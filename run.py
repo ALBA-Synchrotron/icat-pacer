@@ -1,11 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
-import os
-from multiprocessing import Process
-
 from conf.definitions import EXCHANGES, QUEUES
 from connections.rabbitmq import get_rabbitmq_connection
-from consumers.users import UsersWorker
 from helpers.consumers import start_module_processes
 from helpers.serializers import register_custom_serializers
 

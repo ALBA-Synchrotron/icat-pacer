@@ -1,6 +1,7 @@
-from kombu.serialization import register
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+
+from kombu.serialization import register
 
 
 # Encoder: Converts a Python object (e.g., a dictionary) to an XML string

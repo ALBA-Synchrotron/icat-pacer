@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import logging
 from typing import Any, Optional
 
-from kombu import Producer, Exchange, Connection
+from kombu import Producer, Exchange
 
 
 class MessagePublisher:

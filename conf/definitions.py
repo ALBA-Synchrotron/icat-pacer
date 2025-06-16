@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 from kombu import Exchange, Queue
 
-
 """
 This file defines the exchanges and queues used in the application.
 

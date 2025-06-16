@@ -1,8 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
-import os
 import json
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
