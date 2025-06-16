@@ -8,3 +8,5 @@ RUN mkdir -p /icat-pacer/config/
 COPY rabbitmq.json /icat-pacer/config/
 
 RUN pip install -r requirements.txt
+
+CMD ["python", "run.py"]

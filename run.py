@@ -28,10 +28,6 @@ if __name__ == '__main__':
             register_custom_serializers()
 
             # Get all consumers
-            # TODO: Use ENV var to determine which consumers to start and how many
-            os.environ["USERS_WORKERS_ENABLED"] = '1'
-            os.environ["USERS_WORKERS"] = '4'
-
             processes = []
             loaded_modules = ['users', ]  # Add other modules as needed
             for module in loaded_modules:
