@@ -23,11 +23,10 @@ def setup_logging(log_file: Optional[str] = None, level: int = logging.INFO):
     # Console handler
     console_handler = logging.StreamHandler(sys.stdout)
     console_handler.setFormatter(logging.Formatter(print_format))
+    logger.addHandler(console_handler)
 
     # File handler
-    file_handler = logging.FileHandler(log_file)
-    file_handler.setFormatter(logging.Formatter(print_format))
-
-    # Add both handlers
-    logger.addHandler(console_handler)
-    logger.addHandler(file_handler)
+    if log_file:
+        file_handler = logging.FileHandler(log_file)
+        file_handler.setFormatter(logging.Formatter(print_format))
+        logger.addHandler(file_handler)
