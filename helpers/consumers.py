@@ -6,15 +6,22 @@ import os
 from multiprocessing import Process
 from typing import Any
 
+from conf.logging import setup_logging
 from helpers.utils import string_to_classname
+
+logger = logging.getLogger(__name__)
+
+
+def worker(conn, worker_cls: Any):
+    setup_logging()
+    worker_cls(conn).run()
 
 
 def start_module_processes(conn, module_name: str) -> list[Process]:
-    logger = logging.getLogger(__name__)
-    logger.level = logging.INFO
     """
     module_name: str - the name of the module to start processes for, e.g. 'users' or 'dataset_parameter'
     """
+
     logger.info(
         f'{module_name.upper()}_WORKERS_ENABLED -- {os.environ.get(f"{module_name.upper()}_WORKERS_ENABLED", "NOT SET")}')
     workers_enabled = int(os.environ.get(f'{module_name.upper()}_WORKERS_ENABLED', 0))
@@ -33,12 +40,9 @@ def start_module_processes(conn, module_name: str) -> list[Process]:
         worker_module = importlib.import_module(worker_module_name)
         worker_class = getattr(worker_module, worker_class_name)
 
-        def worker(worker_cls: Any):
-            worker_cls(conn, logger=logger).run()
-
         logger.info(f"Starting {worker_class_name} {n} of {worker_num}")
-        process = Process(target=worker, args=(worker_class,))
+        process = Process(target=worker, args=(conn, worker_class,))
         process.start()
-        logger.info(f"{worker_class} {n} of {worker_num} started")
+        logger.info(f"{worker_class_name} {n} of {worker_num} started")
         processes.append(process)
     return processes

@@ -4,8 +4,8 @@ import logging
 
 
 class UserTasks:
-    def __init__(self, logger=logging.getLogger(__name__)):
-        self.logger = logger
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
 
     def create_user_visa(self, body, message):
         """ Process of user creation."""

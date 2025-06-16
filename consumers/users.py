@@ -10,11 +10,12 @@ from tasks.users import UserTasks
 
 
 class UsersWorker(ConsumerMixin):
-    def __init__(self, connection, logger=logging.getLogger(__name__)):
-        self.connection = connection
-        self.logger = logger
+    def __init__(self, connection):
+        self.logger = logging.getLogger(__name__)
 
-        self.user_tasks = UserTasks(logger=self.logger)
+        self.user_tasks = UserTasks()
+
+        self.connection = connection
 
     @override
     def get_consumers(self, Consumer, channel):
@@ -56,7 +57,7 @@ class UsersWorker(ConsumerMixin):
     """
 
     def run_tasks(self, body, message):
-        """Run tasks here"""
+        """Call tasks here"""
         raise NotImplementedError('run_tasks method is not implemented. Use callback methods instead.')
 
     def create_user_visa(self, body, message):
