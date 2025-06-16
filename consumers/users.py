@@ -9,10 +9,12 @@ from conf.definitions import user_create_queue
 from tasks.users import UserTasks
 
 
-class UserWorker(ConsumerMixin):
-    def __init__(self, connection):
+class UsersWorker(ConsumerMixin):
+    def __init__(self, connection, logger=logging.getLogger(__name__)):
         self.connection = connection
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
+
+        self.user_tasks = UserTasks(logger=self.logger)
 
     @override
     def get_consumers(self, Consumer, channel):
@@ -22,6 +24,7 @@ class UserWorker(ConsumerMixin):
                     queues=[user_create_queue, ],
                     # on_message=self.create_user, -> use this if you want to use a single callback
                     # callbacks=[c1, c2], -> use this instead of on_message if you want to use multiple callbacks
+                    # on_message=self.run_tasks,
                     callbacks=[self.create_user_visa, self.create_user_icat],
                     accept=['text/plain'],
                     prefetch_count=1  # how many unacknowledged messages to fetch at once
@@ -34,7 +37,7 @@ class UserWorker(ConsumerMixin):
 
     @override
     def on_connection_error(self, exc, interval):
-        self.logger.error(f"Connection error: {exc!r}. Retrying in {interval} seconds...")
+        self.logger.info(f"Connection error: {exc!r}. Retrying in {interval} seconds...")
 
     @override
     def on_consume_ready(self, connection, channel, consumers, **kwargs):
@@ -44,10 +47,22 @@ class UserWorker(ConsumerMixin):
     def on_consume_end(self, connection, default_channel):
         self.logger.info("Consumer ended.")
 
-    def create_user_visa(self, message):
-        self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
-        return UserTasks().create_user_visa(message)
+    """
+        IMPORTANT NOTE:
+            According to Kombu documentation, callbacks are executed in the order they are defined.
+            Therefore, message.ack() can be handled in the last callback, but you can handle them per-callback with
+            message.acknowledged or in a wrapper function like run_tasks using on_message=func instead of 
+            callbacks=[func1,func2].
+    """
 
-    def create_user_icat(self, message):
+    def run_tasks(self, body, message):
+        """Run tasks here"""
+        raise NotImplementedError('run_tasks method is not implemented. Use callback methods instead.')
+
+    def create_user_visa(self, body, message):
         self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
-        return UserTasks().create_user_icat(message)
+        return self.user_tasks.create_user_visa(body, message)
+
+    def create_user_icat(self, body, message):
+        self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+        return self.user_tasks.create_user_icat(body, message)

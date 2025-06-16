@@ -22,7 +22,7 @@ class MessagePublisher:
         self.content_encoding = content_encoding
 
         if serializer is not None:
-            self.logger.info(f"Using serializer: {serializer}")
+            print(f"Using serializer: {serializer}")
             self.content_type = None
 
         self.producer = Producer(connection, exchange=exchange, routing_key=routing_key, serializer=serializer)
@@ -37,4 +37,4 @@ class MessagePublisher:
             content_type=self.content_type,
             content_encoding=self.content_encoding,
         )
-        self.logger.info("Message sent.")
+        print("Message sent.")

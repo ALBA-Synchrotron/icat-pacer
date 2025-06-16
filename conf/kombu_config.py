@@ -12,7 +12,7 @@ try:
     with open(os.path.join(BASE_DIR, '..', 'config', 'rabbitmq.json')) as rabbitmq_conf:
         RABBITMQ_SETTINGS = json.load(rabbitmq_conf)
 except FileNotFoundError as e:
-    # logger.error(e)
+    # print(e)
     RABBITMQ_SETTINGS = {
         "USER": "",
         "PSSWRD": "",
