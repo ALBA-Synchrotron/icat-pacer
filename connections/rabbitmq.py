@@ -6,4 +6,4 @@ from conf.kombu_config import RABBITMQ_URL
 
 
 def get_rabbitmq_connection():
-    return Connection(RABBITMQ_URL)
+    return (RABBITMQ_URL)

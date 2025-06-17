@@ -1,0 +1,14 @@
+multiprocessStartMethod: "spawn"
+logging:
+  logLevel: "DEBUG"
+  #printFormat:
+  console:
+    enabled: true
+  file:
+    enabled: true
+    path: "/opt/project/asd.log"
+consumers:
+  - module: "users"
+    enabled: true
+    workers: 4
+
