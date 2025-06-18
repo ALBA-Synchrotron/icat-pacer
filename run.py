@@ -5,6 +5,6 @@ from pacer import PACER
 if __name__ == "__main__":
     pacer: PACER = PACER()
 
-    pacer.initial_setup()
-    pacer.start()
-    # while True:
+    pacer.init_workers()
+    pacer.start_consumers()
+    pacer.main_background_loop()

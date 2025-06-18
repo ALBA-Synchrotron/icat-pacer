@@ -20,4 +20,3 @@ except FileNotFoundError as e:
         "VHOST": "",
     }
 
-RABBITMQ_URL = f'amqp://{RABBITMQ_SETTINGS["USER"]}:{RABBITMQ_SETTINGS["PSSWRD"]}@{RABBITMQ_SETTINGS["HOST"]}/{RABBITMQ_SETTINGS["VHOST"] if "VHOST" in RABBITMQ_SETTINGS else "/"}'

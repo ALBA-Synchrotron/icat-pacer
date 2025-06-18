@@ -34,12 +34,25 @@ config_yaml_schema: dict = {
             {
                 "type": "dict",
                 "schema": {
+                    "className": {"type": "string", "required": True},
                     "module": {"type": "string", "required": True},
                     "enabled": {"type": "boolean", "required": True},
                     "workers": {"type": "integer", "required": True}
                 }
             },
         ]
-
+    },
+    "broker": {
+        "type": "dict",
+        "required": True,
+        "check_both_username_password": True,
+        "schema": {
+            "protocol": {"type": "string", "allowed": ["amqp", "amqps", "redis", "rediss", "sqs", "memory" "filesystem"], "required": True},
+            "host": {"type": "string", "required": True},
+            "port": {"type": "integer", "required": False},
+            "username": {"type": "string", "required": False},
+            "password": {"type": "string", "required": False},
+            "vHost": {"type": "string", "required": False},
+        }
     }
 }
