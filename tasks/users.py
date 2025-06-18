@@ -7,7 +7,7 @@ class UserTasks:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
 
-    def create_user_visa(self, body, message):
+    def sync_user_visa(self, body, message):
         """ Process of user creation."""
         try:
             self.logger.info("Starting create_user_visa task")
@@ -21,7 +21,7 @@ class UserTasks:
             message.reject(requeue=True)  # when to requeue?
             return
 
-    def create_user_icat(self, body, message):
+    def sync_user_icat(self, body, message):
         """ Process of user creation."""
         try:
             self.logger.info("Starting create_user_icat task")

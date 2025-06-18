@@ -97,7 +97,7 @@ def xml_decoder(data):
     return result
 
 
-def register_xml():
+def register_xml() -> None:
     """
     Note: The decoding output of this serializer can be found in message.payload.
     """

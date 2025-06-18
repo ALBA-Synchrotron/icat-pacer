@@ -7,10 +7,21 @@ logging:
   file:
     enabled: true
     path: "/opt/project/asd.log"
+customSerializers:
+  - "serializers.xml.register_xml"
+exchanges:
+  - name: "users-exchange"
+    type: "direct"
+queues:
+  - name: "user-sync"
+    exchange: "users-exchange"
+    routingKey: "user.sync"
 consumers:
   - className: "UsersWorker"
     module: "app.consumers.users"
     enabled: true
+    queues:
+      - "user-sync"
     workers: 2
 broker:
   protocol: "amqp"

@@ -27,9 +27,49 @@ config_yaml_schema: dict = {
         }
 
     },
+    "customSerializers": {
+        "type": "list",
+        "required": False,
+        "items": [
+            {
+                "type": "string", "required": True
+            }
+        ]
+    },
+    "exchanges": {
+        "type": "list",
+        "required": True,
+        "check_queues_defined_exchange": True,
+        "items": [
+            {
+                "type": "dict",
+                "schema": {
+                    "name": {"type": "string", "required": True},
+                    "type": {"type": "string", "required": True,
+                             "allowed": ["direct", "fanout", "headers", "topic", "x-local-random"]},
+
+                }
+            }
+        ]
+    },
+    "queues": {
+        "type": "list",
+        "required": True,
+        "items": [
+            {
+                "type": "dict",
+                "schema": {
+                    "name": {"type": "string", "required": True},
+                    "exchange": {"type": "string", "required": True},
+                    "routingKey": {"type": "string", "required": True}
+                }
+            }
+        ]
+    },
     "consumers": {
         "type": "list",
         "required": True,
+        "check_consumer_defined_queues": True,
         "items": [
             {
                 "type": "dict",
@@ -37,7 +77,8 @@ config_yaml_schema: dict = {
                     "className": {"type": "string", "required": True},
                     "module": {"type": "string", "required": True},
                     "enabled": {"type": "boolean", "required": True},
-                    "workers": {"type": "integer", "required": True}
+                    "workers": {"type": "integer", "required": True},
+                    "queues": {"type": "list", "required": True, "items": [{"type": "string", "required": True}]}
                 }
             },
         ]
@@ -47,7 +88,9 @@ config_yaml_schema: dict = {
         "required": True,
         "check_both_username_password": True,
         "schema": {
-            "protocol": {"type": "string", "allowed": ["amqp", "amqps", "redis", "rediss", "sqs", "memory" "filesystem"], "required": True},
+            "protocol": {"type": "string",
+                         "allowed": ["amqp", "amqps", "redis", "rediss", "sqs", "memory" "filesystem"],
+                         "required": True},
             "host": {"type": "string", "required": True},
             "port": {"type": "integer", "required": False},
             "username": {"type": "string", "required": False},

@@ -1,14 +1,16 @@
+import importlib
 import logging
 import multiprocessing
 import os
 import sys
+import time
+from logging.handlers import QueueListener
 
-from kombu import Connection
+from amqp import Channel
+from kombu import Connection, Exchange, Queue
 
-from conf.definitions import EXCHANGES, QUEUES
-from conf.kombu_config import BASE_DIR
-from conf.logging import add_log_handler
 from config.config import ConfigParser
+from helpers.logging import configure_pacer_logger
 from helpers.pacer_consumer import PACERConsumer
 from helpers.serializers import register_custom_serializers
 from helpers.utils import Singleton
@@ -17,7 +19,12 @@ from helpers.utils import Singleton
 class PACER:
     config: dict = {}
     broker_connection: Connection = None
+    queues: list = []
+    exchanges: list = []
     consumers: list = []
+    log_queue: multiprocessing.Queue = None
+    log_queue_listener: QueueListener = None
+    logger: logging.Logger = None
     __metaclass__ = Singleton
 
     def __init__(self) -> None:
@@ -46,48 +53,35 @@ class PACER:
             return fallback_value
 
     def __configure_logging(self) -> None:
-        logger = logging.getLogger()
+        if self.log_queue is None:
+            self.log_queue = multiprocessing.Queue()
 
-        log_level: str = self.get_config_value("logging.level", "INFO")
-        logger.setLevel(getattr(logging, log_level.upper(), logging.INFO))
+            self.logger = logging.getLogger(__name__)
+            handlers: list = configure_pacer_logger(self.config, self.logger)
 
-        print_format: str = self.get_config_value("logging.printFormat",
-                                                  "%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+            self.log_queue_listener = QueueListener(self.log_queue, *handlers)
+            self.log_queue_listener.start()
 
-        if self.get_config_value("logging.file.enabled"):
-            log_file: str = self.get_config_value("logging.file.path",
-                                                  os.path.join(BASE_DIR, "..", "logs", "icat-pacer.log"))
-            os.makedirs(os.path.dirname(log_file), exist_ok=True)
 
-            add_log_handler(
-                handler=logging.FileHandler(log_file),
-                print_format=print_format,
-                logger=logger)
 
-        if self.get_config_value("logging.console.enabled"):
-            add_log_handler(
-                handler=logging.StreamHandler(sys.stdout),
-                print_format=print_format,
-                logger=logger)
-
-    @classmethod
-    def __declare_architecture(cls, connection: Connection) -> None:
-        for exchange in EXCHANGES:
-            exchange(connection).declare()
-        for queue in QUEUES:
-            queue(connection).declare()
+    def __declare_architecture(self, channel: Channel) -> None:
+        self.logger.info("Declaring broker exchanges...")
+        for exchange in self.exchanges:
+            exchange(channel).declare()
+        for queue in self.queues:
+            queue(channel).declare()
 
     def __get_broker_url(self):
-        protocol: str = self.config.get("broker.protocol")
-        host: str = self.config.get("broker.host")
-        port: int = self.config.get("broker.port")
-        username: str = self.config.get("broker.username")
-        password: str = self.config.get("broker.password")
-        vhost: str = self.config.get("broker.vHost")
+        protocol: str = self.get_config_value("broker.protocol")
+        host: str = self.get_config_value("broker.host")
+        port: int = self.get_config_value("broker.port")
+        username: str = self.get_config_value("broker.username")
+        password: str = self.get_config_value("broker.password")
+        vhost: str = self.get_config_value("broker.vHost")
 
         url: str = f"{protocol}://"
         url = f"{url}{username}:{password}@" if username and password else url
-        url = f"{url}{host}:{port}" if port else url
+        url = f"{url}{host}:{port}" if port else f"{url}{host}"
         url = f"{url}/{vhost}" if vhost else url
 
         return url
@@ -96,28 +90,56 @@ class PACER:
         if not isinstance(self.broker_connection, Connection):
             self.broker_connection = Connection(self.__get_broker_url())
 
+    def __create_exchanges(self):
+        for exchange in self.get_config_value("exchanges", []):
+            exchange_name: str = exchange.get("name")
+            exchange_type: str = exchange.get("type")
+
+            self.exchanges.append(Exchange(name=exchange_name, type=exchange_type))
+
+    def __create_queues(self):
+        for queue in self.get_config_value("queues", []):
+            queue_name: str = queue.get("name")
+            exchange_name: str = queue.get("exchange")
+            routing_key: str = queue.get("routingKey")
+
+            self.queues.append(Queue(name=queue_name, exchange=exchange_name, routing_key=routing_key))
+
     def __initial_setup(self) -> None:
         method: str = self.get_config_value("multiprocessStartMethod", "spawn")
         multiprocessing.set_start_method(method)
+
         self.__configure_logging()
 
+        custom_serializers: list = self.get_config_value("customSerializers", [])
+        register_custom_serializers(custom_serializers)
+
+        self.__open_broker_connection()
+        self.__create_exchanges()
+        self.__create_queues()
+
+    def __get_queues_by_name(self, names: str or list) -> list:
+        if isinstance(names, str):
+            names = [names]
+        return list(filter(lambda q: q.name in names, self.queues))
+
     def init_workers(self) -> None:
-        # Declare queues and exchanges (created if they do not exist yet)
         with self.broker_connection.channel() as channel:
-            self.__class__.__declare_architecture(channel)
+            self.__declare_architecture(channel)
 
-            # Register custom serializers
-            register_custom_serializers()
-
-            for consumer in self.config.get("consumers", []):
+            for consumer in self.get_config_value("consumers", []):
                 module: str = consumer.get("module")
                 workers: int = consumer.get("workers")
                 enabled: bool = consumer.get("enabled")
-                worker_module_name: str = consumer.get("moduleName")
+                worker_module_name: str = consumer.get("module")
                 worker_class_name: str = consumer.get("className")
+                consumer_queues: list = self.__get_queues_by_name(consumer.get("queues"))
 
-                pacer_consumer: PACERConsumer = PACERConsumer(module, workers, enabled, worker_module_name,
-                                                              worker_class_name, self.broker_connection)
+                worker_module = importlib.import_module(worker_module_name)
+                worker_class = getattr(worker_module, worker_class_name)
+
+                pacer_consumer: PACERConsumer = worker_class(module, workers, enabled, self.broker_connection,
+                                                             consumer_queues, self.log_queue, self.config)
                 self.consumers.append(pacer_consumer)
 
     def main_background_loop(self):
