@@ -23,9 +23,19 @@ config_yaml_schema: dict = {
                 "schema": {
                     "enabled": {"type": "boolean", "required": True},
                     "path": {"type": "string", "required": False}}
+            },
+            "elasticApm": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "serviceName": {"type": "string", "required": True},
+                    "serverUrl": {"type": "string", "required": True},
+                    "environment": {"type": "string", "required": True},
+                    "secretToken": {"type": "string", "required": False},
+                    "verifyServerCert": {"type": "boolean", "required": False},
+                }
             }
         }
-
     },
     "customSerializers": {
         "type": "list",
@@ -78,7 +88,8 @@ config_yaml_schema: dict = {
                     "module": {"type": "string", "required": True},
                     "enabled": {"type": "boolean", "required": True},
                     "workers": {"type": "integer", "required": True},
-                    "queues": {"type": "list", "required": True, "items": [{"type": "string", "required": True}]}
+                    "queues": {"type": "list", "required": True,
+                               "items": [{"type": "string", "required": True}]}
                 }
             },
         ]
