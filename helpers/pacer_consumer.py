@@ -37,8 +37,7 @@ class PACERConsumer(ConsumerMixin):
         handler: QueueHandler = QueueHandler(log_queue)
         self.logger = logging.getLogger()
         configure_worker_logger(handler, config, self.logger)
-
-        self.logger.debug("ASDASDADASDASDASDAWSDASDDADASDASD")
+        self.logger.info(f"Consumer {self.module} initialized.")
 
     @override
     def get_consumers(self, Consumer, channel) -> list:
@@ -46,14 +45,10 @@ class PACERConsumer(ConsumerMixin):
             return [
                 Consumer(
                     queues=self.queues,
-                    # on_message=self.create_user, -> use this if you want to use a single callback
-                    # callbacks=[c1, c2], -> use this instead of on_message if you want to use multiple callbacks
-                    # on_message=self.run_tasks,
                     callbacks=self.__get_callback_functions(),
                     accept=['text/plain'],
-                    prefetch_count=1  # how many unacknowledged messages to fetch at once
+                    prefetch_count=1
                 ),
-                #  add here more user queue consumers
             ]
         except Exception as e:
             self.logger.error(f"Error setting up consumers: {e!r}")
@@ -68,21 +63,28 @@ class PACERConsumer(ConsumerMixin):
 
     def start(self) -> None:
         if self.enabled:
+            self.logger.info("Starting worker processes")
             for _ in range(self.workers):
                 process: Process = Process(target=self._consumer_main, args=(self.log_queue, self.pacer_config,))
                 process.start()
+                self.logger.debug(f"Spawned {self.module} process {len(self.processes) + 1}/{self.workers}: pid={process.pid}")
                 self.processes.append(process)
 
     def stop(self) -> None:
         if self.enabled:
+            self.logger.info("Stopping worker processes")
             for process in self.processes:
+                self.logger.debug(f"Terminating process: pid={process.pid}")
                 process.terminate()
                 process.join()
+                self.logger.debug(f"Process terminated: pid={process.pid}")
 
     def _consumer_main(self, log_queue: multiprocessing.Queue, config: dict) -> None:
+        import os
         handler: QueueHandler = QueueHandler(log_queue)
         self.logger = logging.getLogger()
         configure_worker_logger(handler, config, self.logger)
+        self.logger.info(f"Consumer {self.module} started in own process with pid={os.getpid()}")
         self.run()
 
     @override

@@ -2,10 +2,14 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+from helpers.pacer_tasks import PACERTasks
 
-class UserTasks:
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
+
+class UserTasks(PACERTasks):
+
+
+    def __init__(self, logger: logging.Logger = None):
+        super().__init__(logger)
 
     def sync_user_visa(self, body, message):
         """ Process of user creation."""

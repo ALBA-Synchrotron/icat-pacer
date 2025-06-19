@@ -13,7 +13,7 @@ from config.config import ConfigParser
 from helpers.logging import configure_pacer_logger
 from helpers.pacer_consumer import PACERConsumer
 from helpers.serializers import register_custom_serializers
-from helpers.utils import Singleton
+from helpers.utils import Singleton, mask_amqp_password
 
 
 class PACER:
@@ -68,8 +68,11 @@ class PACER:
         self.logger.info("Declaring broker exchanges...")
         for exchange in self.exchanges:
             exchange(channel).declare()
+            self.logger.debug(f"Exchange declared: name={exchange.name} ")
+        self.logger.info("Declaring broker queues...")
         for queue in self.queues:
             queue(channel).declare()
+            self.logger.debug(f"Queue declared: name={queue.name} ")
 
     def __get_broker_url(self):
         protocol: str = self.get_config_value("broker.protocol")
@@ -89,28 +92,37 @@ class PACER:
     def __open_broker_connection(self) -> None:
         if not isinstance(self.broker_connection, Connection):
             self.broker_connection = Connection(self.__get_broker_url())
+            self.logger.debug(f"Broker connection URL is: {mask_amqp_password(self.__get_broker_url())}")
+            self.logger.info("Broker connection opened")
+        self.logger.error("Broker connection not opened: A connection is already open")
 
     def __create_exchanges(self):
+        self.logger.info("Creating broker exchanges...")
         for exchange in self.get_config_value("exchanges", []):
             exchange_name: str = exchange.get("name")
             exchange_type: str = exchange.get("type")
-
+            self.logger.debug(f"Creating exchange: name={exchange_name} type={exchange_type}")
             self.exchanges.append(Exchange(name=exchange_name, type=exchange_type))
+        self.logger.debug(f"Created {len(self.exchanges)} exchanges")
 
     def __create_queues(self):
+        self.logger.info("Creating broker queues...")
         for queue in self.get_config_value("queues", []):
             queue_name: str = queue.get("name")
             exchange_name: str = queue.get("exchange")
             routing_key: str = queue.get("routingKey")
-
+            self.logger.debug(f"Creating queue: name={queue_name} exchange={exchange_name} routing_key={routing_key}")
             self.queues.append(Queue(name=queue_name, exchange=exchange_name, routing_key=routing_key))
+        self.logger.debug(f"Created {len(self.queues)} queues")
 
     def __initial_setup(self) -> None:
         method: str = self.get_config_value("multiprocessStartMethod", "spawn")
         multiprocessing.set_start_method(method)
 
         self.__configure_logging()
+        self.logger.info("Logging configured for PACER main process")
 
+        self.logger.info("Registering custom serializers")
         custom_serializers: list = self.get_config_value("customSerializers", [])
         register_custom_serializers(custom_serializers)
 
@@ -124,6 +136,7 @@ class PACER:
         return list(filter(lambda q: q.name in names, self.queues))
 
     def init_workers(self) -> None:
+        self.logger.info("Initializing workers...")
         with self.broker_connection.channel() as channel:
             self.__declare_architecture(channel)
 
