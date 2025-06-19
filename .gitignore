@@ -22,3 +22,4 @@ env
 img.pdf
 temp.pdf
 config.yaml
+logs/

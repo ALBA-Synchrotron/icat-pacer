@@ -1,7 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import logging
-
 from helpers.pacer_consumer import PACERConsumer
 from tasks.users import UserTasks
 

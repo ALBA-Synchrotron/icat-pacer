@@ -7,7 +7,7 @@ config_yaml_schema: dict = {
     "logging": {
         "type": "dict",
         "required": True,
-        "check_path_if_file_is_enabled": True,
+        "check_path_if_file_is_enabled": False,
         "schema": {
             "logLevel": {"type": "string", "allowed": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
                          "required": False},

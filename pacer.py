@@ -94,7 +94,8 @@ class PACER:
             self.broker_connection = Connection(self.__get_broker_url())
             self.logger.debug(f"Broker connection URL is: {mask_amqp_password(self.__get_broker_url())}")
             self.logger.info("Broker connection opened")
-        self.logger.error("Broker connection not opened: A connection is already open")
+        else:
+            self.logger.error("Broker connection not opened: A connection is already open")
 
     def __create_exchanges(self):
         self.logger.info("Creating broker exchanges...")
