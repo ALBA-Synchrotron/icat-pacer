@@ -7,12 +7,6 @@ logging:
   file:
     enabled: true
     path: "/opt/project/asd.log"
-  elasticApm:
-    enabled: false
-    serviceName: "icat-pacer-local"
-    serverUrl: "<<REDACTED>>"
-    environment: "local"
-    secretToken: "<<REDACTED>>"
     verifyServerCert: false
 customSerializers:
   - "serializers.xml.register_xml"
