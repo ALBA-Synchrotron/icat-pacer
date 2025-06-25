@@ -24,6 +24,9 @@ consumers:
     queues:
       - "user-sync"
     workers: 2
+    integrations:
+      - "icat"
+      - "visa"
 broker:
   protocol: "amqp"
   host: "<<REDACTED>>"
@@ -31,4 +34,19 @@ broker:
   username: "<<REDACTED>>"
   password: "<<REDACTED>>"
   vHost: "<<REDACTED>>"
-
+integrations:
+  visa:
+    enabled: true
+    database:
+      host: "<<REDACTED>>"
+      port: "<<REDACTED>>"
+      database: "<<REDACTED>>"
+      user: "<<REDACTED>>"
+      password: "<<REDACTED>>"
+    icat:
+    enabled: true
+    server:
+      url: "https://<<REDACTED>>/ICATService/ICAT?wsdl"
+      authPlugin: "db"
+      username: "<<REDACTED>>"
+      password: "<<REDACTED>>"

@@ -11,7 +11,7 @@ class PACERValidator(Validator):
 
         {'type': 'boolean'}
         """
-        # For some reason custom  rules are not checked when set on a nested schema.
+        # For some reason custom rules are not checked when set on a nested schema.
         # This rule is a workaround that checks that the 'logging.file.path' field is set when 'logging.file.enabled' is True.
         if not check:
             return
@@ -32,7 +32,7 @@ class PACERValidator(Validator):
 
         {'type': 'boolean'}
         """
-        # For some reason custom  rules are not checked when set on a nested schema.
+        # For some reason custom rules are not checked when set on a nested schema.
         # This rule is a workaround that checks that the both username and password are set in the broker.
         if not check:
             return
@@ -51,7 +51,7 @@ class PACERValidator(Validator):
 
         {'type': 'boolean'}
         """
-        # For some reason custom  rules are not checked when set on a nested schema.
+        # For some reason custom rules are not checked when set on a nested schema.
         # This rule is a workaround that checks that the exchanges defined in the queues are actually defined
         # as exchanges in the configuration.
         if not check:
@@ -72,7 +72,7 @@ class PACERValidator(Validator):
 
         {'type': 'boolean'}
         """
-        # For some reason custom  rules are not checked when set on a nested schema.
+        # For some reason custom rules are not checked when set on a nested schema.
         # This rule is a workaround that checks that the queues defined in the consumers are actually defined
         # as queues in the configuration.
         if not check:
@@ -87,3 +87,25 @@ class PACERValidator(Validator):
                     for queue in i.get("queues"):
                         if queue not in queues_names:
                             self._error(field, f"Queue '{queue}' is not defined in 'queues'")
+
+    def _validate_check_consumer_defined_integrations(self, check, field, _) -> None:
+        """
+        The rule's arguments are validated against this schema:
+
+        {'type': 'boolean'}
+        """
+        # For some reason custom rules are not checked when set on a nested schema.
+        # This rule is a workaround that checks that the integrations defined in the consumers are actually defined
+        # as integrations in the configuration.
+        if not check:
+            return
+
+        consumers = self.document.get("consumers")
+        integrations = self.document.get("integrations")
+        if consumers and integrations:
+            integrations_names: list = integrations.keys()
+            for i in consumers:
+                if i.get("integrations"):
+                    for integration in i.get("integrations"):
+                        if integration not in integrations_names:
+                            self._error(field, f"Integration '{integration}' is not defined in 'integrations'")

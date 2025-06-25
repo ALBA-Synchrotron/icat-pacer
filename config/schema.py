@@ -23,34 +23,22 @@ config_yaml_schema: dict = {
                 "schema": {
                     "enabled": {"type": "boolean", "required": True},
                     "path": {"type": "string", "required": False}}
-            },
-            "elasticApm": {
-                "type": "dict",
-                "schema": {
-                    "enabled": {"type": "boolean", "required": True},
-                    "serviceName": {"type": "string", "required": True},
-                    "serverUrl": {"type": "string", "required": True},
-                    "environment": {"type": "string", "required": True},
-                    "secretToken": {"type": "string", "required": False},
-                    "verifyServerCert": {"type": "boolean", "required": False},
-                }
             }
         }
     },
     "customSerializers": {
         "type": "list",
         "required": False,
-        "items": [
+        "schema":
             {
                 "type": "string", "required": True
             }
-        ]
     },
     "exchanges": {
         "type": "list",
         "required": True,
         "check_queues_defined_exchange": True,
-        "items": [
+        "schema":
             {
                 "type": "dict",
                 "schema": {
@@ -60,12 +48,11 @@ config_yaml_schema: dict = {
 
                 }
             }
-        ]
     },
     "queues": {
         "type": "list",
         "required": True,
-        "items": [
+        "schema":
             {
                 "type": "dict",
                 "schema": {
@@ -74,13 +61,13 @@ config_yaml_schema: dict = {
                     "routingKey": {"type": "string", "required": True}
                 }
             }
-        ]
     },
     "consumers": {
         "type": "list",
         "required": True,
         "check_consumer_defined_queues": True,
-        "items": [
+        "check_consumer_defined_integrations": True,
+        "schema":
             {
                 "type": "dict",
                 "schema": {
@@ -89,10 +76,11 @@ config_yaml_schema: dict = {
                     "enabled": {"type": "boolean", "required": True},
                     "workers": {"type": "integer", "required": True},
                     "queues": {"type": "list", "required": True,
-                               "items": [{"type": "string", "required": True}]}
+                               "schema": {"type": "string", "required": True}},
+                    "integrations": {"type": "list", "required": True,
+                                     "schema": {"type": "string", "required": True}}
                 }
             },
-        ]
     },
     "broker": {
         "type": "dict",
@@ -107,6 +95,45 @@ config_yaml_schema: dict = {
             "username": {"type": "string", "required": False},
             "password": {"type": "string", "required": False},
             "vHost": {"type": "string", "required": False},
+        }
+    },
+    "integrations": {
+        "type": "dict",
+        "required": True,
+        "schema": {
+            "visa": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "database": {
+                        "type": "dict",
+                        "required": False,
+                        "schema": {
+                            "host": {"type": "string", "required": False},
+                            "port": {"type": "integer", "required": False},
+                            "database": {"type": "string", "required": False},
+                            "username": {"type": "string", "required": False},
+                            "password": {"type": "string", "required": False},
+                        }
+                    }
+                }
+            },
+            "icat": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "server": {
+                        "type": "dict",
+                        "required": False,
+                        "schema": {
+                            "url": {"type": "string", "required": True},
+                            "authPlugin": {"type": "string", "required": True},
+                            "username": {"type": "string", "required": True},
+                            "password": {"type": "string", "required": True},
+                        }
+                    }
+                }
+            }
         }
     }
 }
