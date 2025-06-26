@@ -3,17 +3,20 @@ import logging
 import multiprocessing
 import os
 import sys
-import time
 from logging.handlers import QueueListener
+from time import sleep
 
 from amqp import Channel
 from kombu import Connection, Exchange, Queue
 
 from config.config import ConfigParser
+from helpers.icat_utils import ICATClient
 from helpers.logging import configure_pacer_logger
 from helpers.pacer_consumer import PACERConsumer
 from helpers.serializers import register_custom_serializers
 from helpers.utils import Singleton, mask_amqp_password
+
+MAIN_LOOP_WAIT_TIME: int = 15 * 60
 
 
 class PACER:
@@ -25,6 +28,7 @@ class PACER:
     log_queue: multiprocessing.Queue = None
     log_queue_listener: QueueListener = None
     logger: logging.Logger = None
+    icat_client: ICATClient = None
     __metaclass__ = Singleton
 
     def __init__(self) -> None:
@@ -61,8 +65,6 @@ class PACER:
 
             self.log_queue_listener = QueueListener(self.log_queue, *handlers)
             self.log_queue_listener.start()
-
-
 
     def __declare_architecture(self, channel: Channel) -> None:
         self.logger.info("Declaring broker exchanges...")
@@ -116,6 +118,13 @@ class PACER:
             self.queues.append(Queue(name=queue_name, exchange=exchange_name, routing_key=routing_key))
         self.logger.debug(f"Created {len(self.queues)} queues")
 
+    def __open_icat_session(self) -> None:
+        self.icat_client = ICATClient.open_icat_session(self.config)
+        if self.icat_client:
+            self.logger.info("ICAT session opened")
+        else:
+            self.logger.error("ICAT session not opened: Could not open ICAT session")
+
     def __initial_setup(self) -> None:
         method: str = self.get_config_value("multiprocessStartMethod", "spawn")
         multiprocessing.set_start_method(method)
@@ -130,6 +139,8 @@ class PACER:
         self.__open_broker_connection()
         self.__create_exchanges()
         self.__create_queues()
+
+        self.__open_icat_session()
 
     def __get_queues_by_name(self, names: str or list) -> list:
         if isinstance(names, str):
@@ -153,13 +164,15 @@ class PACER:
                 worker_class = getattr(worker_module, worker_class_name)
 
                 pacer_consumer: PACERConsumer = worker_class(module, workers, enabled, self.broker_connection,
-                                                             consumer_queues, self.log_queue, self.config)
+                                                             consumer_queues, self.log_queue, self.config,
+                                                             self.icat_client.session_id)
                 self.consumers.append(pacer_consumer)
 
     def main_background_loop(self):
         try:
             while True:
-                pass
+                sleep(MAIN_LOOP_WAIT_TIME)
+                self.icat_client.auto_refresh_session()
         except KeyboardInterrupt:
             self.stop_consumers()
             sys.exit(0)

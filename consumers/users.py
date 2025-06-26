@@ -1,19 +1,31 @@
 from __future__ import absolute_import, unicode_literals
 
+from kombu import Message
+
 from helpers.pacer_consumer import PACERConsumer
+from helpers.user import UserContext, create_user_context
 from tasks.users import UserTasks
 
 
-class UsersWorker(PACERConsumer):
+class UsersConsumer(PACERConsumer):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
-        self.user_tasks = UserTasks(self.logger)
+        self.tasks = UserTasks(self.logger)
 
-    def callback_func_create_user_visa(self, body, message):
+    def callback_func_create_user_visa(self, body, message: Message) -> None:
         self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
-        return self.user_tasks.sync_user_visa(body, message)
+        user_str: str = message.payload or message.body
+        user_context: UserContext = create_user_context(user_str)
 
-    def callback_func_create_user_icat(self, body, message):
+        self.tasks.sync_user_visa(self.icat_client, user_context, message=message, body=body)
+
+    def callback_func_create_user_icat(self, body, message: Message) -> None:
         self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
-        return self.user_tasks.sync_user_icat(body, message)
+        user_str: str = message.payload or message.body
+        user_context: UserContext = create_user_context(user_str)
+
+        self.tasks.sync_user_icat(self.icat_client, user_context, message=message, body=body)
+
+    def callback_func_send_to_test_environment(self, _body, message: Message) -> None:
+        self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")

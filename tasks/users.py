@@ -2,40 +2,20 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
-from helpers.pacer_tasks import PACERTasks
+from helpers.icat_utils import ICATClient
+from helpers.user import UserContext
 
 
-class UserTasks(PACERTasks):
-
+class UserTasks:
 
     def __init__(self, logger: logging.Logger = None):
-        super().__init__(logger)
+        self.logger = logger
 
-    def sync_user_visa(self, body, message):
-        """ Process of user creation."""
-        try:
-            self.logger.info("Starting create_user_visa task")
-            user_dict = message.payload or message.body
-            #
-            # TODO: USER CREATION LOGIC GOES HERE
-            #
-            self.logger.info("Finished create_user_visa task")
-        except Exception as e:
-            self.logger.error(f"Error processing create_user_visa message: {e!r}")
-            message.reject(requeue=True)  # when to requeue?
-            return
+    def sync_user_visa(self, icat_client: ICATClient, user_context: UserContext, *_args, **_kwargs):
+        self.logger.info(f"VISA sync: Synchronizing user {",".join(user_context.usernames)} visa")
 
-    def sync_user_icat(self, body, message):
-        """ Process of user creation."""
-        try:
-            self.logger.info("Starting create_user_icat task")
-            user_dict = message.payload or message.body
-            #
-            # TODO: USER CREATION LOGIC GOES HERE
-            #
-            message.ack()
-            self.logger.info("Finished create_user_icat task")
-        except Exception as e:
-            self.logger.error(f"Error processing create_user_icat message: {e!r}")
-            message.reject(requeue=True)  # when to requeue?
-            return
+    def sync_user_icat(self, icat_client: ICATClient, user_context: UserContext, *_args, **_kwargs):
+        self.logger.info(f"ICAT sync: Synchronizing user {",".join(user_context.usernames)} visa")
+
+        users = icat_client.search("User", conditions={"name__in": user_context.usernames}, flatten_single=False)
+        asd = 23
