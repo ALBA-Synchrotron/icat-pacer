@@ -114,3 +114,6 @@ class ICATClient:
         if results:
             return results[0] if len(results) == 1 and flatten_single else results
         return None
+
+    def new(self, *args, **kwargs) -> Entity:
+        return self.client.new(*args, **kwargs)

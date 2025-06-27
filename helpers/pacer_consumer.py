@@ -55,7 +55,8 @@ class PACERConsumer(ConsumerMixin):
                 errors.append((func.__name__, e))
         if errors:
             self.logger.error(f"Message rejected due to errors: {errors}")
-            message.reject(requeue=True)
+            # TODO: At some point we are going to have this send an error to a specific queue or the logging app.
+            message.reject(requeue=False)
         else:
             message.ack()
 
