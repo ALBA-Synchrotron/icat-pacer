@@ -1,0 +1,52 @@
+multiprocessStartMethod: "spawn"
+logging:
+  logLevel: "DEBUG"
+  #printFormat:
+  console:
+    enabled: true
+  file:
+    enabled: true
+    path: "/opt/project/asd.log"
+    verifyServerCert: false
+customSerializers:
+  - "serializers.xml.register_xml"
+exchanges:
+  - name: "users-exchange"
+    type: "direct"
+queues:
+  - name: "user-sync"
+    exchange: "users-exchange"
+    routingKey: "user.sync"
+consumers:
+  - className: "UsersWorker"
+    module: "app.consumers.users"
+    enabled: true
+    queues:
+      - "user-sync"
+    workers: 2
+    integrations:
+      - "icat"
+      - "visa"
+broker:
+  protocol: "amqp"
+  host: "<<REDACTED>>"
+  #port:
+  username: "<<REDACTED>>"
+  password: "<<REDACTED>>"
+  vHost: "<<REDACTED>>"
+integrations:
+  visa:
+    enabled: true
+    database:
+      host: "<<REDACTED>>"
+      port: "<<REDACTED>>"
+      database: "<<REDACTED>>"
+      user: "<<REDACTED>>"
+      password: "<<REDACTED>>"
+    icat:
+    enabled: true
+    server:
+      url: "https://<<REDACTED>>/ICATService/ICAT?wsdl"
+      authPlugin: "db"
+      username: "<<REDACTED>>"
+      password: "<<REDACTED>>"

@@ -2,36 +2,38 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+from helpers.icat_utils import ICATClient
+from helpers.user import UserContext
+
 
 class UserTasks:
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
 
-    def create_user_visa(self, body, message):
-        """ Process of user creation."""
-        try:
-            self.logger.info("Starting create_user_visa task")
-            user_dict = message.payload or message.body
-            #
-            # TODO: USER CREATION LOGIC GOES HERE
-            #
-            self.logger.info("Finished create_user_visa task")
-        except Exception as e:
-            self.logger.error(f"Error processing create_user_visa message: {e!r}")
-            message.reject(requeue=True)  # when to requeue?
-            return
+    def __init__(self, logger: logging.Logger = None):
+        self.logger = logger
 
-    def create_user_icat(self, body, message):
-        """ Process of user creation."""
-        try:
-            self.logger.info("Starting create_user_icat task")
-            user_dict = message.payload or message.body
-            #
-            # TODO: USER CREATION LOGIC GOES HERE
-            #
-            message.ack()
-            self.logger.info("Finished create_user_icat task")
-        except Exception as e:
-            self.logger.error(f"Error processing create_user_icat message: {e!r}")
-            message.reject(requeue=True)  # when to requeue?
-            return
+    def sync_user_visa(self, user_context: UserContext, *_args, **_kwargs):
+        self.logger.info(f"VISA sync: Synchronizing user {",".join(user_context.usernames)} visa")
+
+    def sync_user_icat(self, icat_client: ICATClient, user_context: UserContext, *_args, **_kwargs):
+        self.logger.info(f"ICAT sync: Synchronizing user {",".join(user_context.usernames)} visa")
+
+        users: list = icat_client.search("User", conditions={"name__in": user_context.usernames}, flatten_single=False)
+        if not users:
+            users = [icat_client.new("User", name=i) for i in user_context.usernames]
+
+        for u in users:
+            u.fullName = f"{user_context.first_name} {user_context.last_name}"
+            u.givenName = user_context.first_name
+            u.familyName = user_context.last_name
+            u.email = user_context.email
+            u.orcidId = user_context.orcid
+            u.affiliation = f"{user_context.affiliation.name}, {user_context.affiliation.unit}, {user_context.affiliation.department_name}"[
+                            :255]
+            u.name = u.name if user_context.enabled else f"{u.name}__user_disabled"
+
+            if u.id:
+                self.logger.info(f"ICAT sync: Updating user {u.name}")
+                u.update()
+            else:
+                self.logger.info(f"ICAT sync: Creating user {u.name}")
+                u.create()
