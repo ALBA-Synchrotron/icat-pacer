@@ -20,7 +20,7 @@ class GenericPACERUnitTest:
     entities_teardown: list
 
     @pytest.fixture(scope="class", autouse=True)
-    def load_fixtures(self):
+    def load_fixtures(self) -> None:
         self.__load_fixtures()
 
     @pytest.fixture(scope="session")
@@ -32,7 +32,7 @@ class GenericPACERUnitTest:
         client: ICATClient = ICATClient(url=ICAT_SERVER_URL, username=ICAT_AUTH_USERNAME, password=ICAT_AUTH_PASSWORD,
                                         auth_plugin=ICAT_AUTH_PLUGIN)
         yield client
-        self.teardown_unittest_entities(client, unittest_user_prefix)
+        self.__teardown_unittest_entities(client, unittest_user_prefix)
 
     def __load_fixtures(self) -> None:
         for fixture_file in self.fixtures:
@@ -42,7 +42,7 @@ class GenericPACERUnitTest:
             with open(fixture_path, "r") as f:
                 self.fixtures_dict[name] = json.load(f)
 
-    def teardown_unittest_entities(self, icat_client: ICATClient, unittest_user_prefix: str):
+    def __teardown_unittest_entities(self, icat_client: ICATClient, unittest_user_prefix: str) -> None:
 
         for entity in self.entities_teardown:
             results: list = icat_client.search(entity, conditions={"name__startswith": unittest_user_prefix},

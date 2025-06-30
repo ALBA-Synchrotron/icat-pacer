@@ -34,7 +34,7 @@ class TestICATUserTasks(GenericPACERUnitTest):
         new_icat_user.enabled = False
         return new_icat_user
 
-    def test_create_new_user(self, user_tasks: UserTasks, icat_client: ICATClient, new_icat_user: UserContext):
+    def test_create_new_user(self, user_tasks: UserTasks, icat_client: ICATClient, new_icat_user: UserContext) -> None:
         user_tasks.sync_user_icat(icat_client, new_icat_user)
         users: list = icat_client.search("User", conditions={"name__in": new_icat_user.usernames}, flatten_single=False)
 
@@ -42,7 +42,7 @@ class TestICATUserTasks(GenericPACERUnitTest):
         for count, i in enumerate(users):
             assert i.name == new_icat_user.usernames[count]
 
-    def test_update_user(self, user_tasks: UserTasks, icat_client: ICATClient, updated_icat_user: UserContext):
+    def test_update_user(self, user_tasks: UserTasks, icat_client: ICATClient, updated_icat_user: UserContext) -> None:
         user_tasks.sync_user_icat(icat_client, updated_icat_user)
         users: list = icat_client.search("User", conditions={"name__in": updated_icat_user.usernames},
                                          flatten_single=False)
@@ -51,7 +51,8 @@ class TestICATUserTasks(GenericPACERUnitTest):
         for i in users:
             assert i.givenName == updated_icat_user.first_name
 
-    def test_disable_user(self, user_tasks: UserTasks, icat_client: ICATClient, disabled_icat_user: UserContext):
+    def test_disable_user(self, user_tasks: UserTasks, icat_client: ICATClient,
+                          disabled_icat_user: UserContext) -> None:
         user_tasks.sync_user_icat(icat_client, disabled_icat_user)
         users: list = icat_client.search("User", conditions={"email__eq": disabled_icat_user.email},
                                          flatten_single=False)
