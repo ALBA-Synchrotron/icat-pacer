@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 import json
 
+
 @dataclass
 class Affiliation:
     name: str = ""
@@ -24,8 +25,8 @@ class UserContext:
     affiliation: Affiliation = field(default_factory=Affiliation)
 
 
-def create_user_context(user_str: str) -> UserContext:
-    user_dict: dict = json.loads(user_str)
+def create_user_context(user_data: str or dict, username_prefix: str = "") -> UserContext:
+    user_dict: dict = json.loads(user_data) if isinstance(user_data, str) else user_data
     aff = user_dict.get("affiliation", {})
     return UserContext(
         first_name=user_dict.get("first_name"),
@@ -35,7 +36,7 @@ def create_user_context(user_str: str) -> UserContext:
         is_staff=user_dict.get("is_staff", False),
         enabled=user_dict.get("enabled", False),
         uos_id=user_dict.get("id"),
-        usernames=[i.get("username").lower() for i in user_dict.get("user_list", [])],
+        usernames=[f"{username_prefix}{i.get("username")}" for i in user_dict.get("user_list", [])],
         affiliation=Affiliation(
             name=aff.get("name", ""),
             code=aff.get("code", ""),

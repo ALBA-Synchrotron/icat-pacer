@@ -1,0 +1,26 @@
+{
+  "first_name": "Test",
+  "last_name": "Test1",
+  "ORCID": null,
+  "email": "test1@cells.es",
+  "affiliation": {
+    "id": 999,
+    "name": "AAS",
+    "code": "LEL",
+    "department_name": "",
+    "department_code": "GTS",
+    "unit": "The GTS",
+    "city": "Cerdanyola del Vallès"
+  },
+  "is_staff": false,
+  "enabled": true,
+  "id": 1021,
+  "user_list": [
+    {
+      "username": "auo-test"
+    },
+    {
+      "username": "auo-testTest1-ou"
+    }
+  ]
+}
