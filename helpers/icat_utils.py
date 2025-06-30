@@ -24,7 +24,8 @@ class ICATClient:
             )
 
     def __del__(self) -> None:
-        self.client.logout()
+        if self.client and self.client.sessionId:
+            self.client.logout()
 
     def auto_refresh_session(self):
         self.client.autoRefresh()
@@ -92,8 +93,12 @@ class ICATClient:
                         result[field] = f"< {value}"
                     case "lte":
                         result[field] = f"<= {value}"
-                    case "like":
+                    case "like" | "contains":
                         result[field] = f"LIKE '%{value}%'"
+                    case "startswith":
+                        result[field] = f"LIKE '{value}%'"
+                    case "endswith":
+                        result[field] = f"LIKE '%{value}'"
                     case _:
                         raise ValueError(f"Invalid operator '{operator}' for custom condition.")
 
@@ -117,3 +122,6 @@ class ICATClient:
 
     def new(self, *args, **kwargs) -> Entity:
         return self.client.new(*args, **kwargs)
+
+    def delete(self, entity: Entity) -> None:
+        self.client.delete(entity)

@@ -27,7 +27,7 @@ class UserTasks:
             u.familyName = user_context.last_name
             u.email = user_context.email
             u.orcidId = user_context.orcid
-            u.affiliation = f"{user_context.affiliation.name}, {user_context.affiliation.unit}, {user_context.affiliation.department_name}"[
+            u.affiliation = f"{", ".join(i for i in [user_context.affiliation.name, user_context.affiliation.unit, user_context.affiliation.department_name] if i != "")}"[
                             :255]
             u.name = u.name if user_context.enabled else f"{u.name}__user_disabled"
 
