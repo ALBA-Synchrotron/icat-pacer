@@ -159,12 +159,13 @@ class PACER:
                 worker_module_name: str = consumer.get("module")
                 worker_class_name: str = consumer.get("className")
                 consumer_queues: list = self.__get_queues_by_name(consumer.get("queues"))
+                integrations: list = consumer.get("integrations", [])
 
                 worker_module = importlib.import_module(worker_module_name)
                 worker_class = getattr(worker_module, worker_class_name)
 
                 pacer_consumer: PACERConsumer = worker_class(module, workers, enabled, self.broker_connection,
-                                                             consumer_queues, self.log_queue, self.config,
+                                                             consumer_queues, self.log_queue, self.config, integrations,
                                                              self.icat_client.session_id)
                 self.consumers.append(pacer_consumer)
 

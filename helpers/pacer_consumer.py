@@ -9,9 +9,11 @@ from typing import override
 from kombu import Connection, Queue, Message
 from kombu.mixins import ConsumerMixin
 from kombu.transport.virtual import Channel
+from psycopg_pool import ConnectionPool
 
 from helpers.icat_utils import ICATClient
 from helpers.logging import configure_worker_logger
+from helpers.visa_utils import get_pg_connection_pool
 
 
 class PACERConsumer(ConsumerMixin):
@@ -26,9 +28,11 @@ class PACERConsumer(ConsumerMixin):
     pacer_config: dict = None
     icat_client: ICATClient = None
     icat_session_id: str = None
+    visa_pg_pool: ConnectionPool = None
+    integrations: list = []
 
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, queues: list,
-                 log_queue: multiprocessing.Queue, config: dict, icat_session_id: str) -> None:
+                 log_queue: multiprocessing.Queue, config: dict, integrations: list, icat_session_id: str) -> None:
         self.module = module
         self.workers = workers
         self.enabled = enabled
@@ -36,6 +40,7 @@ class PACERConsumer(ConsumerMixin):
         self.queues = queues
         self.log_queue = log_queue
         self.pacer_config = config
+        self.integrations = integrations
         self.icat_session_id = icat_session_id
 
         handler: QueueHandler = QueueHandler(log_queue)
@@ -106,7 +111,13 @@ class PACERConsumer(ConsumerMixin):
         handler: QueueHandler = QueueHandler(log_queue)
         self.logger = logging.getLogger()
         configure_worker_logger(handler, self.pacer_config, self.logger)
-        self.icat_client = ICATClient.open_icat_session(self.pacer_config, self.icat_session_id)
+
+        if "icat" in self.integrations:
+            self.icat_client = ICATClient.open_icat_session(self.pacer_config, self.icat_session_id)
+        if "visa" in self.integrations:
+            self.visa_pg_pool = get_pg_connection_pool(self.pacer_config)
+
+        self.tasks.logger = self.logger
         self.logger.info(f"Consumer {self.module} started in own process with pid={os.getpid()}")
         self.run()
 

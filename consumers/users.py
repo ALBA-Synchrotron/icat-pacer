@@ -18,7 +18,7 @@ class UsersConsumer(PACERConsumer):
         user_str: str = message.payload or message.body
         user_context: UserContext = create_user_context(user_str)
 
-        self.tasks.sync_user_visa(user_context, message=message, body=body)
+        self.tasks.sync_user_visa(self.visa_pg_pool, user_context, message=message, body=body)
 
     def callback_func_sync_user_icat(self, body, message: Message) -> None:
         self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")

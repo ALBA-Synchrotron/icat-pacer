@@ -2,8 +2,11 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
+from psycopg_pool import ConnectionPool
+
 from helpers.icat_utils import ICATClient
-from helpers.user import UserContext
+from helpers.user import UserContext, get_affiliation_name
+from helpers.visa_utils import VISALoader
 
 
 class UserTasks:
@@ -11,11 +14,14 @@ class UserTasks:
     def __init__(self, logger: logging.Logger = None):
         self.logger = logger
 
-    def sync_user_visa(self, user_context: UserContext, *_args, **_kwargs):
-        self.logger.info(f"VISA sync: Synchronizing user {",".join(user_context.usernames)} visa")
+    def sync_user_visa(self, pg_pool: ConnectionPool, user_context: UserContext, *_args, **_kwargs):
+        self.logger.info(f"VISA sync: Synchronizing user {",".join(user_context.usernames)}")
+
+        VISALoader.db_sync_affiliation(pg_pool, user_context.affiliation, self.logger)
+        VISALoader.db_sync_user(pg_pool, user_context, self.logger)
 
     def sync_user_icat(self, icat_client: ICATClient, user_context: UserContext, *_args, **_kwargs):
-        self.logger.info(f"ICAT sync: Synchronizing user {",".join(user_context.usernames)} visa")
+        self.logger.info(f"ICAT sync: Synchronizing user {",".join(user_context.usernames)}")
 
         users: list = icat_client.search("User", conditions={"name__in": user_context.usernames}, flatten_single=False)
         if not users:
@@ -27,8 +33,7 @@ class UserTasks:
             u.familyName = user_context.last_name
             u.email = user_context.email
             u.orcidId = user_context.orcid
-            u.affiliation = f"{", ".join(i for i in [user_context.affiliation.name, user_context.affiliation.unit, user_context.affiliation.department_name] if i != "")}"[
-                            :255]
+            u.affiliation = get_affiliation_name(affiliation=user_context.affiliation, limit=255)
             u.name = u.name if user_context.enabled else f"{u.name}__user_disabled"
 
             if u.id:
