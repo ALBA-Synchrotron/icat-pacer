@@ -10,6 +10,7 @@ from helpers.visa_utils import VISALoader
 
 
 class UserTasks:
+    USER_DISABLED_SUFFIX: str = "__user_disabled"
 
     def __init__(self, logger: logging.Logger = None):
         self.logger = logger
@@ -23,7 +24,10 @@ class UserTasks:
     def sync_user_icat(self, icat_client: ICATClient, user_context: UserContext, *_args, **_kwargs):
         self.logger.info(f"ICAT sync: Synchronizing user {",".join(user_context.usernames)}")
 
-        users: list = icat_client.search("User", conditions={"name__in": user_context.usernames}, flatten_single=False)
+        user_usernames: list = [*user_context.usernames,
+                                *[f"{i}{self.USER_DISABLED_SUFFIX}" for i in user_context.usernames]]
+
+        users: list = icat_client.search("User", conditions={"name__in": user_usernames}, flatten_single=False)
         if not users:
             users = [icat_client.new("User", name=i) for i in user_context.usernames]
 
@@ -34,7 +38,8 @@ class UserTasks:
             u.email = user_context.email
             u.orcidId = user_context.orcid
             u.affiliation = get_affiliation_name(affiliation=user_context.affiliation, limit=255)
-            u.name = u.name if user_context.enabled else f"{u.name}__user_disabled"
+            u.name = u.name.replace(self.USER_DISABLED_SUFFIX,
+                                    "") if user_context.enabled else f"{u.name}{self.USER_DISABLED_SUFFIX}"
 
             if u.id:
                 self.logger.info(f"ICAT sync: Updating user {u.name}")
