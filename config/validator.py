@@ -42,8 +42,16 @@ class PACERValidator(Validator):
         if broker:
             username = broker.get("username")
             password = broker.get("password")
-            if not username or not password:
+            if (username and not password) or (password and not username):
                 self._error(field, "'username' and 'password' are required when one of them is set")
+
+        broker_recipients = self.document.get("brokers").get("recipients")
+        if broker_recipients:
+            for recipient in broker_recipients:
+                username = recipient.get("username")
+                password = recipient.get("password")
+                if (username and not password) or (password and not username):
+                    self._error(field, "'username' and 'password' are required when one of them is set")
 
     def _validate_check_queues_defined_exchange(self, check, field, _) -> None:
         """
