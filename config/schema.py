@@ -99,6 +99,7 @@ config_yaml_schema: dict = {
         "type": "dict",
         "required": True,
         "check_both_username_password": True,
+        "check_broker_recipients_forwarding_rules": True,
         "schema": {
             "main": {
                 "required": True,
@@ -112,7 +113,18 @@ config_yaml_schema: dict = {
                     "type": "dict",
                     "schema": {
                         **broker_schema_fields,
-                        "name": {"type": "string", "required": True}
+                        "name": {"type": "string", "required": True},
+                        "forwardingRules": {
+                            "type": "list",
+                            "required": True,
+                            "schema": {
+                                "type": "dict",
+                                "schema": {
+                                    "fromExchange": {"type": "string", "required": True},
+                                    "toBroker": {"type": "string", "required": True}
+                                }
+                            }
+                        }
                     }
                 }
             }

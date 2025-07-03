@@ -117,3 +117,32 @@ class PACERValidator(Validator):
                     for integration in i.get("integrations"):
                         if integration not in integrations_names:
                             self._error(field, f"Integration '{integration}' is not defined in 'integrations'")
+
+    def _validate_check_broker_recipients_forwarding_rules(self, check, field, _) -> None:
+        """
+        The rule's arguments are validated against this schema:
+
+        {'type': 'boolean'}
+        """
+        # For some reason custom rules are not checked when set on a nested schema.
+        # This rule is a workaround that checks that the integrations defined in the consumers are actually defined
+        # as integrations in the configuration.
+        if not check:
+            return
+
+        broker_recipients = self.document.get("brokers").get("recipients")
+        if broker_recipients:
+            exchanges = self.document.get("exchanges")
+            if exchanges:
+                exchanges_names: list = [i.get("name") for i in exchanges]
+                broker_recipients_names: list = [i.get("name") for i in broker_recipients]
+
+                broker_recipients_fw_rules: list = [rule for i in broker_recipients for rule in i.get("forwardingRules")]
+
+                if broker_recipients_fw_rules:
+                    for rule in broker_recipients_fw_rules:
+                        if rule.get("fromExchange") not in exchanges_names:
+                            self._error(field, f"Exchange '{rule.get('fromExchange')}' is not defined in 'exchanges'")
+                        if rule.get("toBroker") not in broker_recipients_names:
+                            self._error(field,
+                                        f"Broker '{rule.get('toBroker')}' is not defined in 'brokers.recipients'")
