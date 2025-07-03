@@ -5,6 +5,7 @@ import os
 import sys
 from logging.handlers import QueueListener
 from time import sleep
+from urllib.parse import quote
 
 from amqp import Channel
 from kombu import Connection, Exchange, Queue
@@ -76,13 +77,13 @@ class PACER:
             queue(channel).declare()
             self.logger.debug(f"Queue declared: name={queue.name} ")
 
-    def __get_broker_url(self):
-        protocol: str = self.get_config_value("broker.protocol")
-        host: str = self.get_config_value("broker.host")
-        port: int = self.get_config_value("broker.port")
-        username: str = self.get_config_value("broker.username")
-        password: str = self.get_config_value("broker.password")
-        vhost: str = self.get_config_value("broker.vHost")
+    def __get_main_broker_url(self) -> str:
+        protocol: str = self.get_config_value("brokers.main.protocol")
+        host: str = self.get_config_value("brokers.main.host")
+        port: int = self.get_config_value("brokers.main.port")
+        username: str = quote(self.get_config_value("brokers.main.username"))
+        password: str = quote(self.get_config_value("brokers.main.password"))
+        vhost: str = quote(self.get_config_value("brokers.main.vHost"))
 
         url: str = f"{protocol}://"
         url = f"{url}{username}:{password}@" if username and password else url
@@ -93,13 +94,14 @@ class PACER:
 
     def __open_broker_connection(self) -> None:
         if not isinstance(self.broker_connection, Connection):
-            self.broker_connection = Connection(self.__get_broker_url())
-            self.logger.debug(f"Broker connection URL is: {mask_amqp_password(self.__get_broker_url())}")
+            broker_url: str = self.__get_main_broker_url()
+            self.broker_connection = Connection(broker_url)
+            self.logger.debug(f"Broker connection URL is: {mask_amqp_password(broker_url)}")
             self.logger.info("Broker connection opened")
         else:
             self.logger.error("Broker connection not opened: A connection is already open")
 
-    def __create_exchanges(self):
+    def __create_exchanges(self) -> None:
         self.logger.info("Creating broker exchanges...")
         for exchange in self.get_config_value("exchanges", []):
             exchange_name: str = exchange.get("name")
@@ -108,7 +110,7 @@ class PACER:
             self.exchanges.append(Exchange(name=exchange_name, type=exchange_type))
         self.logger.debug(f"Created {len(self.exchanges)} exchanges")
 
-    def __create_queues(self):
+    def __create_queues(self) -> None:
         self.logger.info("Creating broker queues...")
         for queue in self.get_config_value("queues", []):
             queue_name: str = queue.get("name")
@@ -169,7 +171,7 @@ class PACER:
                                                              self.icat_client.session_id)
                 self.consumers.append(pacer_consumer)
 
-    def main_background_loop(self):
+    def main_background_loop(self) -> None:
         try:
             while True:
                 sleep(MAIN_LOOP_WAIT_TIME)

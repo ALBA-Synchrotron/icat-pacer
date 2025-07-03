@@ -1,3 +1,16 @@
+broker_schema_fields: dict = {
+    "protocol": {
+        "type": "string",
+        "allowed": ["amqp", "amqps", "redis", "rediss", "sqs", "memory" "filesystem"],
+        "required": True
+    },
+    "host": {"type": "string", "required": True},
+    "port": {"type": "integer", "required": False},
+    "username": {"type": "string", "required": False},
+    "password": {"type": "string", "required": False},
+    "vHost": {"type": "string", "required": False},
+}
+
 config_yaml_schema: dict = {
     "multiprocessStartMethod": {
         "type": "string",
@@ -82,19 +95,27 @@ config_yaml_schema: dict = {
                 }
             },
     },
-    "broker": {
+    "brokers": {
         "type": "dict",
         "required": True,
         "check_both_username_password": True,
         "schema": {
-            "protocol": {"type": "string",
-                         "allowed": ["amqp", "amqps", "redis", "rediss", "sqs", "memory" "filesystem"],
-                         "required": True},
-            "host": {"type": "string", "required": True},
-            "port": {"type": "integer", "required": False},
-            "username": {"type": "string", "required": False},
-            "password": {"type": "string", "required": False},
-            "vHost": {"type": "string", "required": False},
+            "main": {
+                "required": True,
+                "type": "dict",
+                "schema": broker_schema_fields
+            },
+            "recipients": {
+                "required": False,
+                "type": "list",
+                "schema": {
+                    "type": "dict",
+                    "schema": {
+                        **broker_schema_fields,
+                        "name": {"type": "string", "required": True}
+                    }
+                }
+            }
         }
     },
     "integrations": {

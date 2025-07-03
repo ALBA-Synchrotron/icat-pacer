@@ -37,7 +37,7 @@ class PACERValidator(Validator):
         if not check:
             return
 
-        broker = self.document.get("broker")
+        broker = self.document.get("brokers").get("main")
 
         if broker:
             username = broker.get("username")
