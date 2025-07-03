@@ -133,8 +133,11 @@ class PACERValidator(Validator):
         broker_recipients = self.document.get("brokers").get("recipients")
         if broker_recipients:
             exchanges = self.document.get("exchanges")
-            if exchanges:
+            queues = self.document.get("queues")
+            if exchanges and queues:
                 exchanges_names: list = [i.get("name") for i in exchanges]
+                queue_routing_keys: list = [i.get("routingKey") for i in queues]
+
                 broker_recipients_names: list = [i.get("name") for i in broker_recipients]
 
                 broker_recipients_fw_rules: list = [rule for i in broker_recipients for rule in i.get("forwardingRules")]
@@ -143,6 +146,8 @@ class PACERValidator(Validator):
                     for rule in broker_recipients_fw_rules:
                         if rule.get("fromExchange") not in exchanges_names:
                             self._error(field, f"Exchange '{rule.get('fromExchange')}' is not defined in 'exchanges'")
+                        if rule.get("withRoutingKey") not in queue_routing_keys:
+                            self._error(field, f"Queue with routing_key '{rule.get('withRoutingKey')}' is not defined in 'queues'")
                         if rule.get("toBroker") not in broker_recipients_names:
                             self._error(field,
                                         f"Broker '{rule.get('toBroker')}' is not defined in 'brokers.recipients'")

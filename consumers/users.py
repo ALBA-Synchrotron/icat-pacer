@@ -14,18 +14,15 @@ class UsersConsumer(PACERConsumer):
         self.tasks = UserTasks(self.logger)
 
     def callback_func_sync_user_visa(self, body, message: Message) -> None:
-        self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+        self.logger.info(f"VISA_user_sync_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         user_str: str = message.payload or message.body
         user_context: UserContext = create_user_context(user_str)
 
         self.tasks.sync_user_visa(self.visa_pg_pool, user_context, message=message, body=body)
 
     def callback_func_sync_user_icat(self, body, message: Message) -> None:
-        self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+        self.logger.info(f"ICAT_user_sync_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         user_str: str = message.payload or message.body
         user_context: UserContext = create_user_context(user_str)
 
         self.tasks.sync_user_icat(self.icat_client, user_context, message=message, body=body)
-
-    def callback_func_send_to_test_environment(self, _body, message: Message) -> None:
-        self.logger.info(f"Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")

@@ -14,6 +14,7 @@ from psycopg_pool import ConnectionPool
 from helpers.icat_utils import ICATClient
 from helpers.logging import configure_worker_logger
 from helpers.visa_utils import get_pg_connection_pool
+from producers.forwarder import MessageForwarder
 
 
 class PACERConsumer(ConsumerMixin):
@@ -30,14 +31,20 @@ class PACERConsumer(ConsumerMixin):
     icat_session_id: str = None
     visa_pg_pool: ConnectionPool = None
     integrations: list = []
+    recipients_connections: dict = {}
+    recipient_fw_rules: dict = {}
 
-    def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, queues: list,
-                 log_queue: multiprocessing.Queue, config: dict, integrations: list, icat_session_id: str) -> None:
+    def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
+                 queues: list,
+                 fw_rules: dict, log_queue: multiprocessing.Queue, config: dict, integrations: list,
+                 icat_session_id: str) -> None:
         self.module = module
         self.workers = workers
         self.enabled = enabled
         self.connection = connection
+        self.recipients_connections = recipient_connections
         self.queues = queues
+        self.recipient_fw_rules = fw_rules
         self.log_queue = log_queue
         self.pacer_config = config
         self.integrations = integrations
@@ -65,17 +72,49 @@ class PACERConsumer(ConsumerMixin):
         else:
             message.ack()
 
+    def __broker_forwarder_callback(self, _body, message: Message) -> None:
+        msg_exchange_name: str = message.delivery_info.get("exchange", "")
+        routing_key: str = message.delivery_info.get("routing_key", "")
+        if msg_exchange_name and routing_key and (msg_exchange_name, routing_key) in self.recipient_fw_rules.keys():
+            broker_recipients: list = self.recipient_fw_rules.get((msg_exchange_name, routing_key))
+            for i in broker_recipients:
+                self.logger.info(
+                    f"Forwarding message from exchange {msg_exchange_name} with routing_key {routing_key} to broker: {i}")
+                broker_conn: Connection = self.recipients_connections.get(i)
+                try:
+                    MessageForwarder.forward_message(broker_conn, message)
+                except Exception as e:
+                    self.logger.error(f"Error forwarding message to broker {i}: {e!r}")
+                    message.reject(requeue=False)
+                else:
+                    message.ack()
+
     @override
     def get_consumers(self, Consumer, channel) -> list:
         try:
-            return [
+            consumers: list = [
                 Consumer(
                     queues=self.queues,
                     callbacks=[self.__callback_router],
                     accept=['text/plain'],
                     prefetch_count=1
-                ),
+                )
             ]
+
+            for i in self.queues:
+                if (i.exchange.name, i.routing_key) in self.recipient_fw_rules.keys():
+                    self.logger.info(
+                        f"Added message forwarder in {self.module}: from exchange {i.exchange.name} with routing_key {i.routing_key} to brokers: {self.recipient_fw_rules[(i.exchange.name, i.routing_key)]}")
+                    consumers.insert(0,
+                                     Consumer(
+                                         queues=[Queue(i.name, exchange=i.exchange, routing_key=i.routing_key)],
+                                         callbacks=[self.__broker_forwarder_callback],
+                                         accept=['text/plain'],
+                                         prefetch_count=1
+                                     )
+                                     )
+                    break
+            return consumers
         except Exception as e:
             self.logger.error(f"Error setting up consumers: {e!r}")
             raise e

@@ -121,6 +121,7 @@ config_yaml_schema: dict = {
                                 "type": "dict",
                                 "schema": {
                                     "fromExchange": {"type": "string", "required": True},
+                                    "withRoutingKey": {"type": "string", "required": True},
                                     "toBroker": {"type": "string", "required": True}
                                 }
                             }
