@@ -6,11 +6,11 @@ ENV BROKER_TYPE=None
 
 RUN rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 
-WORKDIR /icat-pacer/app
+WORKDIR /icat-pacer/
 
 RUN mkdir /icat-pacer/logs
 
-COPY ./* /icat-pacer/app
+COPY ./* /icat-pacer/
 
 RUN mkdir -p /icat-pacer/config/
 COPY rabbitmq.json /icat-pacer/config/
