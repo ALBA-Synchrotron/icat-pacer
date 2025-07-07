@@ -12,10 +12,6 @@ RUN mkdir /icat-pacer/logs
 
 COPY ./* /icat-pacer/
 
-RUN mkdir -p /icat-pacer/config/
-COPY rabbitmq.json /icat-pacer/config/
-
-
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Conditional installation if BROKER_TYPE is redis
