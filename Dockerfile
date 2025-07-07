@@ -10,7 +10,7 @@ WORKDIR /icat-pacer/
 
 RUN mkdir /icat-pacer/logs
 
-COPY ./* /icat-pacer/
+COPY . /icat-pacer/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
