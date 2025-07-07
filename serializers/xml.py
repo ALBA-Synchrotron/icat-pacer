@@ -1,6 +1,7 @@
-from kombu.serialization import register
 import xml.etree.ElementTree as ET
 from xml.dom import minidom
+
+from kombu.serialization import register
 
 
 # Encoder: Converts a Python object (e.g., a dictionary) to an XML string
@@ -96,7 +97,7 @@ def xml_decoder(data):
     return result
 
 
-def register_xml():
+def register_xml() -> None:
     """
     Note: The decoding output of this serializer can be found in message.payload.
     """

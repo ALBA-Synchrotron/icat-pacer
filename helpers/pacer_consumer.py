@@ -1,0 +1,177 @@
+from __future__ import absolute_import, unicode_literals
+
+import logging
+import multiprocessing
+from logging.handlers import QueueHandler
+from multiprocessing import Process
+from typing import override
+
+from kombu import Connection, Queue, Message
+from kombu.mixins import ConsumerMixin
+from kombu.transport.virtual import Channel
+from psycopg_pool import ConnectionPool
+
+from helpers.icat_utils import ICATClient
+from helpers.logging import configure_worker_logger
+from helpers.visa_utils import get_pg_connection_pool
+from producers.forwarder import MessageForwarder
+
+
+class PACERConsumer(ConsumerMixin):
+    module: str = None
+    workers: int = 0
+    enabled: bool = False
+    processes: list = []
+    connection: Connection = None
+    queues: list[Queue] = []
+    logger: logging.Logger = None
+    log_queue: multiprocessing.Queue = None
+    pacer_config: dict = None
+    icat_client: ICATClient = None
+    icat_session_id: str = None
+    visa_pg_pool: ConnectionPool = None
+    integrations: list = []
+    recipients_connections: dict = {}
+    recipient_fw_rules: dict = {}
+
+    def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
+                 queues: list,
+                 fw_rules: dict, log_queue: multiprocessing.Queue, config: dict, integrations: list,
+                 icat_session_id: str) -> None:
+        self.module = module
+        self.workers = workers
+        self.enabled = enabled
+        self.connection = connection
+        self.recipients_connections = recipient_connections
+        self.queues = queues
+        self.recipient_fw_rules = fw_rules
+        self.log_queue = log_queue
+        self.pacer_config = config
+        self.integrations = integrations
+        self.icat_session_id = icat_session_id
+
+        handler: QueueHandler = QueueHandler(log_queue)
+        self.logger = logging.getLogger()
+        configure_worker_logger(handler, config, self.logger)
+        self.logger.info(f"Consumer {self.module} initialized.")
+
+    def __callback_router(self, body, message: Message) -> None:
+        errors: list = []
+        for func in self.__get_callback_functions():
+            try:
+                self.logger.info(f"Calling callback function: {func.__name__}")
+                func(body, message)
+
+            except Exception as e:
+                self.logger.error(f"Error processing callback router: {e!r}")
+                errors.append((func.__name__, e))
+        if errors:
+            self.logger.error(f"Message rejected due to errors: {errors}")
+            # TODO: At some point we are going to have this send an error to a specific queue or the logging app.
+            message.reject(requeue=False)
+        else:
+            message.ack()
+
+    def __broker_forwarder_callback(self, _body, message: Message) -> None:
+        msg_exchange_name: str = message.delivery_info.get("exchange", "")
+        routing_key: str = message.delivery_info.get("routing_key", "")
+        if msg_exchange_name and routing_key and (msg_exchange_name, routing_key) in self.recipient_fw_rules.keys():
+            broker_recipients: list = self.recipient_fw_rules.get((msg_exchange_name, routing_key))
+            for i in broker_recipients:
+                self.logger.info(
+                    f"Forwarding message from exchange {msg_exchange_name} with routing_key {routing_key} to broker: {i}")
+                broker_conn: Connection = self.recipients_connections.get(i)
+                try:
+                    MessageForwarder.forward_message(broker_conn, message)
+                except Exception as e:
+                    self.logger.error(f"Error forwarding message to broker {i}: {e!r}")
+                    message.reject(requeue=False)
+                else:
+                    message.ack()
+
+    @override
+    def get_consumers(self, Consumer, channel) -> list:
+        try:
+            consumers: list = [
+                Consumer(
+                    queues=self.queues,
+                    callbacks=[self.__callback_router],
+                    accept=['text/plain'],
+                    prefetch_count=1
+                )
+            ]
+
+            for i in self.queues:
+                if (i.exchange.name, i.routing_key) in self.recipient_fw_rules.keys():
+                    self.logger.info(
+                        f"Added message forwarder in {self.module}: from exchange {i.exchange.name} with routing_key {i.routing_key} to brokers: {self.recipient_fw_rules[(i.exchange.name, i.routing_key)]}")
+                    consumers.insert(0,
+                                     Consumer(
+                                         queues=[Queue(i.name, exchange=i.exchange, routing_key=i.routing_key)],
+                                         callbacks=[self.__broker_forwarder_callback],
+                                         accept=['text/plain'],
+                                         prefetch_count=1
+                                     )
+                                     )
+                    break
+            return consumers
+        except Exception as e:
+            self.logger.error(f"Error setting up consumers: {e!r}")
+            raise e
+
+    def __get_callback_functions(self) -> list:
+        callback_functions = [
+            getattr(self, attr) for attr in dir(self)
+            if callable(getattr(self, attr)) and attr.startswith('callback_func_')
+        ]
+        return callback_functions
+
+    def start(self) -> None:
+        if self.enabled:
+            self.logger.info("Starting worker processes")
+            for _ in range(self.workers):
+                process: Process = Process(target=self._consumer_main, args=(self.log_queue,))
+                process.start()
+                self.logger.debug(
+                    f"Spawned {self.module} process {len(self.processes) + 1}/{self.workers}: pid={process.pid}")
+                self.processes.append(process)
+
+    def stop(self) -> None:
+        if self.enabled:
+            self.logger.info("Stopping worker processes")
+            for process in self.processes:
+                self.logger.debug(f"Terminating process: pid={process.pid}")
+                process.terminate()
+                process.join()
+                self.logger.debug(f"Process terminated: pid={process.pid}")
+
+    def _consumer_main(self, log_queue: multiprocessing.Queue) -> None:
+        import os
+        handler: QueueHandler = QueueHandler(log_queue)
+        self.logger = logging.getLogger()
+        configure_worker_logger(handler, self.pacer_config, self.logger)
+
+        if "icat" in self.integrations:
+            self.icat_client = ICATClient.open_icat_session(self.pacer_config, self.icat_session_id)
+        if "visa" in self.integrations:
+            self.visa_pg_pool = get_pg_connection_pool(self.pacer_config)
+
+        self.tasks.logger = self.logger
+        self.logger.info(f"Consumer {self.module} started in own process with pid={os.getpid()}")
+        self.run()
+
+    @override
+    def on_connection_error(self, exc, interval) -> None:
+        self.logger.info(f"Connection error: {exc!r}. Retrying in {interval} seconds...")
+
+    @override
+    def on_consume_ready(self, connection: Connection, channel: Channel, consumers, **kwargs) -> None:
+        self.logger.info("Consumer is ready to consume messages!")
+
+    @override
+    def on_consume_end(self, connection: Connection, default_channel: Channel) -> None:
+        self.logger.info("Consumer ended.")
+
+    def run_tasks(self, body: str, message: str) -> None:
+        """Call tasks here"""
+        raise NotImplementedError('run_tasks method is not implemented. Use callback methods instead.')

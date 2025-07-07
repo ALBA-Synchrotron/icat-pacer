@@ -1,0 +1,64 @@
+multiprocessStartMethod: "spawn"
+logging:
+  logLevel: "DEBUG"
+  #printFormat:
+  console:
+    enabled: true
+  file:
+    enabled: true
+    path: "/opt/project/asd.log"
+    verifyServerCert: false
+customSerializers:
+  - "serializers.xml.register_xml"
+exchanges:
+  - name: "users-exchange"
+    type: "direct"
+queues:
+  - name: "user-sync"
+    exchange: "users-exchange"
+    routingKey: "user.sync"
+consumers:
+  - className: "UsersWorker"
+    module: "app.consumers.users"
+    enabled: true
+    queues:
+      - "user-sync"
+    workers: 2
+    integrations:
+      - "icat"
+      - "visa"
+brokers:
+  main:
+    protocol: "amqp"
+    host: "<<REDACTED>>"
+    #port:
+    username: "<<REDACTED>>"
+    password: "<<REDACTED>>"
+    vHost: "<<REDACTED>>"
+  #recipients:
+  #  - name: "pacer-prod"
+  #    protocol: "amqp"
+  #    host: "<<REDACTED>>"
+  #    #port:
+  #    username: "pacer-prod"
+  #    password: "<<REDACTED>>"
+  #    vHost: "icat-prod"
+  #    forwardingRules:
+  #      - fromExchange: "uos-sync-exchange"
+  #        toBroker: "pacer-prod"
+integrations:
+  visa:
+    enabled: true
+    database:
+      host: "<<REDACTED>>"
+      port: "<<REDACTED>>"
+      database: "<<REDACTED>>"
+      user: "<<REDACTED>>"
+      password: "<<REDACTED>>"
+    icat:
+    enabled: true
+    server:
+      url: "https://<<REDACTED>>/ICATService/ICAT?wsdl"
+      authPlugin: "db"
+      username: "<<REDACTED>>"
+      password: "<<REDACTED>>"
