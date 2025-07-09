@@ -7,7 +7,15 @@ logging:
   file:
     enabled: true
     path: "/opt/project/asd.log"
-    verifyServerCert: false
+    rotate: true
+    maxMBytes: 100
+    backupCount: 5
+  elastic:
+    enabled: false
+    serverUrl: "https://user:password@elastic-host:9200"
+    serviceName: "icat-pacer"
+    serviceEnvironment: "local"
+    indexName: "pacer-logs"
 customSerializers:
   - "serializers.xml.register_xml"
 exchanges:

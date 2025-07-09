@@ -21,6 +21,7 @@ config_yaml_schema: dict = {
         "type": "dict",
         "required": True,
         "check_path_if_file_is_enabled": False,
+        "check_elastic_settings": True,
         "schema": {
             "logLevel": {"type": "string", "allowed": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
                          "required": False},
@@ -35,7 +36,21 @@ config_yaml_schema: dict = {
                 "type": "dict",
                 "schema": {
                     "enabled": {"type": "boolean", "required": True},
-                    "path": {"type": "string", "required": False}}
+                    "path": {"type": "string", "required": False},
+                    "rotate": {"type": "boolean", "required": False},
+                    "maxMBytes": {"type": "integer", "required": False},
+                    "backupCount": {"type": "integer", "required": False}
+                }
+            },
+            "elastic": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "serverUrl": {"type": "string", "required": False},
+                    "serviceName": {"type": "string", "required": False},
+                    "serviceEnvironment": {"type": "string", "required": False},
+                    "indexName": {"type": "string", "required": False}
+                }
             }
         }
     },
