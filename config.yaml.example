@@ -11,7 +11,7 @@ logging:
     maxMBytes: 100
     backupCount: 5
   elastic:
-    enabled: true
+    enabled: false
     serverUrl: "https://user:password@elastic-host:9200"
     serviceName: "icat-pacer"
     serviceEnvironment: "local"
