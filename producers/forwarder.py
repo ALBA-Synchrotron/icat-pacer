@@ -13,6 +13,6 @@ class MessageForwarder:
                 exchange=message.delivery_info["exchange"],
                 routing_key=message.delivery_info["routing_key"],
                 headers=message.headers,
-                content_type=message.content_type if message.content_type else "application/json",
+                content_type=message.content_type if message.content_type else "text/plain",
                 content_encoding=message.content_encoding if message.content_encoding else "utf-8",
             )

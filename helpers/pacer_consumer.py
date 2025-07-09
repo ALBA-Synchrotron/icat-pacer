@@ -85,9 +85,6 @@ class PACERConsumer(ConsumerMixin):
                     MessageForwarder.forward_message(broker_conn, message)
                 except Exception as e:
                     self.logger.error(f"Error forwarding message to broker {i}: {e!r}")
-                    message.reject(requeue=False)
-                else:
-                    message.ack()
 
     @override
     def get_consumers(self, Consumer, channel) -> list:
@@ -96,24 +93,10 @@ class PACERConsumer(ConsumerMixin):
                 Consumer(
                     queues=self.queues,
                     callbacks=[self.__callback_router],
-                    accept=['text/plain'],
+                    accept=["text/plain", "application/json", "application/xml", ],
                     prefetch_count=1
                 )
             ]
-
-            for i in self.queues:
-                if (i.exchange.name, i.routing_key) in self.recipient_fw_rules.keys():
-                    self.logger.info(
-                        f"Added message forwarder in {self.module}: from exchange {i.exchange.name} with routing_key {i.routing_key} to brokers: {self.recipient_fw_rules[(i.exchange.name, i.routing_key)]}")
-                    consumers.insert(0,
-                                     Consumer(
-                                         queues=[Queue(i.name, exchange=i.exchange, routing_key=i.routing_key)],
-                                         callbacks=[self.__broker_forwarder_callback],
-                                         accept=['text/plain'],
-                                         prefetch_count=1
-                                     )
-                                     )
-                    break
             return consumers
         except Exception as e:
             self.logger.error(f"Error setting up consumers: {e!r}")
@@ -124,6 +107,7 @@ class PACERConsumer(ConsumerMixin):
             getattr(self, attr) for attr in dir(self)
             if callable(getattr(self, attr)) and attr.startswith('callback_func_')
         ]
+        callback_functions.append(self.__broker_forwarder_callback)
         return callback_functions
 
     def start(self) -> None:
