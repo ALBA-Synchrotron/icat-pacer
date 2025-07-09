@@ -4,6 +4,9 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV BROKER_TYPE=None
 
+RUN groupadd -r -g 9000 pacer
+RUN useradd pacer -u 9017 -g pacer
+
 RUN rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 
 WORKDIR /icat-pacer/
@@ -24,5 +27,6 @@ RUN if [ "$BROKER_TYPE" = "sqs" ]; then \
         pip install --no-cache-dir -r requirements_redis.txt; \
     fi
 
+USER pacer
 
 CMD ["python", "run.py"]
