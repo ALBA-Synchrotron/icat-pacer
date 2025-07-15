@@ -22,6 +22,8 @@ class ICATClient:
                 auth_plugin,
                 {"username": username, "password": password}
             )
+            if self.client.sessionId:
+                self.session_id = self.client.sessionId
 
     def __del__(self) -> None:
         if self.client and self.client.sessionId:
@@ -44,7 +46,7 @@ class ICATClient:
         username: str = icat_server_config.get("username")
         password: str = icat_server_config.get("password")
 
-        icat_client: cls = cls(url, username, password, auth_plugin)
+        icat_client: cls = cls(url, username, password, auth_plugin, session_id=session_id)
         if session_id:
             icat_client.sessionId = session_id
             return icat_client
