@@ -136,7 +136,7 @@ class PACERConsumer(ConsumerMixin):
         configure_worker_logger(handler, self.pacer_config, self.logger)
 
         if "icat" in self.integrations:
-            self.icat_client = ICATClient.open_icat_session(self.pacer_config, self.icat_session_id)
+            self.icat_client = ICATClient.open_icat_session(self.pacer_config, session_id=self.icat_session_id)
         if "visa" in self.integrations:
             self.visa_pg_pool = get_pg_connection_pool(self.pacer_config)
 
