@@ -3,13 +3,16 @@ FROM registry.cells.es/docker/python:3.12.6-slim-bullseye
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV BROKER_TYPE=None
+ENV TZ=Europe/Madrid
+
+WORKDIR /icat-pacer/
 
 RUN groupadd -r -g 9000 pacer
 RUN useradd pacer -u 9017 -g pacer
 
-RUN rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 
-WORKDIR /icat-pacer/
+RUN apt-get update && apt-get clean \
+    && rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 
 RUN mkdir /icat-pacer/logs
 
