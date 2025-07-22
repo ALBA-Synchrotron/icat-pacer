@@ -151,6 +151,12 @@ config_yaml_schema: dict = {
         "type": "dict",
         "required": True,
         "schema": {
+            "messageForwarding": {
+                "type": "dict",
+                "required": False,
+                "nullable": True,
+                "schema": {}
+            },
             "visa": {
                 "type": "dict",
                 "schema": {

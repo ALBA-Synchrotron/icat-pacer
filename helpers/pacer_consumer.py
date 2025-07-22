@@ -11,6 +11,7 @@ from kombu.mixins import ConsumerMixin
 from kombu.transport.virtual import Channel
 from psycopg_pool import ConnectionPool
 
+from helpers.dashboard import get_configured_dashboard_callback, create_message_context
 from helpers.icat_utils import ICATClient
 from helpers.logging import configure_worker_logger
 from helpers.visa_utils import get_pg_connection_pool
@@ -33,7 +34,6 @@ class PACERConsumer(ConsumerMixin):
     integrations: list = []
     recipients_connections: dict = {}
     recipient_fw_rules: dict = {}
-    integration_callbacks: list = []
 
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
                  queues: list,
@@ -68,10 +68,17 @@ class PACERConsumer(ConsumerMixin):
                 errors.append((func.__name__, e))
         if errors:
             self.logger.error(f"Message rejected due to errors: {errors}")
-            # TODO: At some point we are going to have this send an error to a specific queue or the logging app.
+            self.__dashboard_message_logging_handler(message, f"Message rejected due to errors: {errors}")
             message.reject(requeue=False)
         else:
             message.ack()
+
+    def __dashboard_message_logging_handler(self, message: Message, error_msg: str = "") -> None:
+        msg_context = create_message_context(message, self.__class__.__name__, error_message=error_msg)
+        self.__configured_dashboard_logging_call(msg_context)
+
+    def __dashboard_message_logging_callback(self, _body, message: Message) -> None:
+        self.__dashboard_message_logging_handler(message)
 
     def __broker_forwarder_callback(self, _body, message: Message) -> None:
         msg_exchange_name: str = message.delivery_info.get("exchange", "")
@@ -108,7 +115,10 @@ class PACERConsumer(ConsumerMixin):
             getattr(self, attr) for attr in dir(self)
             if callable(getattr(self, attr)) and attr.startswith('callback_func_')
         ]
-        callback_functions.append(self.__broker_forwarder_callback)
+        callback_functions.sort(key=lambda f: (
+            0 if f.__name__ == "callback_func_dashboard_message_logging" else 1,
+            f.__name__
+        ) if any(f.__name__ == "callback_func_dashboard_message_logging" for f in callback_functions) else f.__name__)
         return callback_functions
 
     def start(self) -> None:
@@ -136,6 +146,11 @@ class PACERConsumer(ConsumerMixin):
         self.logger = logging.getLogger()
         configure_worker_logger(handler, self.pacer_config, self.logger)
 
+        if "messageForwarding" in self.integrations:
+            self.callback_func_broker_forwarder_callback = self.__broker_forwarder_callback
+        if "dashboard" in self.integrations:
+            self.__configured_dashboard_logging_call = get_configured_dashboard_callback(self)
+            self.callback_func_dashboard_message_logging = self.__dashboard_message_logging_callback
         if "icat" in self.integrations:
             self.icat_client = ICATClient.open_icat_session(self.pacer_config, session_id=self.icat_session_id)
         if "visa" in self.integrations:

@@ -38,6 +38,7 @@ consumers:
       - "user-sync"
     workers: 2
     integrations:
+      - "dashboard"
       - "icat"
       - "visa"
 brokers:
