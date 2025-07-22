@@ -33,6 +33,7 @@ class PACERConsumer(ConsumerMixin):
     integrations: list = []
     recipients_connections: dict = {}
     recipient_fw_rules: dict = {}
+    integration_callbacks: list = []
 
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
                  queues: list,

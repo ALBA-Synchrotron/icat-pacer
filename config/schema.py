@@ -115,6 +115,7 @@ config_yaml_schema: dict = {
         "required": True,
         "check_both_username_password": True,
         "check_broker_recipients_forwarding_rules": True,
+        "check_dashboard_settings": True,
         "schema": {
             "main": {
                 "required": True,
@@ -181,6 +182,14 @@ config_yaml_schema: dict = {
                             "password": {"type": "string", "required": True},
                         }
                     }
+                }
+            },
+            "dashboard": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "exchangeName": {"type": "string", "required": False},
+                    "routingKey": {"type": "string", "required": False},
                 }
             }
         }

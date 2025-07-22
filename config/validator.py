@@ -176,3 +176,22 @@ class PACERValidator(Validator):
                 self._error(field, "'service_name' is required when 'logging.elastic.enabled' is True")
             if not elastic.get("serviceEnvironment"):
                 self._error(field, "'service_environment' is required when 'logging.elastic.enabled' is True")
+
+    def _validate_check_dashboard_settings(self, check, field, _) -> None:
+        """
+        The rule's arguments are validated against this schema:
+
+        {'type': 'boolean'}
+        """
+        # For some reason custom rules are not checked when set on a nested schema.
+        # This rule is a workaround that checks that if the dashboard integration is enabled, the exchangeName and
+        # routingKey are also set.
+        if not check:
+            return
+
+        dashboard = self.document.get("integrations").get("dashboard")
+        if dashboard.get("enabled") is True:
+            exchange_name = dashboard.get("exchangeName")
+            routing_key = dashboard.get("routingKey")
+            if not exchange_name or not routing_key:
+                self._error(field, "'exchangeName' and 'routingKey' are required when 'integrations.dashboard.enabled' is True")
