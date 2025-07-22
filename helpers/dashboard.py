@@ -41,8 +41,9 @@ def get_configured_dashboard_callback(consumer: "PACERConsumer") -> Callable or 
     if dashboard_integration.get("enabled", False):
         exchange_name: str = dashboard_integration.get("exchangeName", "")
         routing_key: str = dashboard_integration.get("routingKey", "")
+        celery_task: str = dashboard_integration.get("celeryTask", "")
 
-        if exchange_name and routing_key:
-            func = partial(DashboardProducer.log_message, consumer.connection, exchange_name, routing_key)
+        if exchange_name and routing_key and celery_task:
+            func = partial(DashboardProducer.log_message, consumer.connection, exchange_name, routing_key, celery_task)
             return func
     return None

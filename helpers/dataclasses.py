@@ -36,3 +36,11 @@ class MessageContext:
     payload: str = ""
     errored: bool = False
     error_message: str = ""
+
+
+@dataclass
+class DashboardCeleryTask:
+    task: str
+    args: list
+    kwargs: dict
+    retries: int = 0

@@ -193,5 +193,7 @@ class PACERValidator(Validator):
         if dashboard.get("enabled") is True:
             exchange_name = dashboard.get("exchangeName")
             routing_key = dashboard.get("routingKey")
-            if not exchange_name or not routing_key:
-                self._error(field, "'exchangeName' and 'routingKey' are required when 'integrations.dashboard.enabled' is True")
+            celery_task = dashboard.get("celeryTask")
+            if not exchange_name or not routing_key or not celery_task:
+                self._error(field,
+                            "'exchangeName', 'routingKey' and 'celeryTask' are required when 'integrations.dashboard.enabled' is True")

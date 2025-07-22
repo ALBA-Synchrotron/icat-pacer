@@ -196,6 +196,7 @@ config_yaml_schema: dict = {
                     "enabled": {"type": "boolean", "required": True},
                     "exchangeName": {"type": "string", "required": False},
                     "routingKey": {"type": "string", "required": False},
+                    "celeryTask": {"type": "string", "required": False},
                 }
             }
         }
