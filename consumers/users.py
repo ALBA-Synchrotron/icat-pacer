@@ -15,7 +15,7 @@ class UsersConsumer(PACERConsumer):
     # IF IT IS NOT SPECIFIED, MESSAGES WILL BE LOGGED WITH `unknown` TYPE.
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(dashboard_message_type="user-sync", *args, **kwargs)
         self.tasks = UserTasks(self.logger)
 
     def callback_func_sync_user_visa(self, body, message: Message) -> None:

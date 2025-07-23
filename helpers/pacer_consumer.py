@@ -34,11 +34,12 @@ class PACERConsumer(ConsumerMixin):
     integrations: list = []
     recipients_connections: dict = {}
     recipient_fw_rules: dict = {}
+    dashboard_message_type: str = "unknown"
 
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
                  queues: list,
                  fw_rules: dict, log_queue: multiprocessing.Queue, config: dict, integrations: list,
-                 icat_session_id: str) -> None:
+                 icat_session_id: str, dashboard_message_type: str) -> None:
         self.module = module
         self.workers = workers
         self.enabled = enabled
@@ -50,6 +51,7 @@ class PACERConsumer(ConsumerMixin):
         self.pacer_config = config
         self.integrations = integrations
         self.icat_session_id = icat_session_id
+        self.dashboard_message_type = dashboard_message_type
 
         handler: QueueHandler = QueueHandler(log_queue)
         self.logger = logging.getLogger()
@@ -74,7 +76,7 @@ class PACERConsumer(ConsumerMixin):
             message.ack()
 
     def __dashboard_message_logging_handler(self, message: Message, error_msg: str = "") -> None:
-        msg_context = create_message_context(message, self.__class__.__name__, error_message=error_msg)
+        msg_context = create_message_context(message, self.dashboard_message_type, error_message=error_msg)
         self.__configured_dashboard_logging_call(msg_context)
 
     def __dashboard_message_logging_callback(self, _body, message: Message) -> None:

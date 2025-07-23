@@ -10,10 +10,10 @@ from helpers.dataclasses import MessageContext
 from producers.dashboard import DashboardProducer
 
 
-def create_message_context(message: Message, classname: str, error_message: str = "") -> MessageContext:
+def create_message_context(message: Message, message_type: str, error_message: str = "") -> MessageContext:
     processed_at: str = f"{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]} {time.strftime("%z")}"
     sha256_hash: str = hashlib.sha256(str(message.payload).encode()).hexdigest()
-    message_type: str = get_message_type(classname)
+    message_type: str = message_type
     payload: str = message.payload or str(message.body)
     errored: bool = True if error_message else False
     error_message: str = error_message or ""
@@ -26,14 +26,6 @@ def create_message_context(message: Message, classname: str, error_message: str 
         errored=errored,
         error_message=error_message,
     )
-
-
-def get_message_type(classname: str) -> str:
-    match classname:
-        case "UsersConsumer":
-            return "user-sync"
-        case _:
-            return "unknown"
 
 
 def get_configured_dashboard_callback(consumer: "PACERConsumer") -> Callable or None:
