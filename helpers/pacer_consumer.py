@@ -84,7 +84,7 @@ class PACERConsumer(ConsumerMixin):
     def __dashboard_message_logging_callback(self, _body, message: Message, *_args, **kwargs) -> None:
         self.__dashboard_message_logging_handler(message, kwargs.get("errors", []))
 
-    def __broker_forwarder_callback(self, _body, message: Message) -> None:
+    def __broker_forwarder_callback(self, _body, message: Message, *_args, **_kwargs) -> None:
         msg_exchange_name: str = message.delivery_info.get("exchange", "")
         routing_key: str = message.delivery_info.get("routing_key", "")
         if msg_exchange_name and routing_key and (msg_exchange_name, routing_key) in self.recipient_fw_rules.keys():
