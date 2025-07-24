@@ -80,3 +80,4 @@ integrations:
     enabled: true
     exchangeName: "dashboard-logging-exchange"
     routingKey: "message.logging"
+    celeryTask: "dashboard.tasks.log_pacer_message"

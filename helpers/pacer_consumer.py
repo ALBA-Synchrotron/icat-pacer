@@ -63,24 +63,26 @@ class PACERConsumer(ConsumerMixin):
         for func in self.__get_callback_functions():
             try:
                 self.logger.info(f"Calling callback function: {func.__name__}")
-                func(body, message)
+                func(body, message, errors=errors)
 
             except Exception as e:
                 self.logger.error(f"Error processing callback router: {e!r}")
                 errors.append((func.__name__, e))
         if errors:
             self.logger.error(f"Message rejected due to errors: {errors}")
-            self.__dashboard_message_logging_handler(message, f"Message rejected due to errors: {errors}")
             message.reject(requeue=False)
         else:
             message.ack()
 
-    def __dashboard_message_logging_handler(self, message: Message, error_msg: str = "") -> None:
-        msg_context = create_message_context(message, self.dashboard_message_type, error_message=error_msg)
+    def __dashboard_message_logging_handler(self, message: Message, errors: list = []) -> None:
+        obj_identifiers: dict = self.get_message_object_identifiers(message)
+        error_msg: str = "" if not errors else str(errors)
+        msg_context = create_message_context(message, self.dashboard_message_type, error_message=error_msg,
+                                             obj_identifiers=obj_identifiers)
         self.__configured_dashboard_logging_call(msg_context)
 
-    def __dashboard_message_logging_callback(self, _body, message: Message) -> None:
-        self.__dashboard_message_logging_handler(message)
+    def __dashboard_message_logging_callback(self, _body, message: Message, *_args, **kwargs) -> None:
+        self.__dashboard_message_logging_handler(message, kwargs.get("errors", []))
 
     def __broker_forwarder_callback(self, _body, message: Message) -> None:
         msg_exchange_name: str = message.delivery_info.get("exchange", "")
@@ -118,7 +120,7 @@ class PACERConsumer(ConsumerMixin):
             if callable(getattr(self, attr)) and attr.startswith('callback_func_')
         ]
         callback_functions.sort(key=lambda f: (
-            0 if f.__name__ == "callback_func_dashboard_message_logging" else 1,
+            1 if f.__name__ == "callback_func_dashboard_message_logging" else 0,
             f.__name__
         ) if any(f.__name__ == "callback_func_dashboard_message_logging" for f in callback_functions) else f.__name__)
         return callback_functions

@@ -10,7 +10,8 @@ from helpers.dataclasses import MessageContext
 from producers.dashboard import DashboardProducer
 
 
-def create_message_context(message: Message, message_type: str, error_message: str = "") -> MessageContext:
+def create_message_context(message: Message, message_type: str, error_message: str = "",
+                           obj_identifiers: dict = {}) -> MessageContext:
     processed_at: str = f"{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]} {time.strftime("%z")}"
     sha256_hash: str = hashlib.sha256(str(message.payload).encode()).hexdigest()
     message_type: str = message_type
@@ -18,10 +19,10 @@ def create_message_context(message: Message, message_type: str, error_message: s
     errored: bool = True if error_message else False
     error_message: str = error_message or ""
     return MessageContext(
-        object_identifiers={},
+        object_identifiers=obj_identifiers,
         processed_at=processed_at,
         hash=sha256_hash,
-        type=message_type,
+        message_type=message_type,
         payload=payload,
         errored=errored,
         error_message=error_message,

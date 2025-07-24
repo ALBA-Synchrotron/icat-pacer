@@ -31,7 +31,7 @@ class MessageContext:
     object_identifiers: dict
     processed_at: str = ""
     hash: str = ""
-    type: str = ""
+    message_type: str = ""
     payload_format: str = ""
     payload: str = ""
     errored: bool = False
@@ -40,7 +40,8 @@ class MessageContext:
 
 @dataclass
 class DashboardCeleryTask:
+    id: str
     task: str
     args: list
     kwargs: dict
-    retries: int = 0
+    retries: int = 10
