@@ -19,9 +19,14 @@ logging:
 customSerializers:
   - "serializers.xml.register_xml"
 exchanges:
+  - name: "dashboard-logging-exchange"
+    type: "direct"
   - name: "users-exchange"
     type: "direct"
 queues:
+  - name: "dashboard-logging"
+    exchange: "dashboard-logging-exchange"
+    routingKey: "message.logging"
   - name: "user-sync"
     exchange: "users-exchange"
     routingKey: "user.sync"
@@ -33,6 +38,7 @@ consumers:
       - "user-sync"
     workers: 2
     integrations:
+      - "dashboard"
       - "icat"
       - "visa"
 brokers:
@@ -63,10 +69,15 @@ integrations:
       database: "<<REDACTED>>"
       user: "<<REDACTED>>"
       password: "<<REDACTED>>"
-    icat:
+  icat:
     enabled: true
     server:
       url: "https://<<REDACTED>>/ICATService/ICAT?wsdl"
       authPlugin: "db"
       username: "<<REDACTED>>"
       password: "<<REDACTED>>"
+  dashboard:
+    enabled: true
+    exchangeName: "dashboard-logging-exchange"
+    routingKey: "message.logging"
+    celeryTask: "dashboard.tasks.log_pacer_message"
