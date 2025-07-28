@@ -4,9 +4,9 @@ import logging
 
 from psycopg_pool import ConnectionPool
 
+from helpers.common import get_affiliation_name
 from helpers.dataclasses import UserContext
 from helpers.icat_utils import ICATClient
-from helpers.user import get_affiliation_name
 from helpers.visa_utils import VISALoader
 
 
@@ -16,13 +16,13 @@ class UserTasks:
     def __init__(self, logger: logging.Logger = None):
         self.logger = logger
 
-    def sync_user_visa(self, pg_pool: ConnectionPool, user_context: UserContext, *_args, **_kwargs):
+    def sync_user_visa(self, pg_pool: ConnectionPool, user_context: UserContext, *_args, **_kwargs) -> None:
         self.logger.info(f"VISA sync: Synchronizing user {",".join(user_context.usernames)}")
 
         VISALoader.db_sync_affiliation(pg_pool, user_context.affiliation, self.logger)
         VISALoader.db_sync_user(pg_pool, user_context, self.logger)
 
-    def sync_user_icat(self, icat_client: ICATClient, user_context: UserContext, *_args, **_kwargs):
+    def sync_user_icat(self, icat_client: ICATClient, user_context: UserContext, *_args, **_kwargs) -> None:
         self.logger.info(f"ICAT sync: Synchronizing user {",".join(user_context.usernames)}")
 
         user_usernames: list = [*user_context.usernames,

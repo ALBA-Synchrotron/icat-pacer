@@ -13,6 +13,7 @@ from psycopg_pool import ConnectionPool
 
 from helpers.dashboard import get_configured_dashboard_callback, create_message_context
 from helpers.icat_utils import ICATClient
+from helpers.datacite import get_datacite_client, DataciteClient
 from helpers.logging import configure_worker_logger
 from helpers.visa_utils import get_pg_connection_pool
 from producers.forwarder import MessageForwarder
@@ -35,6 +36,7 @@ class PACERConsumer(ConsumerMixin):
     recipients_connections: dict = {}
     recipient_fw_rules: dict = {}
     dashboard_message_type: str = "unknown"
+    datacite_client: DataciteClient = None
 
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
                  queues: list,
@@ -159,6 +161,8 @@ class PACERConsumer(ConsumerMixin):
             self.icat_client = ICATClient.open_icat_session(self.pacer_config, session_id=self.icat_session_id)
         if "visa" in self.integrations:
             self.visa_pg_pool = get_pg_connection_pool(self.pacer_config)
+        if "datacite" in self.integrations:
+            self.datacite_client = get_datacite_client(self.pacer_config, self.logger)
 
         self.tasks.logger = self.logger
         self.logger.info(f"Consumer {self.module} started in own process with pid={os.getpid()}")

@@ -213,6 +213,7 @@ config_yaml_schema: dict = {
                     "username": {"type": "string", "required": False},
                     "password": {"type": "string", "required": False},
                     "apiUrl": {"type": "string", "required": False},
+                    "language": {"type": "string", "required": False},
                     "rightsName": {"type": "string", "required": False},
                     "rightsSchemeUri": {"type": "string", "required": False},
                     "rightsUri": {"type": "string", "required": False},

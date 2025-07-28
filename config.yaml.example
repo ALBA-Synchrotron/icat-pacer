@@ -106,6 +106,7 @@ integrations:
     username: "<<REDACTED>>"
     password: "<<REDACTED>>"
     apiUrl: "https://api.test.datacite.org"
+    language: "en"
     rightsName: "Creative Commons Attribution 4.0 International"
     rightsSchemeUri: "https://spdx.org/licenses/"
     rightsUri: "https://creativecommons.org/licenses/by/4.0/"
