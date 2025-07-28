@@ -81,3 +81,18 @@ integrations:
     exchangeName: "dashboard-logging-exchange"
     routingKey: "message.logging"
     celeryTask: "dashboard.tasks.log_pacer_message"
+  datacite:
+    enabled: true
+    dataCatalogueDoiBaseUrl: "https://doi.cells.es/"
+    publisher: "ALBA Synchrotron"
+    prefix: "DOI PREFIX"
+    sessionSuffix: "TEST-ALBA-"
+    username: "<<REDACTED>>"
+    password: "<<REDACTED>>"
+    apiUrl: "https://api.test.datacite.org"
+  panosc:
+    enabled: true
+    scoringSvcUrl: "https://scoring-svc"
+    scoringSvcUsername: "<<REDACTED>>"
+    scoringSvcPassword: "<<REDACTED>>"
+    searchApiUrl: "https://data.cells.es/iws/datagateway/search-api"

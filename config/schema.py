@@ -115,7 +115,6 @@ config_yaml_schema: dict = {
         "required": True,
         "check_both_username_password": True,
         "check_broker_recipients_forwarding_rules": True,
-        "check_dashboard_settings": True,
         "schema": {
             "main": {
                 "required": True,
@@ -150,6 +149,10 @@ config_yaml_schema: dict = {
     "integrations": {
         "type": "dict",
         "required": True,
+        "check_visa_integration_settings": True,
+        "check_dashboard_integration_settings": True,
+        "check_datacite_integration_settings": True,
+        "check_panosc_integration_settings": True,
         "schema": {
             "messageForwarding": {
                 "type": "dict",
@@ -198,7 +201,30 @@ config_yaml_schema: dict = {
                     "routingKey": {"type": "string", "required": False},
                     "celeryTask": {"type": "string", "required": False},
                 }
-            }
+            },
+            "datacite": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "dataCatalogueDoiBaseUrl": {"type": "string", "required": False},
+                    "publisher": {"type": "string", "required": False},
+                    "prefix": {"type": "string", "required": False},
+                    "sessionSuffix": {"type": "string", "required": False},
+                    "username": {"type": "string", "required": False},
+                    "password": {"type": "string", "required": False},
+                    "apiUrl": {"type": "string", "required": False},
+                }
+            },
+            "panosc": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "scoringSvcUrl": {"type": "string", "required": False},
+                    "scoringSvcUsername": {"type": "string", "required": False},
+                    "scoringSvcPassword": {"type": "string", "required": False},
+                    "searchApiUrl": {"type": "string", "required": False},
+                }
+            },
         }
     }
 }

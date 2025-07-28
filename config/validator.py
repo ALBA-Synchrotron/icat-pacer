@@ -1,4 +1,5 @@
 from cerberus import Validator
+from pygments.lexers import q
 
 
 class PACERValidator(Validator):
@@ -177,7 +178,35 @@ class PACERValidator(Validator):
             if not elastic.get("serviceEnvironment"):
                 self._error(field, "'service_environment' is required when 'logging.elastic.enabled' is True")
 
-    def _validate_check_dashboard_settings(self, check, field, _) -> None:
+    def _validate_check_visa_integration_settings(self, check, field, _) -> None:
+        """
+        The rule's arguments are validated against this schema:
+
+        {'type': 'boolean'}
+        """
+        # For some reason custom rules are not checked when set on a nested schema.
+        # This rule is a workaround that checks that if the visa integration is enabled, the exchangeName and
+        # routingKey are also set.
+        if not check:
+            return
+
+        visa = self.document.get("integrations").get("visa")
+        if visa.get("enabled") is True:
+            visa_db = visa.get("database")
+            if visa_db:
+                host = visa_db.get("host")
+                port = visa_db.get("port")
+                database = visa_db.get("database")
+                username = visa_db.get("username")
+                password = visa_db.get("password")
+
+                if not host or not port or not database or not username or not password:
+                    self._error(field,
+                                "'host', 'port', 'database', 'username' and 'password' are required when 'integrations.visa.enabled' is True")
+            if not visa_db:
+                self._error(field, "'db' is required when 'integrations.visa.enabled' is True")
+
+    def _validate_check_dashboard_integration_settings(self, check, field, _) -> None:
         """
         The rule's arguments are validated against this schema:
 
@@ -194,6 +223,56 @@ class PACERValidator(Validator):
             exchange_name = dashboard.get("exchangeName")
             routing_key = dashboard.get("routingKey")
             celery_task = dashboard.get("celeryTask")
+
             if not exchange_name or not routing_key or not celery_task:
                 self._error(field,
                             "'exchangeName', 'routingKey' and 'celeryTask' are required when 'integrations.dashboard.enabled' is True")
+
+    def _validate_check_datacite_integration_settings(self, check, field, _) -> None:
+        """
+        The rule's arguments are validated against this schema:
+
+        {'type': 'boolean'}
+        """
+        # For some reason custom rules are not checked when set on a nested schema.
+        # This rule is a workaround that checks that if the dashboard integration is enabled, the exchangeName and
+        # routingKey are also set.
+        if not check:
+            return
+
+        datacite = self.document.get("integrations").get("datacite")
+        if datacite.get("enabled") is True:
+            catalogue_doi_base_url = datacite.get("dataCatalogueDoiBaseUrl")
+            publisher = datacite.get("publisher")
+            prefix = datacite.get("prefix")
+            session_suffix = datacite.get("sessionSuffix")
+            username = datacite.get("username")
+            password = datacite.get("password")
+            apiUrl = datacite.get("apiUrl")
+
+            if not catalogue_doi_base_url or not publisher or not prefix or not session_suffix or not username or not password or not apiUrl:
+                self._error(field,
+                            "'dataCatalogueDoiBaseUrl', 'publisher', 'prefix', 'sessionSuffix', 'username', 'password' and 'apiUrl' are required when 'integrations.datacite.enabled' is True")
+
+    def _validate_check_panosc_integration_settings(self, check, field, _) -> None:
+        """
+        The rule's arguments are validated against this schema:
+
+        {'type': 'boolean'}
+        """
+        # For some reason custom rules are not checked when set on a nested schema.
+        # This rule is a workaround that checks that if the dashboard integration is enabled, the exchangeName and
+        # routingKey are also set.
+        if not check:
+            return
+
+        panosc = self.document.get("integrations").get("panosc")
+        if panosc.get("enabled") is True:
+            scoring_url = panosc.get("scoringSvcUrl")
+            scoring_username = panosc.get("scoringSvcUsername")
+            scoring_password = panosc.get("scoringSvcPassword")
+            search_api_url = panosc.get("searchApiUrl")
+
+            if not scoring_url or not scoring_username or not scoring_password or not search_api_url:
+                self._error(field,
+                            "'scoringSvcUrl', 'scoringSvcUsername', 'scoringSvcPassword' and 'searchApiUrl' are required when 'integrations.panosc.enabled' is True")
