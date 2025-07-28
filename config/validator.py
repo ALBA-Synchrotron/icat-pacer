@@ -249,10 +249,18 @@ class PACERValidator(Validator):
             username = datacite.get("username")
             password = datacite.get("password")
             apiUrl = datacite.get("apiUrl")
+            rights_name = datacite.get("rightsName")
+            rights_scheme_uri = datacite.get("rightsSchemeUri")
+            rights_uri = datacite.get("rightsUri")
+            rights_identifier_scheme = datacite.get("rightsIdentifierScheme")
+            rights_identifier = datacite.get("rightsIdentifier")
+            funder_name = datacite.get("funderName")
+            funder_identifier = datacite.get("funderIdentifier")
+            funder_identifier_type = datacite.get("funderIdentifierType")
 
-            if not catalogue_doi_base_url or not publisher or not prefix or not session_suffix or not username or not password or not apiUrl:
+            if not catalogue_doi_base_url or not publisher or not prefix or not session_suffix or not username or not password or not apiUrl or not rights_name or not rights_scheme_uri or not rights_uri or not rights_identifier_scheme or not rights_identifier or not funder_name or not funder_identifier or not funder_identifier_type:
                 self._error(field,
-                            "'dataCatalogueDoiBaseUrl', 'publisher', 'prefix', 'sessionSuffix', 'username', 'password' and 'apiUrl' are required when 'integrations.datacite.enabled' is True")
+                            "'dataCatalogueDoiBaseUrl', 'publisher', 'prefix', 'sessionSuffix', 'username', 'password', 'apiUrl', 'rightsName', 'rightsSchemeUri', 'rightsUri', 'rightsIdentifierScheme', 'rightsIdentifier', 'funderName', 'funderIdentifier', 'funderIdentifierType' are required when 'integrations.datacite.enabled' is True")
 
     def _validate_check_panosc_integration_settings(self, check, field, _) -> None:
         """

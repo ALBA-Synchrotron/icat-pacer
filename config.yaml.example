@@ -23,6 +23,8 @@ exchanges:
     type: "direct"
   - name: "users-exchange"
     type: "direct"
+  - name: "investigation-ops-exchange"
+    type: "direct"
 queues:
   - name: "dashboard-logging"
     exchange: "dashboard-logging-exchange"
@@ -30,6 +32,9 @@ queues:
   - name: "user-sync"
     exchange: "users-exchange"
     routingKey: "user.sync"
+  - name: "icat-investigation-ops"
+    exchange: "investigation-ops-exchange"
+    routingKey: "investigation.ops"
 consumers:
   - className: "UsersWorker"
     module: "app.consumers.users"
@@ -41,6 +46,17 @@ consumers:
       - "dashboard"
       - "icat"
       - "visa"
+  - className: "InvestigationOperationsConsumer"
+    module: "consumers.investigation_ops"
+    enabled: true
+    queues:
+      - "icat-investigation-ops"
+    workers: 1
+    integrations:
+      - "dashboard"
+      - "icat"
+      - "visa"
+      - "datacite"
 brokers:
   main:
     protocol: "amqp"
@@ -90,6 +106,14 @@ integrations:
     username: "<<REDACTED>>"
     password: "<<REDACTED>>"
     apiUrl: "https://api.test.datacite.org"
+    rightsName: "Creative Commons Attribution 4.0 International"
+    rightsSchemeUri: "https://spdx.org/licenses/"
+    rightsUri: "https://creativecommons.org/licenses/by/4.0/"
+    rightsIdentifierScheme: "SPDX"
+    rightsIdentifier: "CC-BY-4.0"
+    funderName: "ALBA Synchrotron"
+    funderIdentifier: "https://ror.org/02j9n6e35"
+    funderIdentifierType: "ROR"
   panosc:
     enabled: true
     scoringSvcUrl: "https://scoring-svc"

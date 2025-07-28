@@ -213,6 +213,14 @@ config_yaml_schema: dict = {
                     "username": {"type": "string", "required": False},
                     "password": {"type": "string", "required": False},
                     "apiUrl": {"type": "string", "required": False},
+                    "rightsName": {"type": "string", "required": False},
+                    "rightsSchemeUri": {"type": "string", "required": False},
+                    "rightsUri": {"type": "string", "required": False},
+                    "rightsIdentifierScheme": {"type": "string", "required": False},
+                    "rightsIdentifier": {"type": "string", "required": False},
+                    "funderName": {"type": "string", "required": False},
+                    "funderIdentifier": {"type": "string", "required": False},
+                    "funderIdentifierType": {"type": "string", "required": False},
                 }
             },
             "panosc": {
