@@ -65,7 +65,7 @@ class InvestigationOpsTasks:
         contributors: list = datacite_client.generate_user_data_structure(investigation_users_role.get("Local contact"))
         self.logger.debug(f"Investigation mint: Total {len(creators)} creators,{len(contributors)} contributors")
 
-        titles: list = [{"title": investigation.title.replace("\n", "")}]
+        titles: list = [{"title": investigation.title}]
         descriptions: list = [{"description": investigation.summary, "descriptionType": "Abstract"}]
         subjects: list = [
             {
@@ -118,7 +118,6 @@ class InvestigationOpsTasks:
         datacite_client.create_proposal_doi(identifiers, creators, titles, publication_year, subjects, contributors,
                                             dates, types, descriptions, funding_references, doi_landing_url, doi)
         self.logger.info(f"Investigation mint: DOI minted for proposal {inv_ops_ctx.name}")
-        return
 
         investigation.doi = doi
         investigation.update()
