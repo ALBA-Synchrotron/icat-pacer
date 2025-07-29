@@ -26,7 +26,7 @@ class InvestigationOperationsConsumer(PACERConsumer):
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
-    def callback_func_investigation_mint(self, body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_investigation_mint(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
             f"investigation_mint_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         inv_ops_str: str = message.payload or message.body

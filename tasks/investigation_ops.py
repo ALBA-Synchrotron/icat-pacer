@@ -9,6 +9,14 @@ from helpers.icat_utils import ICATClient
 from helpers.datacite import DataciteClient
 from helpers.visa_utils import VISALoader
 
+ICAT_ROLE_PRINCIPAL_INVESTIGATOR: str = "Principal investigator"
+ICAT_ROLE_PARTICIPANT: str = "Participant"
+ICAT_ROLE_LOCAL_CONTACT: str = "Local contact"
+ICAT_ROLE_SCIENTIST: str = "Scientist"
+
+DATACITE_CONTRIBUTOR_PROJECT_MANAGER: str = "ProjectManager"
+DATACITE_CONTRIBUTOR_PROJECT_MEMBER: str = "ProjectMember"
+DATACITE_CONTRIBUTOR_DATA_COLLECTOR: str = "DataCollector"
 
 class InvestigationOpsTasks:
 
@@ -40,7 +48,7 @@ class InvestigationOpsTasks:
             self.logger.error(error_msg)
             raise Exception(error_msg)
 
-        if not investigation.datasets and 5 == 6:
+        if not investigation.datasets:
             error_msg: str = f"Investigation mint: Investigation {inv_ops_ctx.name} has no datasets, it will not be minted"
             self.logger.error(error_msg)
             raise Exception(error_msg)
@@ -61,11 +69,20 @@ class InvestigationOpsTasks:
             f"Investigation mint: Identifiers: {identifiers}, DOI: {doi}, DOI landing URL: {doi_landing_url}")
 
         creators: list = datacite_client.generate_user_data_structure(
-            investigation_users_role.get("Principal investigator", []), investigation_users_role.get("Participant"), [])
-        contributors: list = datacite_client.generate_user_data_structure(investigation_users_role.get("Local contact"))
+            investigation_users_role.get(ICAT_ROLE_PRINCIPAL_INVESTIGATOR, []),
+            investigation_users_role.get(ICAT_ROLE_PARTICIPANT, [])
+        )
+        contributor_data_collector: list = datacite_client.generate_user_data_structure(
+            investigation_users_role.get(ICAT_ROLE_LOCAL_CONTACT, []), contributor_type=DATACITE_CONTRIBUTOR_DATA_COLLECTOR)
+        contributor_project_manager: list = datacite_client.generate_user_data_structure(
+            investigation_users_role.get(ICAT_ROLE_PRINCIPAL_INVESTIGATOR, []), contributor_type=DATACITE_CONTRIBUTOR_PROJECT_MANAGER)
+        contributor_project_member: list = datacite_client.generate_user_data_structure(
+            investigation_users_role.get(ICAT_ROLE_SCIENTIST, []), contributor_type=DATACITE_CONTRIBUTOR_PROJECT_MEMBER)
+
+        contributors: list = contributor_data_collector + contributor_project_manager + contributor_project_member
         self.logger.debug(f"Investigation mint: Total {len(creators)} creators,{len(contributors)} contributors")
 
-        titles: list = [{"title": investigation.title}]
+        titles: list = [{"title": investigation.title, "lang": datacite_client.language}]
         descriptions: list = [{"description": investigation.summary, "descriptionType": "Abstract"}]
         subjects: list = [
             {
@@ -76,7 +93,9 @@ class InvestigationOpsTasks:
                 "subject": investigation.name,
                 "subjectScheme": "Proposal",
             }
+
         ]
+
         if instrument_names:
             subjects.append(
                 {

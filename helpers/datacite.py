@@ -48,15 +48,18 @@ class DataciteClient:
         self.logger = logger
 
     @classmethod
-    def generate_user_data_structure(cls, *args) -> list:
+    def generate_user_data_structure(cls, *args, **kwargs) -> list:
         users: list = list(chain.from_iterable(args))
+        contributor_type: str = kwargs.get("contributor_type") if kwargs.get("contributor_type") else ""
         ret: list = []
 
         for inv_user in users:
             ret.append({
+                "name": f"{inv_user.familyName}, {inv_user.givenName}",
                 "nameType": "Personal",
                 "givenName": inv_user.givenName,
                 "familyName": inv_user.familyName,
+                **({"contributorType": contributor_type} if contributor_type else {}),
                 "affiliation": [
                     {
                         "name": inv_user.affiliation
@@ -80,7 +83,7 @@ class DataciteClient:
         data: dict = {
             "type": "dois",
             "attributes": {
-                "prefix": self.prefix, "identifiers": identifiers, "creators": creators, "titles": titles,
+                "prefix": self.prefix, "creators": creators, "titles": titles,
                 "publisher": self.publisher, "publicationYear": publication_year, "subjects": subjects,
                 "contributors": contributors, "language": self.language, "dates": dates, "types": types,
                 "rightsList": [
@@ -92,7 +95,7 @@ class DataciteClient:
                     }
                 ],
                 "descriptions": descriptions, "fundingReferences": funding_references, "url": doi_landing_url,
-                "doi": doi, "event": "publish",
+                "doi": doi,  "event": "publish", "identifiers": identifiers,
             }
         }
         resp: Response = requests.post(url=f"{self.api_url}/dois", json={"data": data},
@@ -100,7 +103,7 @@ class DataciteClient:
                                        headers={"Accept": "application/vnd.api+json",
                                                 "Content-Type": "application/json"})
         if resp.status_code != 201:
-            error_msg: str = f"Error creating DOI {identifiers}, error: {resp.text}"
+            error_msg: str = f"Error creating DOI {"asd"}, error: {resp.text}"
             self.logger.error(error_msg)
             raise Exception(error_msg)
 

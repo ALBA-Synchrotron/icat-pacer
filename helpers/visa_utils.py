@@ -42,7 +42,22 @@ class VISALoader:
                 with conn.cursor() as cur:
                     cur.execute(query, params)
         except Exception as e:
-            error_msg: str = f"Error updating investigation's DOI / DOI url to VISA db: {e}"
+            error_msg: str = f"Error updating investigation's DOI / DOI url to VISA db (db_table=experiment): {e}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        query: str = """UPDATE proposal
+                        SET doi=%s,
+                            url=%s
+                        WHERE id = %s"""
+        logger.debug(
+            f"Writing to VISA db an investigation DOI update: investigation={investigation} doi={doi} url={doi_landing_url}")
+        params: tuple = (doi, doi_landing_url, investigation)
+        try:
+            with pool.connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, params)
+        except Exception as e:
+            error_msg: str = f"Error updating investigation's DOI / DOI url to VISA db (db_table=proposal): {e}"
             logger.error(error_msg)
             raise Exception(error_msg)
 
