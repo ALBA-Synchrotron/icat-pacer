@@ -95,7 +95,7 @@ class DataciteClient:
                     }
                 ],
                 "descriptions": descriptions, "fundingReferences": funding_references, "url": doi_landing_url,
-                "doi": doi,  "event": "publish", "identifiers": identifiers,
+                "doi": doi, "event": "publish", "identifiers": identifiers,
             }
         }
         resp: Response = requests.post(url=f"{self.api_url}/dois", json={"data": data},
@@ -108,9 +108,9 @@ class DataciteClient:
             raise Exception(error_msg)
 
 
-def get_datacite_client(config: dict, logger: logging.Logger) -> DataciteClient:
+def get_datacite_client(config: dict, logger: logging.Logger) -> DataciteClient or None:
     datacite_config: dict = config.get("integrations", {}).get("datacite", {})
-    if not datacite_config:
+    if not datacite_config or not datacite_config.get("enabled"):
         return None
     return DataciteClient(
         data_catalogue_doi_base_url=datacite_config.get("dataCatalogueDoiBaseUrl"),

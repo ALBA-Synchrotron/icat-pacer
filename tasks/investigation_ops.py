@@ -101,7 +101,6 @@ class InvestigationOpsTasks:
                 "subject": investigation.name,
                 "subjectScheme": "Proposal",
             }
-
         ]
 
         if instrument_names:
