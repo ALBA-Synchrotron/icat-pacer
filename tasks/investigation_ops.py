@@ -18,6 +18,7 @@ DATACITE_CONTRIBUTOR_PROJECT_MANAGER: str = "ProjectManager"
 DATACITE_CONTRIBUTOR_PROJECT_MEMBER: str = "ProjectMember"
 DATACITE_CONTRIBUTOR_DATA_COLLECTOR: str = "DataCollector"
 
+
 class InvestigationOpsTasks:
 
     def __init__(self, logger: logging.Logger = None):
@@ -48,6 +49,11 @@ class InvestigationOpsTasks:
             self.logger.error(error_msg)
             raise Exception(error_msg)
 
+        if investigation.doi:
+            error_msg: str = f"Investigation mint: Investigation {inv_ops_ctx.name} already has a DOI {investigation.doi}"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+
         if not investigation.datasets:
             error_msg: str = f"Investigation mint: Investigation {inv_ops_ctx.name} has no datasets, it will not be minted"
             self.logger.error(error_msg)
@@ -73,9 +79,11 @@ class InvestigationOpsTasks:
             investigation_users_role.get(ICAT_ROLE_PARTICIPANT, [])
         )
         contributor_data_collector: list = datacite_client.generate_user_data_structure(
-            investigation_users_role.get(ICAT_ROLE_LOCAL_CONTACT, []), contributor_type=DATACITE_CONTRIBUTOR_DATA_COLLECTOR)
+            investigation_users_role.get(ICAT_ROLE_LOCAL_CONTACT, []),
+            contributor_type=DATACITE_CONTRIBUTOR_DATA_COLLECTOR)
         contributor_project_manager: list = datacite_client.generate_user_data_structure(
-            investigation_users_role.get(ICAT_ROLE_PRINCIPAL_INVESTIGATOR, []), contributor_type=DATACITE_CONTRIBUTOR_PROJECT_MANAGER)
+            investigation_users_role.get(ICAT_ROLE_PRINCIPAL_INVESTIGATOR, []),
+            contributor_type=DATACITE_CONTRIBUTOR_PROJECT_MANAGER)
         contributor_project_member: list = datacite_client.generate_user_data_structure(
             investigation_users_role.get(ICAT_ROLE_SCIENTIST, []), contributor_type=DATACITE_CONTRIBUTOR_PROJECT_MEMBER)
 

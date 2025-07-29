@@ -6,6 +6,7 @@ from typing import Generator, Any
 from unittest.mock import patch, MagicMock
 
 import pytest
+from icat.entity import Entity
 
 from helpers.icat_utils import ICATClient
 
@@ -36,6 +37,14 @@ class GenericPACERUnitTest:
         self.__teardown_unittest_entities(client, unittest_user_prefix)
 
     @pytest.fixture(scope="session")
+    def datacite_client_mock(self) -> Generator[MagicMock, Any, None]:
+        with patch("helpers.datacite.DataciteClient") as DataciteClientMock:
+            client_mock = DataciteClientMock.return_value
+            client_mock.create_doi.return_value = None
+
+            yield client_mock
+
+    @pytest.fixture(scope="session")
     def mock_psycopg_pool(self) -> Generator[MagicMock, Any, None]:
         with patch("psycopg_pool.ConnectionPool") as MockPool:
             mock_pool = MockPool.return_value
@@ -52,22 +61,49 @@ class GenericPACERUnitTest:
 
             yield mock_pool
 
-    def __load_fixtures(self) -> None:
-        for fixture_file in self.fixtures:
-            name, _ = fixture_file.split(".")
+    @pytest.fixture(scope="session")
+    def icat_acquisition_dataset_type(self, icat_client: ICATClient) -> Entity:
+        dataset_type: Entity = icat_client.search("DatasetType", conditions={"name__eq": "acquisition"},
+                                                  flatten_single=True)
+        return dataset_type
 
-            fixture_path: str = os.path.join("tests", 'fixtures', 'json', fixture_file)
-            with open(fixture_path, "r") as f:
-                self.fixtures_dict[name] = json.load(f)
+    @pytest.fixture(scope="session")
+    def icat_facility(self, icat_client: ICATClient) -> Generator[Entity, Any, None]:
+        facility: Entity = icat_client.new("Facility", name="ICAT Facility")
+        facility.create()
+        yield facility
+        icat_client.delete(facility)
+
+    @pytest.fixture(scope="session")
+    def icat_root_user(self, icat_client: ICATClient) -> Entity:
+        root_user: Entity = icat_client.search("User", conditions={"name__eq": "root"}, flatten_single=True)
+        return root_user
+
+    @pytest.fixture(scope="session")
+    def icat_investigation_type(self, icat_client: ICATClient, icat_facility: Entity) -> Generator[Entity, Any, None]:
+        investigation_type: Entity = icat_client.new("InvestigationType", name="ICAT Investigation Type",
+                                                     facility=icat_facility, description="ICAT Investigation Type")
+        investigation_type.create()
+        yield investigation_type
+        icat_client.delete(investigation_type)
+
+    def __load_fixtures(self) -> None:
+        if hasattr(self, 'fixtures') and isinstance(self.fixtures, list):
+            for fixture_file in self.fixtures:
+                name, _ = fixture_file.split(".")
+
+                fixture_path: str = os.path.join("tests", 'fixtures', 'json', fixture_file)
+                with open(fixture_path, "r") as f:
+                    self.fixtures_dict[name] = json.load(f)
 
     def __teardown_unittest_entities(self, icat_client: ICATClient, unittest_user_prefix: str) -> None:
+        if hasattr(self, 'entities_teardown') and isinstance(self.entities_teardown, list):
+            for entity in self.entities_teardown:
+                results: list = icat_client.search(entity, conditions={"name__startswith": unittest_user_prefix},
+                                                   flatten_single=False)
+                for i in results:
+                    icat_client.delete(i)
 
-        for entity in self.entities_teardown:
-            results: list = icat_client.search(entity, conditions={"name__startswith": unittest_user_prefix},
-                                               flatten_single=False)
-            for i in results:
-                icat_client.delete(i)
-
-            results: list = icat_client.search(entity, conditions={"name__startswith": unittest_user_prefix},
-                                               flatten_single=False)
-            assert results is None
+                results: list = icat_client.search(entity, conditions={"name__startswith": unittest_user_prefix},
+                                                   flatten_single=False)
+                assert results is None
