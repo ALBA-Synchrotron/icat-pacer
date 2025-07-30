@@ -8,3 +8,4 @@ psycopg-binary==3.2.9
 psycopg-pool==3.2.6
 pytest==8.4.1
 python-elasticsearch-logging==2.0.8
+requests==2.32.4
