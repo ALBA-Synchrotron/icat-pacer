@@ -98,8 +98,10 @@ class DataciteClient:
                 "doi": doi, "event": "publish", "identifiers": identifiers,
             }
         }
+        basic_auth: tuple = (self.username, self.password) if self.username and self.password else None
+        self.logger.debug(f"Creating DOI {json.dumps(data)}")
         resp: Response = requests.post(url=f"{self.api_url}/dois", json={"data": data},
-                                       auth=(self.username, self.password),
+                                       **({"auth": basic_auth} if self.username and self.password else {}),
                                        headers={"Accept": "application/vnd.api+json",
                                                 "Content-Type": "application/json"})
         if resp.status_code != 201:
