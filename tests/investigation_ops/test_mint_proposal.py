@@ -1,4 +1,3 @@
-import datetime
 import logging
 
 import pytest
@@ -8,9 +7,7 @@ from psycopg_pool import ConnectionPool
 from helpers.datacite import DataciteClient
 from helpers.dataclasses import InvestigationOperationsContext
 from helpers.icat_utils import ICATClient
-from helpers.user import create_user_context, UserContext
 from tasks.investigation_ops import InvestigationOpsTasks
-from tasks.users import UserTasks
 from tests.utils.generic_unit_test import GenericPACERUnitTest
 
 logger: logging.Logger = logging.getLogger(__name__)
@@ -19,165 +16,11 @@ logger: logging.Logger = logging.getLogger(__name__)
 class TestInvestigationOpsMint(GenericPACERUnitTest):
     # entities_teardown: list = ["User"]
 
-    @pytest.fixture(scope="class")
-    def investigation_ops_tasks(self) -> InvestigationOpsTasks:
-        return InvestigationOpsTasks(logger)
-
-    @pytest.fixture(scope="class")
-    def non_existent_investigation(self) -> InvestigationOperationsContext:
-        return InvestigationOperationsContext(name="non-existent-investigation", operations=["mint-proposal"])
-
-    @pytest.fixture(scope="class")
-    def investigation_with_doi(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                               icat_investigation_type: Entity):
-        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-with-doi",
-                                                facility=icat_facility, doi="10.1234/test-doi", title="test title",
-                                                type=icat_investigation_type,
-                                                visitId="bltest")
-        investigation.create()
-        yield InvestigationOperationsContext(name=investigation.name, operations=["mint-proposal"])
-
-        icat_client.delete(investigation)
-
-    @pytest.fixture(scope="class")
-    def investigation_with_no_datasets(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                                       icat_investigation_type: Entity):
-        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-no-data",
-                                                facility=icat_facility, title="test title",
-                                                type=icat_investigation_type,
-                                                visitId="bltest")
-        investigation.create()
-        yield InvestigationOperationsContext(name=investigation.name, operations=["mint-proposal"])
-
-        icat_client.delete(investigation)
-
-    @pytest.fixture(scope="class")
-    def investigation_with_no_users(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                                    icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity):
-        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-no-users",
-                                                facility=icat_facility, title="test title",
-                                                type=icat_investigation_type,
-                                                visitId="bltest")
-        investigation.create()
-        dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
-                                          investigation=investigation, type=icat_acquisition_dataset_type)
-        dataset.create()
-
-        yield InvestigationOperationsContext(name=investigation.name, operations=["mint-proposal"])
-
-        icat_client.delete(dataset)
-        icat_client.delete(investigation)
-
-    @pytest.fixture(scope="class")
-    def investigation_with_no_dates(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                                    icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
-                                    icat_root_user: Entity):
-        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-no-dates",
-                                                facility=icat_facility, title="test title",
-                                                type=icat_investigation_type,
-                                                visitId="bltest")
-        investigation.create()
-        dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
-                                          investigation=investigation, type=icat_acquisition_dataset_type)
-        dataset.create()
-        inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
-                                           role="Principal Investigator")
-        inv_user.create()
-
-        yield InvestigationOperationsContext(name=investigation.name, operations=["mint-proposal"])
-
-        icat_client.delete(dataset)
-        icat_client.delete(inv_user)
-        icat_client.delete(investigation)
-
-    @pytest.fixture(scope="class")
-    def investigation_with_no_instrument(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                                         icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
-                                         icat_root_user: Entity):
-        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-noinstr",
-                                                facility=icat_facility, title="test title",
-                                                type=icat_investigation_type,
-                                                visitId="bltest", startDate="2021-01-01", endDate="2021-01-31",
-                                                releaseDate="2021-02-01")
-        investigation.create()
-        dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
-                                          investigation=investigation, type=icat_acquisition_dataset_type)
-        dataset.create()
-        inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
-                                           role="Principal Investigator")
-        inv_user.create()
-
-        yield InvestigationOperationsContext(name=investigation.name, operations=["mint-proposal"])
-
-        icat_client.delete(dataset)
-        icat_client.delete(inv_user)
-        icat_client.delete(investigation)
-
-    @pytest.fixture(scope="class")
-    def investigation_with_future_end_date(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                                   icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
-                                   icat_root_user: Entity):
-        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-good",
-                                                facility=icat_facility, title="test title",
-                                                type=icat_investigation_type,
-                                                visitId="bltest", startDate="2021-01-01",
-                                                endDate=(datetime.datetime.now() + datetime.timedelta(days=15)).strftime("%Y-%m-%d"),
-                                                releaseDate="2021-02-01")
-        investigation.create()
-        dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
-                                          investigation=investigation, type=icat_acquisition_dataset_type)
-        dataset.create()
-        inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
-                                           role="Principal Investigator")
-        inv_user.create()
-        instr: Entity = icat_client.new("Instrument", name=f"{unittest_user_prefix}-instrument-1",
-                                        facility=icat_facility, )
-        instr.create()
-        inv_str: Entity = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=instr)
-        inv_str.create()
-
-        yield InvestigationOperationsContext(name=investigation.name, operations=["mint-proposal"])
-
-        icat_client.delete(dataset)
-        icat_client.delete(inv_user)
-        icat_client.delete(inv_str)
-        icat_client.delete(investigation)
-        icat_client.delete(instr)
-
-    @pytest.fixture(scope="class")
-    def investigation_good_for_doi(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                                   icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
-                                   icat_root_user: Entity):
-        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-future",
-                                                facility=icat_facility, title="test title",
-                                                type=icat_investigation_type,
-                                                visitId="bltest", startDate="2021-01-01", endDate="2021-01-31",
-                                                releaseDate="2021-02-01")
-        investigation.create()
-        dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
-                                          investigation=investigation, type=icat_acquisition_dataset_type)
-        dataset.create()
-        inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
-                                           role="Principal Investigator")
-        inv_user.create()
-        instr: Entity = icat_client.new("Instrument", name=f"{unittest_user_prefix}-instrument", facility=icat_facility,)
-        instr.create()
-        inv_str: Entity = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=instr)
-        inv_str.create()
-
-        yield InvestigationOperationsContext(name=investigation.name, operations=["mint-proposal"])
-
-        icat_client.delete(dataset)
-        icat_client.delete(inv_user)
-        icat_client.delete(inv_str)
-        icat_client.delete(investigation)
-        icat_client.delete(instr)
-
-    def test_mint_existent_investigation(self, investigation_ops_tasks: InvestigationOpsTasks,
-                                         mock_psycopg_pool: ConnectionPool,
-                                         icat_client: ICATClient,
-                                         datacite_client_mock: DataciteClient,
-                                         non_existent_investigation: InvestigationOperationsContext) -> None:
+    def test_mint_non_existent_investigation(self, investigation_ops_tasks: InvestigationOpsTasks,
+                                             mock_psycopg_pool: ConnectionPool,
+                                             icat_client: ICATClient,
+                                             datacite_client_mock: DataciteClient,
+                                             non_existent_investigation: InvestigationOperationsContext) -> None:
         with pytest.raises(Exception) as exc_info:
             investigation_ops_tasks.mint_proposal(
                 mock_psycopg_pool, icat_client, datacite_client_mock, non_existent_investigation)
@@ -234,10 +77,10 @@ class TestInvestigationOpsMint(GenericPACERUnitTest):
         assert "has no instruments, it will not be minted" in str(exc_info.value)
 
     def test_mint_investigation_future_end_date(self, investigation_ops_tasks: InvestigationOpsTasks,
-                                                    mock_psycopg_pool: ConnectionPool,
-                                                    icat_client: ICATClient,
-                                                    datacite_client_mock: DataciteClient,
-                                                    investigation_with_future_end_date: InvestigationOperationsContext) -> None:
+                                                mock_psycopg_pool: ConnectionPool,
+                                                icat_client: ICATClient,
+                                                datacite_client_mock: DataciteClient,
+                                                investigation_with_future_end_date: InvestigationOperationsContext) -> None:
         with pytest.raises(Exception) as exc_info:
             investigation_ops_tasks.mint_proposal(
                 mock_psycopg_pool, icat_client, datacite_client_mock, investigation_with_future_end_date)
