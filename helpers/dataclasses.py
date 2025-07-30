@@ -45,3 +45,9 @@ class DashboardCeleryTask:
     args: list
     kwargs: dict
     retries: int = 10
+
+
+@dataclass
+class InvestigationOperationsContext:
+    name: str
+    operations: list

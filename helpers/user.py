@@ -3,13 +3,6 @@ import json
 from helpers.dataclasses import UserContext, Affiliation
 
 
-def get_affiliation_name(affiliation: Affiliation, limit: int = -1) -> str:
-    ret: str = f"{", ".join(i for i in [affiliation.name, affiliation.unit, affiliation.department_name] if i != "")}"
-    if limit > 0:
-        ret = ret[:limit]
-    return ret
-
-
 def create_user_context(user_data: str or dict, username_prefix: str = "") -> UserContext:
     user_dict: dict = json.loads(user_data) if isinstance(user_data, str) else user_data
     aff = user_dict.get("affiliation", {})
