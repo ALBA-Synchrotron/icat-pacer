@@ -25,16 +25,17 @@ class GenericPACERUnitTest:
                 with open(fixture_path, "r") as f:
                     self.fixtures_dict[name] = json.load(f)
 
-    @pytest.fixture(scope="class")
+    @pytest.fixture(scope="class", autouse=True)
     def class_cleanup(self, icat_client: ICATClient, unittest_user_prefix: str) -> Generator[None, Any, None]:
         yield
         if hasattr(self, 'entities_teardown') and isinstance(self.entities_teardown, list):
             for entity in self.entities_teardown:
                 results: list = icat_client.search(entity, conditions={"name__startswith": unittest_user_prefix},
                                                    flatten_single=False)
-                for i in results:
-                    icat_client.delete(i)
+                if results is not None:
+                    for i in results:
+                        icat_client.delete(i)
 
-                results: list = icat_client.search(entity, conditions={"name__startswith": unittest_user_prefix},
-                                                   flatten_single=False)
-                assert results is None
+                    results: list = icat_client.search(entity, conditions={"name__startswith": unittest_user_prefix},
+                                                       flatten_single=False)
+                    assert results is None
