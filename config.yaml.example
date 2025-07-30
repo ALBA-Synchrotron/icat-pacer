@@ -117,7 +117,7 @@ integrations:
     funderIdentifierType: "ROR"
   panosc:
     enabled: true
-    scoringSvcUrl: "https://scoring-svc"
-    scoringSvcUsername: "<<REDACTED>>"
-    scoringSvcPassword: "<<REDACTED>>"
+    apiUrl: "https://scoring-svc"
+    username: "<<REDACTED>>"
+    password: "<<REDACTED>>"
     searchApiUrl: "https://data.cells.es/iws/datagateway/search-api"

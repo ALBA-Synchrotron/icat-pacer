@@ -277,9 +277,9 @@ class PACERValidator(Validator):
 
         panosc = self.document.get("integrations").get("panosc")
         if panosc.get("enabled") is True:
-            scoring_url = panosc.get("scoringSvcUrl")
-            scoring_username = panosc.get("scoringSvcUsername")
-            scoring_password = panosc.get("scoringSvcPassword")
+            scoring_url = panosc.get("apiUrl")
+            scoring_username = panosc.get("username")
+            scoring_password = panosc.get("password")
             search_api_url = panosc.get("searchApiUrl")
 
             if not scoring_url or not scoring_username or not scoring_password or not search_api_url:

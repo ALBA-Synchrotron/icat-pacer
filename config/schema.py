@@ -228,9 +228,9 @@ config_yaml_schema: dict = {
                 "type": "dict",
                 "schema": {
                     "enabled": {"type": "boolean", "required": True},
-                    "scoringSvcUrl": {"type": "string", "required": False},
-                    "scoringSvcUsername": {"type": "string", "required": False},
-                    "scoringSvcPassword": {"type": "string", "required": False},
+                    "apiUrl": {"type": "string", "required": False},
+                    "username": {"type": "string", "required": False},
+                    "password": {"type": "string", "required": False},
                     "searchApiUrl": {"type": "string", "required": False},
                 }
             },
