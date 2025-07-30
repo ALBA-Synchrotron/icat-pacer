@@ -284,4 +284,4 @@ class PACERValidator(Validator):
 
             if not scoring_url or not scoring_username or not scoring_password or not search_api_url:
                 self._error(field,
-                            "'scoringSvcUrl', 'scoringSvcUsername', 'scoringSvcPassword' and 'searchApiUrl' are required when 'integrations.panosc.enabled' is True")
+                            "'apiUrl', 'username', 'password' and 'searchApiUrl' are required when 'integrations.panosc.enabled' is True")
