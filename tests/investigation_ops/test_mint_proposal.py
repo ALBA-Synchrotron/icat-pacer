@@ -1,3 +1,4 @@
+import datetime
 import logging
 
 import pytest
@@ -90,10 +91,10 @@ class TestInvestigationOpsMint(GenericPACERUnitTest):
         icat_client.delete(investigation)
 
     @pytest.fixture(scope="class")
-    def investigation_good_for_doi(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                                   icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
-                                   icat_root_user: Entity):
-        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-good",
+    def investigation_with_no_instrument(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+                                         icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
+                                         icat_root_user: Entity):
+        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-noinstr",
                                                 facility=icat_facility, title="test title",
                                                 type=icat_investigation_type,
                                                 visitId="bltest", startDate="2021-01-01", endDate="2021-01-31",
@@ -111,6 +112,66 @@ class TestInvestigationOpsMint(GenericPACERUnitTest):
         icat_client.delete(dataset)
         icat_client.delete(inv_user)
         icat_client.delete(investigation)
+
+    @pytest.fixture(scope="class")
+    def investigation_with_future_end_date(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+                                   icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
+                                   icat_root_user: Entity):
+        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-good",
+                                                facility=icat_facility, title="test title",
+                                                type=icat_investigation_type,
+                                                visitId="bltest", startDate="2021-01-01",
+                                                endDate=(datetime.datetime.now() + datetime.timedelta(days=15)).strftime("%Y-%m-%d"),
+                                                releaseDate="2021-02-01")
+        investigation.create()
+        dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
+                                          investigation=investigation, type=icat_acquisition_dataset_type)
+        dataset.create()
+        inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
+                                           role="Principal Investigator")
+        inv_user.create()
+        instr: Entity = icat_client.new("Instrument", name=f"{unittest_user_prefix}-instrument-1",
+                                        facility=icat_facility, )
+        instr.create()
+        inv_str: Entity = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=instr)
+        inv_str.create()
+
+        yield InvestigationOperationsContext(name=investigation.name, operations=["mint-proposal"])
+
+        icat_client.delete(dataset)
+        icat_client.delete(inv_user)
+        icat_client.delete(inv_str)
+        icat_client.delete(investigation)
+        icat_client.delete(instr)
+
+    @pytest.fixture(scope="class")
+    def investigation_good_for_doi(self, icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+                                   icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
+                                   icat_root_user: Entity):
+        investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-future",
+                                                facility=icat_facility, title="test title",
+                                                type=icat_investigation_type,
+                                                visitId="bltest", startDate="2021-01-01", endDate="2021-01-31",
+                                                releaseDate="2021-02-01")
+        investigation.create()
+        dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
+                                          investigation=investigation, type=icat_acquisition_dataset_type)
+        dataset.create()
+        inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
+                                           role="Principal Investigator")
+        inv_user.create()
+        instr: Entity = icat_client.new("Instrument", name=f"{unittest_user_prefix}-instrument", facility=icat_facility,)
+        instr.create()
+        inv_str: Entity = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=instr)
+        inv_str.create()
+
+        yield InvestigationOperationsContext(name=investigation.name, operations=["mint-proposal"])
+
+        icat_client.delete(dataset)
+        icat_client.delete(inv_user)
+        icat_client.delete(inv_str)
+        icat_client.delete(investigation)
+        icat_client.delete(instr)
 
     def test_mint_existent_investigation(self, investigation_ops_tasks: InvestigationOpsTasks,
                                          mock_psycopg_pool: ConnectionPool,
@@ -160,7 +221,27 @@ class TestInvestigationOpsMint(GenericPACERUnitTest):
         with pytest.raises(Exception) as exc_info:
             investigation_ops_tasks.mint_proposal(
                 mock_psycopg_pool, icat_client, datacite_client_mock, investigation_with_no_dates)
-        assert "has no releaseDate or startDate, it will not be minted" in str(exc_info.value)
+        assert "has no releaseDate, endDate or startDate, it will not be minted" in str(exc_info.value)
+
+    def test_mint_investigation_with_no_instruments(self, investigation_ops_tasks: InvestigationOpsTasks,
+                                                    mock_psycopg_pool: ConnectionPool,
+                                                    icat_client: ICATClient,
+                                                    datacite_client_mock: DataciteClient,
+                                                    investigation_with_no_instrument: InvestigationOperationsContext) -> None:
+        with pytest.raises(Exception) as exc_info:
+            investigation_ops_tasks.mint_proposal(
+                mock_psycopg_pool, icat_client, datacite_client_mock, investigation_with_no_instrument)
+        assert "has no instruments, it will not be minted" in str(exc_info.value)
+
+    def test_mint_investigation_future_end_date(self, investigation_ops_tasks: InvestigationOpsTasks,
+                                                    mock_psycopg_pool: ConnectionPool,
+                                                    icat_client: ICATClient,
+                                                    datacite_client_mock: DataciteClient,
+                                                    investigation_with_future_end_date: InvestigationOperationsContext) -> None:
+        with pytest.raises(Exception) as exc_info:
+            investigation_ops_tasks.mint_proposal(
+                mock_psycopg_pool, icat_client, datacite_client_mock, investigation_with_future_end_date)
+        assert "has an end date in the future, it will not be minted" in str(exc_info.value)
 
     def test_mint_investigation(self, investigation_ops_tasks: InvestigationOpsTasks,
                                 mock_psycopg_pool: ConnectionPool,

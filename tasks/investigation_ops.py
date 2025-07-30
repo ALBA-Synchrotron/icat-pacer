@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import logging
 
 from icat.entity import Entity
@@ -7,6 +8,7 @@ from psycopg_pool import ConnectionPool
 from helpers.dataclasses import InvestigationOperationsContext
 from helpers.icat_utils import ICATClient
 from helpers.datacite import DataciteClient
+from helpers.panosc import PaNOSCClient
 from helpers.visa_utils import VISALoader
 
 ICAT_ROLE_PRINCIPAL_INVESTIGATOR: str = "Principal investigator"
@@ -33,10 +35,78 @@ class InvestigationOpsTasks:
             ret[inv_user.role].append(inv_user.user)
         return ret
 
+    def __general_investigation_check(self, investigation: Entity, check_doi=True, check_datasets=True,
+                                      check_users=True, check_dates=True, check_instruments=True,
+                                      check_end_date_today=False, check_no_doi=False) -> None:
+        if check_doi and investigation.doi:
+            error_msg: str = f"Investigation: Investigation {investigation.name} already has a DOI {investigation.doi}"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+
+        if check_datasets and not investigation.datasets:
+            error_msg: str = f"Investigation: Investigation {investigation.name} has no datasets, it will not be minted"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+
+        if check_users and not investigation.investigationUsers:
+            error_msg: str = f"Investigation: Investigation {investigation.name} has no users, it will not be minted"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+
+        if check_dates and not investigation.releaseDate or not investigation.startDate or not investigation.endDate:
+            error_msg: str = f"Investigation: Investigation {investigation.name} has no releaseDate, endDate or startDate, it will not be minted"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+
+        if check_instruments and not investigation.investigationInstruments:
+            error_msg: str = f"Investigation: Investigation {investigation.name} has no instruments, it will not be minted"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+
+        if check_end_date_today and investigation.endDate and investigation.endDate.timestamp() > datetime.datetime.now().timestamp():
+            error_msg: str = f"Investigation: Investigation {investigation.name} has an end date in the future, it will not be minted"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+
+        if check_no_doi and not investigation.doi:
+            error_msg: str = f"Investigation: Investigation {investigation.name} has no DOI"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+
+    def create_panosc_item(self, icat_client: ICATClient, inv_ops_ctx: InvestigationOperationsContext,
+                           panosc_client: PaNOSCClient, *_args,
+                           **_kwargs) -> None:
+        self.logger.info(f"PaNOSC item creation: Creating item for proposal {inv_ops_ctx.name}")
+        investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": inv_ops_ctx.name},
+                                                   flatten_single=True,
+                                                   includes=["datasets", "investigationUsers",
+                                                             "investigationUsers.user", "type",
+                                                             "investigationInstruments",
+                                                             "investigationInstruments.instrument",
+                                                             "facility"])
+        if not investigation:
+            error_msg: str = f"PaNOSC item creation: Investigation {inv_ops_ctx.name} not found"
+            self.logger.error(error_msg)
+            raise Exception(error_msg)
+
+        self.__general_investigation_check(investigation, check_doi=False, check_no_doi=True, check_datasets=False,
+                                           check_users=False)
+        public_investigation_info: dict = panosc_client.retrieve_public_investigation_info(investigation.name)
+
+        if panosc_client.item_exists(investigation.name):
+            self.logger.info(f"Investigation PaNOSC indexes: Index for proposal {investigation.name} already exists")
+            panosc_client.update_item(investigation.name, public_investigation_info)
+        else:
+            self.logger.info(f"Investigation PaNOSC indexes: Index for proposal {investigation.name} does not exist")
+            panosc_client.create_item(investigation.name, public_investigation_info)
+
+        self.logger.info(
+            f"Item exists for proposal {investigation.name}: {panosc_client.item_exists(investigation.name)}")
+        panosc_client.recompute_weights()
+
     def mint_proposal(self, pg_pool: ConnectionPool, icat_client: ICATClient, datacite_client: DataciteClient,
                       inv_ops_ctx: InvestigationOperationsContext, *_args, **_kwargs) -> None:
         self.logger.info(f"Investigation mint: Creating a DOI for proposal {inv_ops_ctx.name}")
-
         investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": inv_ops_ctx.name},
                                                    flatten_single=True,
                                                    includes=["datasets", "investigationUsers",
@@ -49,22 +119,9 @@ class InvestigationOpsTasks:
             self.logger.error(error_msg)
             raise Exception(error_msg)
 
-        if investigation.doi:
-            error_msg: str = f"Investigation mint: Investigation {inv_ops_ctx.name} already has a DOI {investigation.doi}"
-            self.logger.error(error_msg)
-            raise Exception(error_msg)
-
-        if not investigation.datasets:
-            error_msg: str = f"Investigation mint: Investigation {inv_ops_ctx.name} has no datasets, it will not be minted"
-            self.logger.error(error_msg)
-            raise Exception(error_msg)
+        self.__general_investigation_check(investigation, check_end_date_today=True)
 
         investigation_users_role: dict = self.__get_investigation_users_by_role(investigation.investigationUsers)
-        if not investigation_users_role:
-            error_msg: str = f"Investigation mint: Investigation {inv_ops_ctx.name} has no users, it will not be minted"
-            self.logger.error(error_msg)
-            raise Exception(error_msg)
-
         instrument_names: list = [i.instrument.name for i in investigation.investigationInstruments]
 
         doi: str = f"{datacite_client.prefix}/{datacite_client.session_suffix}-{investigation.name}"
@@ -110,11 +167,6 @@ class InvestigationOpsTasks:
                     "subjectScheme": f"Instrument{'s' if len(instrument_names) > 1 else ''}",
                 }
             )
-
-        if not investigation.releaseDate or not investigation.startDate:
-            error_msg: str = f"Investigation mint: Investigation {inv_ops_ctx.name} has no releaseDate or startDate, it will not be minted"
-            self.logger.error(error_msg)
-            raise Exception(error_msg)
 
         dates: list = [
             {

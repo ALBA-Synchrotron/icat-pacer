@@ -57,6 +57,7 @@ consumers:
       - "icat"
       - "visa"
       - "datacite"
+      - "panosc"
 brokers:
   main:
     protocol: "amqp"

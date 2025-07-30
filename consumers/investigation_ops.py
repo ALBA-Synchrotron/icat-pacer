@@ -34,3 +34,5 @@ class InvestigationOperationsConsumer(PACERConsumer):
 
         if "mint-proposal" in inv_ops_ctx.operations and self.datacite_client is not None:
             self.tasks.mint_proposal(self.visa_pg_pool, self.icat_client, self.datacite_client, inv_ops_ctx)
+        if "create-panosc-item" in inv_ops_ctx.operations:
+            self.tasks.create_panosc_item(self.icat_client, inv_ops_ctx, self.panosc_client)
