@@ -28,7 +28,7 @@ class UserContext:
 
 
 def get_affiliation_name(affiliation: Affiliation, limit: int = -1) -> str:
-    ret: str = f"{", ".join(i for i in [affiliation.name, affiliation.unit, affiliation.department_name] if i != "")}"
+    ret: str = f"{', '.join(i for i in [affiliation.name, affiliation.unit, affiliation.department_name] if i != '')}"
     if limit > 0:
         ret = ret[:limit]
     return ret
@@ -45,7 +45,7 @@ def create_user_context(user_data: str or dict, username_prefix: str = "") -> Us
         is_staff=user_dict.get("is_staff", False),
         enabled=user_dict.get("enabled", False),
         uos_id=user_dict.get("id"),
-        usernames=[f"{username_prefix}{i.get("username")}" for i in user_dict.get("user_list", [])],
+        usernames=[f"{username_prefix}{i.get('username')}" for i in user_dict.get("user_list", [])],
         affiliation=Affiliation(
             id=aff.get("id") or 0,
             name=aff.get("name") or "",

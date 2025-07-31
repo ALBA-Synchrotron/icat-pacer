@@ -63,7 +63,7 @@ integrations:
       database: "<<REDACTED>>"
       user: "<<REDACTED>>"
       password: "<<REDACTED>>"
-    icat:
+  icat:
     enabled: true
     server:
       url: "https://<<REDACTED>>/ICATService/ICAT?wsdl"
