@@ -2,8 +2,9 @@ from __future__ import absolute_import, unicode_literals
 
 from kombu import Message
 
+from helpers.dataclasses import InvestigationContext
 from helpers.pacer_consumer import PACERConsumer
-from helpers.proposals import InvestigationContext, create_investigation_context
+from helpers.proposals import create_investigation_context
 from tasks.proposals import ProposalTasks
 
 

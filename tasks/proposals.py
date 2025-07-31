@@ -5,8 +5,8 @@ import logging
 from dateutil.relativedelta import relativedelta
 from psycopg_pool import ConnectionPool
 
+from helpers.dataclasses import InvestigationContext
 from helpers.icat_utils import ICATClient
-from helpers.proposals import InvestigationContext
 from helpers.visa_utils import VISALoader
 from icat.entity import Entity
 from helpers import labels

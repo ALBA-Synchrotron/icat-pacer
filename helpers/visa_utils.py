@@ -3,6 +3,7 @@ from logging import Logger
 from psycopg_pool import ConnectionPool
 
 from helpers.common import get_affiliation_name
+from helpers.dataclasses import InvestigationContext
 from helpers.user import UserContext, Affiliation
 
 

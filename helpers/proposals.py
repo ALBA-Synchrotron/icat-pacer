@@ -5,25 +5,8 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 from helpers import labels
+from helpers.dataclasses import InvestigationContext
 from helpers.datetime import try_parse_datetime
-
-
-@dataclass
-class InvestigationContext:
-    name: str = ""
-    facility: str = "ALBA"
-    start_date: datetime = ""
-    end_date: datetime = ""
-    release_date: datetime = ""
-    title: str = ""
-    summary: str = ""
-    instrument: dict = field(default_factory=lambda: {"name": "", "code": ""})
-    type: str = ""
-    user_list: list = field(default_factory=lambda: [{"username": "", "email": "", "role": ""}])
-    visit_count: int = 0
-    is_reimbursed: bool = False
-    doi: str = ""
-    url: str = ""
 
 
 def create_investigation_context(investigation_data: str or dict) -> InvestigationContext:
