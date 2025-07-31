@@ -2,8 +2,8 @@ import datetime
 from logging import Logger
 from psycopg_pool import ConnectionPool
 
-from helpers.proposals import InvestigationContext
-from helpers.user import UserContext, get_affiliation_name, Affiliation
+from helpers.common import get_affiliation_name
+from helpers.user import UserContext, Affiliation
 
 
 def get_pg_connection_pool(config: dict) -> ConnectionPool:
@@ -28,6 +28,40 @@ def get_pg_connection_pool(config: dict) -> ConnectionPool:
 class VISALoader:
 
     @classmethod
+    def db_update_investigation_doi(cls, pool: ConnectionPool, investigation: str, doi: str, doi_landing_url: str,
+                                    logger: Logger) -> None:
+        query: str = """UPDATE experiment
+                        SET doi=%s,
+                            url=%s
+                        WHERE id = %s"""
+        logger.debug(
+            f"Writing to VISA db an investigation DOI update: investigation={investigation} doi={doi} url={doi_landing_url}")
+        params: tuple = (doi, doi_landing_url, investigation)
+        try:
+            with pool.connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, params)
+        except Exception as e:
+            error_msg: str = f"Error updating investigation's DOI / DOI url to VISA db (db_table=experiment): {e}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+        query: str = """UPDATE proposal
+                        SET doi=%s,
+                            url=%s
+                        WHERE id = %s"""
+        logger.debug(
+            f"Writing to VISA db an investigation DOI update: investigation={investigation} doi={doi} url={doi_landing_url}")
+        params: tuple = (doi, doi_landing_url, investigation)
+        try:
+            with pool.connection() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(query, params)
+        except Exception as e:
+            error_msg: str = f"Error updating investigation's DOI / DOI url to VISA db (db_table=proposal): {e}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
+
+    @classmethod
     def db_sync_affiliation(cls, pool: ConnectionPool, affiliation: Affiliation, logger: Logger) -> None:
         query: str = """INSERT INTO employer (id, name, town, country_code)
                         VALUES (%s, %s, %s, %s) ON CONFLICT (id) DO
@@ -47,7 +81,9 @@ class VISALoader:
                 with conn.cursor() as cur:
                     cur.execute(query, params)
         except Exception as e:
-            logger.error(f"Error writing affiliation / employer to VISA db: {e}")
+            error_msg: str = f"Error writing affiliation / employer to VISA db: {e}"
+            logger.error(error_msg)
+            raise Exception(error_msg)
 
     @classmethod
     def db_sync_user(cls, pool: ConnectionPool, user_ctx: UserContext, logger: Logger) -> None:
@@ -80,7 +116,9 @@ class VISALoader:
                 try:
                     cur.execute(query, params)
                 except Exception as e:
-                    logger.error(f"Error writing user to VISA db: {e}")
+                    error_msg: str = f"Error writing user to VISA db: {e}"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
 
                 match user_ctx.is_staff:
                     case True:
@@ -91,7 +129,9 @@ class VISALoader:
                             res = cur.fetchone()
                             staff_id: int = res[0] if res else 1
                         except Exception as e:
-                            logger.error(f"Error fetching staff role_id from visa db: {e}")
+                            error_msg: str = f"Error fetching staff role_id from visa db: {e}"
+                            logger.error(error_msg)
+                            raise Exception(error_msg)
 
                         if staff_id:
                             logger.debug(f"Writing to VISA db: Adding  STAFF role to user profile_id={user_ctx.uos_id}")
@@ -102,8 +142,9 @@ class VISALoader:
                             try:
                                 cur.execute(query, params)
                             except Exception as e:
-                                logger.error(
-                                    f"Error writing STAFF role to user profile_id={user_ctx.uos_id} to visa db: {e}")
+                                error_msg: str = f"Error writing STAFF role to user profile_id={user_ctx.uos_id} to visa db: {e}"
+                                logger.error(error_msg)
+                                raise Exception(error_msg)
 
                     case False:
                         logger.debug(
@@ -115,8 +156,9 @@ class VISALoader:
                         try:
                             cur.execute(query, params)
                         except Exception as e:
-                            logger.error(
-                                f"Error deleting STAFF role from user profile_id={user_ctx.uos_id} to visa db: {e}")
+                            error_msg: str = f"Error deleting STAFF role from user profile_id={user_ctx.uos_id} to visa db: {e}"
+                            logger.error(error_msg)
+                            raise Exception(error_msg)
 
     @classmethod
     def db_sync_proposal(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger):

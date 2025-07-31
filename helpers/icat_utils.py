@@ -29,8 +29,11 @@ class ICATClient:
         if self.client and self.client.sessionId:
             self.client.logout()
 
-    def auto_refresh_session(self):
+    def auto_refresh_session(self) -> None:
         self.client.autoRefresh()
+
+    def logout(self) -> None:
+        self.client.logout()
 
     @classmethod
     def open_icat_session(cls, config: dict, session_id: str = None) -> Client or None:

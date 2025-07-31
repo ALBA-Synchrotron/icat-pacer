@@ -19,12 +19,22 @@ logging:
 customSerializers:
   - "serializers.xml.register_xml"
 exchanges:
+  - name: "dashboard-logging-exchange"
+    type: "direct"
   - name: "users-exchange"
     type: "direct"
+  - name: "investigation-ops-exchange"
+    type: "direct"
 queues:
+  - name: "dashboard-logging"
+    exchange: "dashboard-logging-exchange"
+    routingKey: "message.logging"
   - name: "user-sync"
     exchange: "users-exchange"
     routingKey: "user.sync"
+  - name: "icat-investigation-ops"
+    exchange: "investigation-ops-exchange"
+    routingKey: "investigation.ops"
 consumers:
   - className: "UsersWorker"
     module: "app.consumers.users"
@@ -33,8 +43,21 @@ consumers:
       - "user-sync"
     workers: 2
     integrations:
+      - "dashboard"
       - "icat"
       - "visa"
+  - className: "InvestigationOperationsConsumer"
+    module: "consumers.investigation_ops"
+    enabled: true
+    queues:
+      - "icat-investigation-ops"
+    workers: 1
+    integrations:
+      - "dashboard"
+      - "icat"
+      - "visa"
+      - "datacite"
+      - "panosc"
 brokers:
   main:
     protocol: "amqp"
@@ -70,3 +93,32 @@ integrations:
       authPlugin: "db"
       username: "<<REDACTED>>"
       password: "<<REDACTED>>"
+  dashboard:
+    enabled: true
+    exchangeName: "dashboard-logging-exchange"
+    routingKey: "message.logging"
+    celeryTask: "dashboard.tasks.log_pacer_message"
+  datacite:
+    enabled: true
+    dataCatalogueDoiBaseUrl: "https://doi.cells.es/"
+    publisher: "ALBA Synchrotron"
+    prefix: "DOI PREFIX"
+    sessionSuffix: "TEST-ALBA-"
+    username: "<<REDACTED>>"
+    password: "<<REDACTED>>"
+    apiUrl: "https://api.test.datacite.org"
+    language: "en"
+    rightsName: "Creative Commons Attribution 4.0 International"
+    rightsSchemeUri: "https://spdx.org/licenses/"
+    rightsUri: "https://creativecommons.org/licenses/by/4.0/"
+    rightsIdentifierScheme: "SPDX"
+    rightsIdentifier: "CC-BY-4.0"
+    funderName: "ALBA Synchrotron"
+    funderIdentifier: "https://ror.org/02j9n6e35"
+    funderIdentifierType: "ROR"
+  panosc:
+    enabled: true
+    apiUrl: "https://scoring-svc"
+    username: "<<REDACTED>>"
+    password: "<<REDACTED>>"
+    searchApiUrl: "https://data.cells.es/iws/datagateway/search-api"

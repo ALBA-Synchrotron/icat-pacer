@@ -1,37 +1,6 @@
-from dataclasses import dataclass, field
 import json
 
-
-@dataclass
-class Affiliation:
-    id: int = 0
-    name: str = ""
-    code: str = ""
-    department_name: str = ""
-    department_code: str = ""
-    unit: str = ""
-    city: str = ""
-    country_code: str = ""
-
-
-@dataclass
-class UserContext:
-    first_name: str
-    last_name: str
-    orcid: str = ""
-    email: str = None
-    is_staff: bool = False
-    enabled: bool = False
-    uos_id: int = None
-    usernames: list[str] = None
-    affiliation: Affiliation = field(default_factory=Affiliation)
-
-
-def get_affiliation_name(affiliation: Affiliation, limit: int = -1) -> str:
-    ret: str = f"{', '.join(i for i in [affiliation.name, affiliation.unit, affiliation.department_name] if i != '')}"
-    if limit > 0:
-        ret = ret[:limit]
-    return ret
+from helpers.dataclasses import UserContext, Affiliation
 
 
 def create_user_context(user_data: str or dict, username_prefix: str = "") -> UserContext:

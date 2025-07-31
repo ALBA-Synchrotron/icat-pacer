@@ -149,7 +149,17 @@ config_yaml_schema: dict = {
     "integrations": {
         "type": "dict",
         "required": True,
+        "check_visa_integration_settings": True,
+        "check_dashboard_integration_settings": True,
+        "check_datacite_integration_settings": True,
+        "check_panosc_integration_settings": True,
         "schema": {
+            "messageForwarding": {
+                "type": "dict",
+                "required": False,
+                "nullable": True,
+                "schema": {}
+            },
             "visa": {
                 "type": "dict",
                 "schema": {
@@ -182,7 +192,48 @@ config_yaml_schema: dict = {
                         }
                     }
                 }
-            }
+            },
+            "dashboard": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "exchangeName": {"type": "string", "required": False},
+                    "routingKey": {"type": "string", "required": False},
+                    "celeryTask": {"type": "string", "required": False},
+                }
+            },
+            "datacite": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "dataCatalogueDoiBaseUrl": {"type": "string", "required": False},
+                    "publisher": {"type": "string", "required": False},
+                    "prefix": {"type": "string", "required": False},
+                    "sessionSuffix": {"type": "string", "required": False},
+                    "username": {"type": "string", "required": False},
+                    "password": {"type": "string", "required": False},
+                    "apiUrl": {"type": "string", "required": False},
+                    "language": {"type": "string", "required": False},
+                    "rightsName": {"type": "string", "required": False},
+                    "rightsSchemeUri": {"type": "string", "required": False},
+                    "rightsUri": {"type": "string", "required": False},
+                    "rightsIdentifierScheme": {"type": "string", "required": False},
+                    "rightsIdentifier": {"type": "string", "required": False},
+                    "funderName": {"type": "string", "required": False},
+                    "funderIdentifier": {"type": "string", "required": False},
+                    "funderIdentifierType": {"type": "string", "required": False},
+                }
+            },
+            "panosc": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "apiUrl": {"type": "string", "required": False},
+                    "username": {"type": "string", "required": False},
+                    "password": {"type": "string", "required": False},
+                    "searchApiUrl": {"type": "string", "required": False},
+                }
+            },
         }
     }
 }
