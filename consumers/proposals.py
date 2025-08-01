@@ -11,7 +11,7 @@ from tasks.proposals import ProposalTasks
 class ProposalConsumer(PACERConsumer):
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(dashboard_message_type="proposal-sync", *args, **kwargs)
         self.tasks = ProposalTasks(self.logger)
 
     def callback_func_sync_proposal_visa(self, body, message: Message) -> None:
