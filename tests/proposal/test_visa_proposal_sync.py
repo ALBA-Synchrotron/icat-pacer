@@ -20,9 +20,9 @@ class TestVISAProposalTasks(GenericPACERUnitTest):
         return ProposalTasks(logger)
 
     @pytest.fixture(scope="class")
-    def new_visa_proposal(self, dynamic_prefix: str) -> InvestigationContext:
+    def new_visa_proposal(self, unittest_prefix: str) -> InvestigationContext:
         investigation_context: InvestigationContext = create_investigation_context(self.fixtures_dict.get("proposal"),
-                                                                                   name_prefix=dynamic_prefix)
+                                                                                   name_prefix=unittest_prefix)
         return investigation_context
 
     def test_sync_visa_proposal(self, proposal_tasks: ProposalTasks, mock_psycopg_pool: ConnectionPool, new_visa_proposal: InvestigationContext) -> None:

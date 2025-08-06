@@ -21,9 +21,9 @@ class TestICATProposalTasks(GenericPACERUnitTest):
         return ProposalTasks(logger)
 
     @pytest.fixture(scope="class")
-    def new_icat_proposal(self, dynamic_prefix: str) -> InvestigationContext:
+    def new_icat_proposal(self, unittest_prefix: str) -> InvestigationContext:
         investigation_context: InvestigationContext = create_investigation_context(self.fixtures_dict.get("proposal"),
-                                                                                   name_prefix=dynamic_prefix)
+                                                                                   name_prefix=unittest_prefix)
         return investigation_context
 
     @pytest.fixture(scope="class")

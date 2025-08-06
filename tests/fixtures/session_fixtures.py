@@ -15,23 +15,16 @@ ICAT_AUTH_PASSWORD: str = os.getenv("ICAT_AUTH_PASSWORD", "")
 
 
 @pytest.fixture(scope="session")
-def unittest_prefix() -> str:
-    return "".join(random.choices(string.ascii_letters + string.digits, k=5))
+def unittest_prefix(request) -> str:
+    characters: str = string.digits
+    digit_only = request.node.get_closest_marker("digit_only_prefix") is not None
+    if not digit_only:
+        characters += string.ascii_letters
+    return "".join(random.choices(characters, k=5))
 
 
 @pytest.fixture(scope="session")
-def unittest_numeric_prefix() -> str:
-    return "".join(random.choices(string.digits, k=5))
-
-
-@pytest.fixture(scope="session")
-def dynamic_prefix(request, unittest_prefix, unittest_numeric_prefix) -> str:
-    use_numeric = request.node.get_closest_marker("digit_only_prefix") is not None
-    return unittest_numeric_prefix if use_numeric else unittest_prefix
-
-
-@pytest.fixture(scope="session")
-def icat_client(dynamic_prefix) -> Generator[ICATClient, Any, None]:
+def icat_client(unittest_prefix) -> Generator[ICATClient, Any, None]:
     client: ICATClient = ICATClient(url=ICAT_SERVER_URL, username=ICAT_AUTH_USERNAME, password=ICAT_AUTH_PASSWORD,
                                     auth_plugin=ICAT_AUTH_PLUGIN)
     yield client

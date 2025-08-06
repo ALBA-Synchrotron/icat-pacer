@@ -17,8 +17,9 @@ DATE_EU = "%d/%m/%Y"
 
 def try_parse_datetime(date_str: str) -> datetime:
     datetime_formats = [
-        DATETIME_ISO_UTC_MS,
         DATETIME_ISO,
+        DATETIME_ISO_8601_UTC,
+        DATETIME_ISO_UTC_MS,
         DATETIME_ISO_SPACE,
         DATETIME_ISO_SPACE_MS,
         DATETIME_US,
