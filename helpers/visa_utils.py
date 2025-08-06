@@ -199,7 +199,14 @@ class VISALoader:
                 params: tuple = (investigation_context.instrument.get('name'),)
                 cur.execute(query, params)
                 res = cur.fetchone()
-                instrument_id = res[0] if res else 1
+                if not res:
+                    error_msg: str = f"Instrument {investigation_context.instrument.get('name')} not found in visa db"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
+
+                instrument_id: int | tuple = res[0]
+                if isinstance(instrument_id, tuple):
+                    instrument_id = res[0]
 
                 insert_query: str = """
                         INSERT INTO experiment (id, proposal_id, instrument_id, start_date, end_date, title, url, doi)
@@ -211,14 +218,14 @@ class VISALoader:
                 insert_params: tuple = (
                     investigation_context.name,
                     int(investigation_context.name),
-                    int(instrument_id),
+                    instrument_id,
                     investigation_context.start_date,
                     investigation_context.end_date,
                     investigation_context.title,
                     investigation_context.url,
                     investigation_context.doi,
                     int(investigation_context.name),
-                    int(instrument_id),
+                    instrument_id,
                     investigation_context.start_date,
                     investigation_context.end_date,
                     investigation_context.title,

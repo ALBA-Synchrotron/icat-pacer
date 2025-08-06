@@ -13,7 +13,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 
 class TestVISAProposalTasks(GenericPACERUnitTest):
     fixtures: list = ["user.json"]
-    entities_teardown: list = ["User"]
+    entities_teardown: list = []
     digit_only_prefix: bool = True
 
     @pytest.fixture(scope="class")

@@ -134,8 +134,8 @@ class ProposalTasks:
             reimbursed_parcels_investigation_param = icat_client.search(
                 "InvestigationParameter",
                 conditions={
-                    "investigation__id": investigation.id,
-                    "type__id": reimbursed_parcels_param_type.id
+                    "investigation.id__eq": investigation.id,
+                    "type.id__eq": reimbursed_parcels_param_type.id
                 },
                 flatten_single=True
             )
