@@ -14,15 +14,16 @@ logger: logging.Logger = logging.getLogger(__name__)
 class TestVISAProposalTasks(GenericPACERUnitTest):
     fixtures: list = ["user.json"]
     entities_teardown: list = ["User"]
+    digit_only_prefix: bool = True
 
     @pytest.fixture(scope="class")
     def proposal_tasks(self) -> ProposalTasks:
         return ProposalTasks(logger)
 
     @pytest.fixture(scope="class")
-    def new_visa_proposal(self, unittest_prefix: str) -> InvestigationContext:
+    def new_visa_proposal(self, numeric_prefix: str) -> InvestigationContext:
         investigation_context: InvestigationContext = create_investigation_context(self.fixtures_dict.get("proposal"),
-                                                                                   name_prefix=unittest_prefix)
+                                                                                   name_prefix=numeric_prefix)
         return investigation_context
 
     def test_sync_visa_proposal(self, proposal_tasks: ProposalTasks, mock_psycopg_pool: ConnectionPool, new_visa_proposal: InvestigationContext) -> None:

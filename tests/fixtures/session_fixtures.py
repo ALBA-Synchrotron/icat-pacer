@@ -25,7 +25,7 @@ def numeric_prefix() -> str:
 
 
 @pytest.fixture(scope="session")
-def icat_client(unittest_prefix) -> Generator[ICATClient, Any, None]:
+def icat_client() -> Generator[ICATClient, Any, None]:
     client: ICATClient = ICATClient(url=ICAT_SERVER_URL, username=ICAT_AUTH_USERNAME, password=ICAT_AUTH_PASSWORD,
                                     auth_plugin=ICAT_AUTH_PLUGIN)
     yield client
