@@ -15,6 +15,7 @@ class TestICATProposalTasks(GenericPACERUnitTest):
     fixtures: list = ["proposal.json"]
     entities_teardown: list = ["Investigation", "InvestigationInstrument", "InvestigationUser",
                                "InvestigationParameter", "InvestigationType", "Facility"]
+    digit_only_prefix: bool = True
 
     @pytest.fixture(scope="class")
     def proposal_tasks(self) -> ProposalTasks:
@@ -31,7 +32,6 @@ class TestICATProposalTasks(GenericPACERUnitTest):
         new_icat_proposal.start_date = datetime.now()
         return new_icat_proposal
 
-    @pytest.mark.digit_only_prefix
     def test_create_new_proposal(self, proposal_tasks: ProposalTasks, icat_client: ICATClient,
                                  new_icat_proposal: InvestigationContext) -> None:
         proposal_tasks.sync_investigation_icat(icat_client, new_icat_proposal)
@@ -41,7 +41,6 @@ class TestICATProposalTasks(GenericPACERUnitTest):
         assert len(proposals) == 1
         assert proposals[0].name == new_icat_proposal.name
 
-    @pytest.mark.digit_only_prefix
     def test_update_proposal(self, proposal_tasks: ProposalTasks, icat_client: ICATClient,
                              updated_icat_proposal: InvestigationContext) -> None:
         proposal_tasks.sync_investigation_icat(icat_client, updated_icat_proposal)

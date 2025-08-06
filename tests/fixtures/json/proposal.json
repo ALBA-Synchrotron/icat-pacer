@@ -11,7 +11,7 @@
     "code": "BL13"
   },
   "type": "MX",
-  "user_list": [{"username": "auo-test", "email": "", "role": "Principal Investigator"}],
+  "user_list": [{"username": "testuser", "email": "", "role": "Principal Investigator"}],
   "visit_count": 1,
   "is_reimbursed": true,
   "doi": "",

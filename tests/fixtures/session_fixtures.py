@@ -16,10 +16,10 @@ ICAT_AUTH_PASSWORD: str = os.getenv("ICAT_AUTH_PASSWORD", "")
 
 @pytest.fixture(scope="session")
 def unittest_prefix(request) -> str:
-    characters: str = string.digits
-    digit_only = request.node.get_closest_marker("digit_only_prefix") is not None
-    if not digit_only:
-        characters += string.ascii_letters
+    characters: str = string.ascii_letters + string.digits
+    test_cls = getattr(request.node, "cls", None)
+    if getattr(test_cls, "digit_only_prefix", False):
+        characters = string.digits
     return "".join(random.choices(characters, k=5))
 
 

@@ -11,6 +11,7 @@ class GenericPACERUnitTest:
     fixtures_dict: dict = {}
     fixtures: list
     entities_teardown: list
+    digit_only_prefix: bool = False
 
     @pytest.fixture(scope="class", autouse=True)
     def load_fixtures(self) -> None:
