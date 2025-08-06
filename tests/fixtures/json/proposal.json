@@ -1,0 +1,22 @@
+{
+  "name": "2025079999",
+  "facility": "ALBA",
+  "start_date": "2025-07-01T00:00:00Z",
+  "end_date": "2025-07-02T00:00:00Z",
+  "release_date": "2028-07-02T00:00:00Z",
+  "title": "test_title",
+  "summary": "test_summary",
+  "instrument": {
+    "name": "BL13 - XALOC",
+    "code": "BL13"
+  },
+  "type": "MX",
+  "user_list": [
+    {"username": "testuser", "email": "", "role": "Principal investigator"},
+    {"username": "testuser", "email": "", "role": "Local contact"}
+  ],
+  "visit_count": 1,
+  "is_reimbursed": true,
+  "doi": "",
+  "url": ""
+}

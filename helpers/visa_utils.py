@@ -3,6 +3,7 @@ from logging import Logger
 from psycopg_pool import ConnectionPool
 
 from helpers.common import get_affiliation_name
+from helpers.dataclasses import InvestigationContext
 from helpers.user import UserContext, Affiliation
 
 
@@ -159,138 +160,103 @@ class VISALoader:
                             error_msg: str = f"Error deleting STAFF role from user profile_id={user_ctx.uos_id} to visa db: {e}"
                             logger.error(error_msg)
                             raise Exception(error_msg)
-                # TODO: Fix up these functions below when proposal sync is implemented. Change func names and attributes to match
-                #       those defined above for user and affiliation sync.
-            """
-            @classmethod
-            async def db_sync_experiment(cls, experiments):
-                async with conn.transaction():
-                    inserted = 0
-                    updated = 0
-                    total_lines = 0
-                    for experiment in experiments:
-                        instrument_id = await conn.fetchval(
-                            "select id from instrument where name LIKE '{}%'".format(experiment['instrument']))
-            
-                        res = await conn.execute(
-                            \"""INSERT INTO experiment (id, proposal_id, instrument_id, start_date, end_date, title, url, doi)
-                               VALUES ($1, $2, $3, $4, $5, $6, $7, $8) ON CONFLICT (id) DO
-                            UPDATE
-                                SET proposal_id = $2, instrument_id=$3, start_date=$4, end_date=$5, title=$6, url=$7, doi=$8\""",
-                            experiment['id'],
-                            int(experiment['proposal_id']),
-                            instrument_id,
-                            experiment['start_date'],
-                            experiment['end_date'],
-                            experiment['title'],
-                            experiment['url'],
-                            experiment['doi']
-                        )
-                        response_parsed = self.parse_response_reg.match(res)
-                        inserted += int(response_parsed.group(1))
-                        updated += int(response_parsed.group(2))
-                        total_lines += 1
-                    print("Experiment : INSERT {0} UPDATE {1} TOTAL {2}".format(inserted, updated, total_lines))
-            
-            async def experiment_user(self, exp_users):
-                async with self.conn.transaction():
-                    inserted = 0
-                    updated = 0
-                    total_lines = 0
-                    for exp_user in exp_users:
-                        user_id = await self.conn.fetchval(
-                            "select id from users where email = '{}'".format(exp_user['email']))
-                        if user_id:
-                            res = await self.conn.execute(
-                                \"""INSERT INTO experiment_user (experiment_id, user_id)
-                                   VALUES ($1, $2) ON CONFLICT DO NOTHING\""",
-                                exp_user['experiment_id'],
-                                user_id)
-                            response_parsed = self.parse_response_reg.match(res)
-                            inserted += int(response_parsed.group(1))
-                            updated += int(response_parsed.group(2))
-                            total_lines += 1
-                    print("Experiment User : INSERT {0} UPDATE {1} TOTAL {2}".format(inserted, updated, total_lines))
-            
-            async def instrument_control_user(self, ic_users):
-                async with self.conn.transaction():
-                    inserted = 0
-                    updated = 0
-                    total_lines = 0
-            
-                    instrument_control_id = await self.conn.fetchval("select id from role where name = 'INSTRUMENT_CONTROL'")
-                    for ic_user in ic_users:
-                        res = await self.conn.execute(
-                            \"""INSERT INTO user_role (user_id, role_id)
-                               VALUES ($1, $2) ON CONFLICT DO NOTHING\""",
-                            ic_user['user_id'],
-                            instrument_control_id)
-                        response_parsed = self.parse_response_reg.match(res)
-                        inserted += int(response_parsed.group(1))
-                        updated += int(response_parsed.group(2))
-                        total_lines += 1
-                    print("Instrument Control User : INSERT {0} UPDATE {1} TOTAL {2}".format(inserted, updated, total_lines))
-            
-            async def instrument(self, instruments):
-                async with self.conn.transaction():
-                    inserted = 0
-                    updated = 0
-                    total_lines = 0
-                    for instrument in instruments:
-                        res = await self.conn.execute(
-                            \"""INSERT INTO instrument (id, name)
-                               VALUES ($1, $2) ON CONFLICT (id) DO
-                            UPDATE
-                                SET name = $2\""",
-                            int(instrument['id']),
-                            instrument['name']
-                        )
-                        response_parsed = self.parse_response_reg.match(res)
-                        inserted += int(response_parsed.group(1))
-                        updated += int(response_parsed.group(2))
-                        total_lines += 1
-                    print("Instrument : INSERT {0} UPDATE {1} TOTAL {2}".format(inserted, updated, total_lines))
-            
-            async def instrument_scientist(self, instrument_scientists):
-                async with self.conn.transaction():
-                    inserted = 0
-                    updated = 0
-                    total_lines = 0
-                    for instrument_scientist in instrument_scientists:
-                        res = await self.conn.execute(
-                            \"""INSERT INTO instrument_scientist (instrument_id, user_id)
-                               VALUES ($1, $2) ON CONFLICT DO NOTHING\""",
-                            int(instrument_scientist['instrument_id']),
-                            instrument_scientist['user_id']
-                        )
-                        response_parsed = self.parse_response_reg.match(res)
-                        inserted += int(response_parsed.group(1))
-                        updated += int(response_parsed.group(2))
-                        total_lines += 1
-                    print("Instrument responsible : INSERT {0} UPDATE {1} TOTAL {2}".format(inserted, updated, total_lines))
-            
-            async def proposal(self, proposals):
-                async with self.conn.transaction():
-                    inserted = 0
-                    updated = 0
-                    total_lines = 0
-                    for proposal in proposals:
-                        res = await self.conn.execute(
-                            \"""INSERT INTO proposal (id, identifier, title, doi, url, summary, public_at)
-                               VALUES ($1, $2, $3, $4, $5, $6, $7) ON CONFLICT (id) DO
-                            UPDATE
-                                SET identifier = $2, title = $3, doi = $4, url = $5, summary = $6, public_at = $7\""",
-                            int(proposal['id']),
-                            proposal['identifier'],
-                            proposal['title'],
-                            proposal['doi'],
-                            proposal['url'],
-                            proposal['summary'],
-                            proposal['public_at']
-                        )
-                        response_parsed = self.parse_response_reg.match(res)
-                        inserted += int(response_parsed.group(1))
-                        updated += int(response_parsed.group(2))
-                        total_lines += 1
-                    print("Proposal : INSERT {0} UPDATE {1} TOTAL {2}".format(inserted, updated, total_lines))
-            """
+
+    @classmethod
+    def db_sync_proposal(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger):
+        with pool.connection() as conn:
+            with conn.cursor() as cur:
+                query: str = """
+                        INSERT INTO proposal (id, identifier, title, doi, url, summary, public_at)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO
+                        UPDATE
+                            SET identifier = %s, title = %s, doi = %s, url = %s, summary = %s, public_at = %s
+                    """
+                params: tuple = (
+                    int(investigation_context.name),
+                    investigation_context.name,
+                    investigation_context.title,
+                    investigation_context.doi,
+                    investigation_context.url,
+                    investigation_context.summary,
+                    investigation_context.release_date,
+                    investigation_context.name,
+                    investigation_context.title,
+                    investigation_context.doi,
+                    investigation_context.url,
+                    investigation_context.summary,
+                    investigation_context.release_date
+                )
+                try:
+                    cur.execute(query, params)
+                except Exception as e:
+                    logger.error(f"Error synchronizing Proposal {investigation_context.name} to visa db: {e}")
+
+    @classmethod
+    def db_sync_experiment(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger):
+        with pool.connection() as conn:
+            with conn.cursor() as cur:
+                query: str = "select id from instrument where name LIKE %s"
+                params: tuple = (investigation_context.instrument.get('name'),)
+                cur.execute(query, params)
+                res = cur.fetchone()
+                if not res:
+                    error_msg: str = f"Instrument {investigation_context.instrument.get('name')} not found in visa db"
+                    logger.error(error_msg)
+                    raise Exception(error_msg)
+
+                instrument_id: int | tuple = res[0]
+                if isinstance(instrument_id, tuple):
+                    instrument_id = res[0]
+
+                insert_query: str = """
+                        INSERT INTO experiment (id, proposal_id, instrument_id, start_date, end_date, title, url, doi)
+                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        ON CONFLICT (id) DO 
+                        UPDATE
+                            SET proposal_id=%s, instrument_id=%s, start_date=%s, end_date=%s, title=%s, url=%s, doi=%s
+                    """
+                insert_params: tuple = (
+                    investigation_context.name,
+                    int(investigation_context.name),
+                    instrument_id,
+                    investigation_context.start_date,
+                    investigation_context.end_date,
+                    investigation_context.title,
+                    investigation_context.url,
+                    investigation_context.doi,
+                    int(investigation_context.name),
+                    instrument_id,
+                    investigation_context.start_date,
+                    investigation_context.end_date,
+                    investigation_context.title,
+                    investigation_context.url,
+                    investigation_context.doi
+                )
+                try:
+                    cur.execute(insert_query, insert_params)
+                except Exception as e:
+                    logger.error(f"Error synchronizing Experiment {investigation_context.name} to visa db: {e}")
+
+    @classmethod
+    def db_sync_experiment_user(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger):
+        with pool.connection() as conn:
+            with conn.cursor() as cur:
+                for ctx_user in investigation_context.user_list:
+                    query: str = "select id from users where email = %s"
+                    params: tuple = (ctx_user['email'],)
+                    cur.execute(query, params)
+                    res = cur.fetchone()
+                    user_id = res[0] if res else 1
+                    insert_query: str = """
+                            INSERT INTO experiment_user (experiment_id, user_id)
+                            VALUES (%s, %s) ON CONFLICT DO NOTHING
+                        """
+                    insert_params: tuple = (
+                        int(investigation_context.name),
+                        user_id
+                    )
+                    try:
+                        cur.execute(insert_query, insert_params)
+                    except Exception as e:
+                        logger.error(
+                            f"Error synchronizing Experiment User {ctx_user['email']} for {investigation_context.name} to visa db: {e}")

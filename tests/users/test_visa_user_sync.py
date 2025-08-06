@@ -19,9 +19,9 @@ class TestVISAUserTasks(GenericPACERUnitTest):
         return UserTasks(logger)
 
     @pytest.fixture(scope="class")
-    def new_visa_user(self, unittest_user_prefix: str) -> UserContext:
+    def new_visa_user(self, ascii_prefix) -> UserContext:
         user_ctx: UserContext = create_user_context(self.fixtures_dict.get("user"),
-                                                    username_prefix=unittest_user_prefix)
+                                                    username_prefix=ascii_prefix)
         return user_ctx
 
     def test_sync_visa_user(self, user_tasks: UserTasks, mock_psycopg_pool: ConnectionPool, new_visa_user: UserContext) -> None:

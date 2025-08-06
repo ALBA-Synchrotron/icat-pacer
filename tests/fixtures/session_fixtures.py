@@ -15,12 +15,17 @@ ICAT_AUTH_PASSWORD: str = os.getenv("ICAT_AUTH_PASSWORD", "")
 
 
 @pytest.fixture(scope="session")
-def unittest_user_prefix() -> str:
+def ascii_prefix() -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=5))
 
 
 @pytest.fixture(scope="session")
-def icat_client(unittest_user_prefix: str) -> Generator[ICATClient, Any, None]:
+def numeric_prefix() -> str:
+    return "".join(random.choices(string.digits, k=5))
+
+
+@pytest.fixture(scope="session")
+def icat_client() -> Generator[ICATClient, Any, None]:
     client: ICATClient = ICATClient(url=ICAT_SERVER_URL, username=ICAT_AUTH_USERNAME, password=ICAT_AUTH_PASSWORD,
                                     auth_plugin=ICAT_AUTH_PLUGIN)
     yield client
@@ -33,7 +38,6 @@ def datacite_client_mock() -> Generator[MagicMock, Any, None]:
         client_mock = DataciteClientMock.return_value
         client_mock.create_doi.return_value = None
         client_mock.__check_weight_recomputation_in_progress.return_value = False
-
 
         yield client_mock
 

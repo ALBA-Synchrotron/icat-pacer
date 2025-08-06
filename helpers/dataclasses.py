@@ -1,3 +1,4 @@
+import datetime
 from dataclasses import dataclass, field
 
 
@@ -51,3 +52,21 @@ class DashboardCeleryTask:
 class InvestigationOperationsContext:
     name: str
     operations: list
+
+
+@dataclass
+class InvestigationContext:
+    name: str = ""
+    facility: str = "ALBA"
+    start_date: datetime = ""
+    end_date: datetime = ""
+    release_date: datetime = ""
+    title: str = ""
+    summary: str = ""
+    instrument: dict = field(default_factory=lambda: {"name": "", "code": ""})
+    type: str = ""
+    user_list: list = field(default_factory=lambda: [{"username": "", "email": "", "role": ""}])
+    visit_count: int = 0
+    is_reimbursed: bool = False
+    doi: str = ""
+    url: str = ""
