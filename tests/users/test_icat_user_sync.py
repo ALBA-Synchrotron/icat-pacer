@@ -19,9 +19,9 @@ class TestICATUserTasks(GenericPACERUnitTest):
         return UserTasks(logger)
 
     @pytest.fixture(scope="class")
-    def new_icat_user(self, unittest_user_prefix: str) -> UserContext:
+    def new_icat_user(self, dynamic_prefix) -> UserContext:
         user_ctx: UserContext = create_user_context(self.fixtures_dict.get("user"),
-                                                    username_prefix=unittest_user_prefix)
+                                                    username_prefix=dynamic_prefix)
         return user_ctx
 
     @pytest.fixture(scope="class")

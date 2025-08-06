@@ -173,12 +173,18 @@ class VISALoader:
                     """
                 params: tuple = (
                     int(investigation_context.name),
-                    int(investigation_context.name),
+                    investigation_context.name,
                     investigation_context.title,
                     investigation_context.doi,
                     investigation_context.url,
                     investigation_context.summary,
                     investigation_context.release_date,
+                    investigation_context.name,
+                    investigation_context.title,
+                    investigation_context.doi,
+                    investigation_context.url,
+                    investigation_context.summary,
+                    investigation_context.release_date
                 )
                 try:
                     cur.execute(query, params)
@@ -203,16 +209,16 @@ class VISALoader:
                             SET proposal_id=%s, instrument_id=%s, start_date=%s, end_date=%s, title=%s, url=%s, doi=%s
                     """
                 insert_params: tuple = (
+                    investigation_context.name,
                     int(investigation_context.name),
-                    int(investigation_context.name),
-                    instrument_id,
+                    int(instrument_id),
                     investigation_context.start_date,
                     investigation_context.end_date,
                     investigation_context.title,
                     investigation_context.url,
                     investigation_context.doi,
                     int(investigation_context.name),
-                    instrument_id,
+                    int(instrument_id),
                     investigation_context.start_date,
                     investigation_context.end_date,
                     investigation_context.title,

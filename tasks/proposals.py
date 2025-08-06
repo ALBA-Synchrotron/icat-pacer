@@ -9,7 +9,7 @@ from helpers.dataclasses import InvestigationContext
 from helpers.icat_utils import ICATClient
 from helpers.visa_utils import VISALoader
 from icat.entity import Entity
-from helpers import labels
+from helpers import settings
 
 
 class ProposalTasks:
@@ -29,8 +29,8 @@ class ProposalTasks:
                                 **_kwargs):
         self.logger.info(f"ICAT sync: Synchronizing proposal {investigation_context.name}")
 
-        investigation: Entity = icat_client.search("Investigation", conditions={"name": investigation_context.name},
-                                                   flatten_single=False)
+        investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": investigation_context.name},
+                                                   flatten_single=True)
         if not investigation:
             investigation: Entity = icat_client.new("Investigation", name=investigation_context.name)
             investigation.name = investigation_context.name
@@ -54,14 +54,14 @@ class ProposalTasks:
             # Facility
             investigation.facility = icat_client.search(
                 "Facility",
-                conditions={"name": investigation_context.facility},
+                conditions={"name__eq": investigation_context.facility},
                 flatten_single=True
             )
 
             # InvestigationType
             investigation.type = icat_client.search(
                 "InvestigationType",
-                conditions={"name": investigation_context.type},
+                conditions={"name__eq": investigation_context.type},
                 flatten_single=True
             )
         except Exception as e:
@@ -128,7 +128,7 @@ class ProposalTasks:
 
             reimbursed_parcels_param_type: Entity = icat_client.search(
                 "ParameterType",
-                conditions={"name__in": "reimbursedParcels"},
+                conditions={"name__eq": "reimbursedParcels"},
                 flatten_single=True
             )
             reimbursed_parcels_investigation_param = icat_client.search(
@@ -153,9 +153,13 @@ class ProposalTasks:
 
             investigation_instrument: Entity = icat_client.search(
                 "InvestigationInstrument",
-                conditions={"investigation__name": investigation_context.name},
-                flatten_single=True
+                conditions={"investigation.name__eq": investigation_context.name},
+                flatten_single=True,
+                includes=['instrument']
             )
+            if not investigation_instrument:
+                raise ValueError(f"InvestigationInstrument for {investigation_context.name} not found in ICAT.")
+
             if investigation_context.instrument.get("name") != investigation_instrument.instrument.name:
                 self.logger.info(f"ICAT sync: Instrument changed for investigation {investigation.name}")
                 icat_client.delete(investigation_instrument)
@@ -168,13 +172,13 @@ class ProposalTasks:
 
     def __create_statistics_parameters(self, icat_client: ICATClient, investigation: Entity):
         try:
-            self.logger.info(f"ICAT sync: Initializing statistics parameters [] for investigation {investigation.name}")
-
             parameter_tye_list: list = ['__datasetCount', '__sampleCount', '__fileCount', '__volume']
+            self.logger.info(f"ICAT sync: Initializing statistics parameters {parameter_tye_list} for investigation {investigation.name}")
+
             for param_type_name in parameter_tye_list:
                 param_type: Entity = icat_client.search(
                     "ParameterType",
-                    conditions={"name": param_type_name},
+                    conditions={"name__eq": param_type_name},
                     flatten_single=True
                 )
                 if not param_type:
@@ -198,7 +202,7 @@ class ProposalTasks:
 
             reimbursed_parcels_param_type: Entity = icat_client.search(
                 "ParameterType",
-                conditions={"name": "reimbursedParcels"},
+                conditions={"name__eq": "reimbursedParcels"},
                 flatten_single=True
             )
             param: Entity = icat_client.new('InvestigationParameter')
@@ -218,7 +222,7 @@ class ProposalTasks:
 
             instrument: Entity = icat_client.search(
                 "Instrument",
-                conditions={"name": investigation_context.instrument.get("name")},
+                conditions={"name__eq": investigation_context.instrument.get("code")},
                 flatten_single=True
             )
             if not instrument:
@@ -235,21 +239,25 @@ class ProposalTasks:
 
     def __handle_user_roles(self, icat_client: ICATClient, investigation: Entity, investigation_context: InvestigationContext):
         # Main Proposer
+        self.logger.info(f"ICAT sync: Saving main proposer for investigation {investigation_context.name}")
         self.__save_investigation_user_role_unique(icat_client, investigation, investigation_context,
-                                                   labels.ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR)
-        # Proposers
-        self.__save_investigation_user_role_set(icat_client, investigation, investigation_context, labels.ICAT_USER_ROLE_PROPOSER)
+                                                   settings.ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR)
+        # Co-Proposers
+        self.logger.info(f"ICAT sync: Saving proposers for investigation {investigation_context.name}")
+        self.__save_investigation_user_role_set(icat_client, investigation, investigation_context, settings.ICAT_USER_ROLE_PROPOSER)
         # Local contact
+        self.logger.info(f"ICAT sync: Saving local contact for investigation {investigation_context.name}")
         self.__save_investigation_user_role_unique(icat_client, investigation, investigation_context,
-                                                   labels.ICAT_USER_ROLE_LOCAL_CONTACT)
-        # Collaborators
-        self.__save_investigation_user_role_set(icat_client, investigation, investigation_context, labels.ICAT_USER_ROLE_COLLABORATOR)
+                                                   settings.ICAT_USER_ROLE_LOCAL_CONTACT)
+        # Participants (visitors)
+        self.logger.info(f"ICAT sync: Saving Participants for investigation {investigation_context.name}")
+        self.__save_investigation_user_role_set(icat_client, investigation, investigation_context, settings.ICAT_USER_ROLE_PARTICIPANT)
 
     def __save_investigation_user_role_unique(self, icat_client: ICATClient, investigation: Entity,
                                               investigation_context: InvestigationContext, role: str):
         try:
             try:
-                context_investigation_user: Entity = [u['username'] for u in investigation_context.user_list if u['role'] == role][0]
+                context_investigation_user: Entity = [u['username'] for u in investigation_context.user_list if u['role'].lower() == role.lower()][0]
             except IndexError:
                 msg = f"InvestigationUser not found in user list provided for investigation {investigation_context.name}"
                 self.logger.error(msg)
@@ -257,7 +265,7 @@ class ProposalTasks:
 
             user: Entity = icat_client.search(
                 "User",
-                conditions={"name": context_investigation_user},
+                conditions={"name__eq": context_investigation_user},
                 flatten_single=True
             )
             if not user:
@@ -265,17 +273,21 @@ class ProposalTasks:
 
             current_investigation_user = icat_client.search(
                 "InvestigationUser",
-                conditions={"investigation__name": investigation_context.name,
-                            "role": role},
-                flatten_single=True
+                conditions={
+                    "investigation.name__eq": investigation_context.name,
+                    "role__eq": role
+                },
+                flatten_single=True,
+                includes=['user']
             )
             if current_investigation_user and current_investigation_user.user.name != context_investigation_user:
                 icat_client.delete(current_investigation_user)
 
-            investigation_user: Entity = icat_client.new("InvestigationUser")
-            investigation_user.investigation = investigation
-            investigation_user.user = user
-            investigation_user.role = role
+                investigation_user: Entity = icat_client.new("InvestigationUser")
+                investigation_user.investigation = investigation
+                investigation_user.user = user
+                investigation_user.role = role
+                investigation_user.create()
         except Exception as e:
             self.logger.error(f"Error saving InvestigationUser for investigation {investigation_context.name}")
             self.logger.error(e)
@@ -284,8 +296,6 @@ class ProposalTasks:
     def __save_investigation_user_role_set(self, icat_client: ICATClient, investigation: Entity,
                                            investigation_context: InvestigationContext, role: str):
         try:
-            self.logger.info(f"ICAT sync: Saving InvestigationUsers with role {role} for investigation {investigation_context.name}")
-
             context_investigation_usernames: list[str] = [u['username'] for u in investigation_context.user_list if u['role'] == role]
             if not context_investigation_usernames:
                 self.logger.warning(f"No InvestigationUsers found for investigation {investigation_context.name} with role {role}")
@@ -293,17 +303,18 @@ class ProposalTasks:
 
             current_investigation_users: list[Entity] = icat_client.search(
                 "InvestigationUser",
-                conditions={"investigation__name": investigation_context.name, "role": role},
-                flatten_single=False
+                conditions={"investigation.name__eq": investigation_context.name, "role__eq": role},
+                flatten_single=False,
+                includes=['user']
             )
             current_investigation_usernames: list[str] = [investigation_proposer.user.name for investigation_proposer in
-                                                          current_investigation_users]
+                                                          current_investigation_users] if current_investigation_users else []
 
             for context_investigation_username in context_investigation_usernames:
                 if context_investigation_username not in current_investigation_usernames:
                     user: Entity = icat_client.search(
                         "User",
-                        conditions={"name": context_investigation_username},
+                        conditions={"name__eq": context_investigation_username},
                         flatten_single=True
                     )
                     if not user:
@@ -315,11 +326,12 @@ class ProposalTasks:
                     investigation_user.role = role
                     investigation_user.create()
 
-            for current_investigation_user in current_investigation_users:
-                if current_investigation_user.user.name not in context_investigation_usernames:
-                    self.logger.info(f"Removing InvestigationUser {current_investigation_user.user.name} with role "
-                                     f"{role} from investigation {investigation_context.name}")
-                    icat_client.delete(current_investigation_user)
+            if current_investigation_users:
+                for current_investigation_user in current_investigation_users:
+                    if current_investigation_user.user.name not in context_investigation_usernames:
+                        self.logger.info(f"Removing InvestigationUser {current_investigation_user.user.name} with role "
+                                         f"{role} from investigation {investigation_context.name}")
+                        icat_client.delete(current_investigation_user)
 
         except Exception as e:
             self.logger.error(f"Error saving InvestigationUsers with role {role} for investigation {investigation_context.name}")

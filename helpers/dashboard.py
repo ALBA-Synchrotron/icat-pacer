@@ -11,8 +11,9 @@ from producers.dashboard import DashboardProducer
 
 
 def create_message_context(message: Message, message_type: str, error_message: str = "",
-                           obj_identifiers: dict = {}) -> MessageContext:
-    processed_at: str = f"{datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]} {time.strftime("%z")}"
+                           obj_identifiers: dict | None = None) -> MessageContext:
+    obj_identifiers = obj_identifiers or {}
+    processed_at: str = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]} {time.strftime('%z')}"
     sha256_hash: str = hashlib.sha256(str(message.payload).encode()).hexdigest()
     message_type: str = message_type
     payload: str = message.payload or str(message.body)

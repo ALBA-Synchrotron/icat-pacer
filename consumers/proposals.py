@@ -14,14 +14,23 @@ class ProposalConsumer(PACERConsumer):
         super().__init__(dashboard_message_type="proposal-sync", *args, **kwargs)
         self.tasks = ProposalTasks(self.logger)
 
-    def callback_func_sync_proposal_visa(self, body, message: Message) -> None:
+    def get_message_object_identifiers(self, message: Message) -> dict:
+        try:
+            investigation_str: str = message.payload or message.body
+            investigation_context: InvestigationContext = create_investigation_context(investigation_str)
+            return {"name": investigation_context.name, }
+        except Exception as e:
+            self.logger.error(f"Error getting message object identifiers: {e!r}")
+            return {}
+
+    def callback_func_sync_proposal_visa(self, body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(f"VISA_proposal_sync_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         proposal_str: str = message.payload or message.body
         investigation_context: InvestigationContext = create_investigation_context(proposal_str)
 
         self.tasks.sync_investigation_visa(self.visa_pg_pool, investigation_context, message=message, body=body)
 
-    def callback_func_sync_proposal_icat(self, body, message: Message) -> None:
+    def callback_func_sync_proposal_icat(self, body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(f"ICAT_proposal_sync_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         proposal_str: str = message.payload or message.body
         investigation_context: InvestigationContext = create_investigation_context(proposal_str)

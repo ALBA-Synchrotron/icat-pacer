@@ -22,9 +22,9 @@ def non_existent_investigation() -> InvestigationOperationsContext:
 
 
 @pytest.fixture(scope="class")
-def investigation_with_doi(icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+def investigation_with_doi(icat_client: ICATClient, dynamic_prefix, icat_facility: Entity,
                            icat_investigation_type: Entity):
-    investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-with-doi",
+    investigation: Entity = icat_client.new("Investigation", name=f"{dynamic_prefix}-investigation-with-doi",
                                             facility=icat_facility, doi="10.1234/test-doi", title="test title",
                                             type=icat_investigation_type,
                                             visitId="bltest")
@@ -35,9 +35,9 @@ def investigation_with_doi(icat_client: ICATClient, unittest_user_prefix: str, i
 
 
 @pytest.fixture(scope="class")
-def investigation_with_no_datasets(icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+def investigation_with_no_datasets(icat_client: ICATClient, dynamic_prefix, icat_facility: Entity,
                                    icat_investigation_type: Entity):
-    investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-no-data",
+    investigation: Entity = icat_client.new("Investigation", name=f"{dynamic_prefix}-investigation-no-data",
                                             facility=icat_facility, title="test title",
                                             type=icat_investigation_type,
                                             visitId="bltest")
@@ -48,14 +48,14 @@ def investigation_with_no_datasets(icat_client: ICATClient, unittest_user_prefix
 
 
 @pytest.fixture(scope="class")
-def investigation_with_no_users(icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+def investigation_with_no_users(icat_client: ICATClient, dynamic_prefix, icat_facility: Entity,
                                 icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity):
-    investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-no-users",
+    investigation: Entity = icat_client.new("Investigation", name=f"{dynamic_prefix}-investigation-no-users",
                                             facility=icat_facility, title="test title",
                                             type=icat_investigation_type,
                                             visitId="bltest")
     investigation.create()
-    dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
+    dataset: Entity = icat_client.new("Dataset", name=f"{dynamic_prefix}-dataset",
                                       investigation=investigation, type=icat_acquisition_dataset_type)
     dataset.create()
 
@@ -66,15 +66,15 @@ def investigation_with_no_users(icat_client: ICATClient, unittest_user_prefix: s
 
 
 @pytest.fixture(scope="class")
-def investigation_with_no_dates(icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+def investigation_with_no_dates(icat_client: ICATClient, dynamic_prefix, icat_facility: Entity,
                                 icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
                                 icat_root_user: Entity):
-    investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-no-dates",
+    investigation: Entity = icat_client.new("Investigation", name=f"{dynamic_prefix}-investigation-no-dates",
                                             facility=icat_facility, title="test title",
                                             type=icat_investigation_type,
                                             visitId="bltest")
     investigation.create()
-    dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
+    dataset: Entity = icat_client.new("Dataset", name=f"{dynamic_prefix}-dataset",
                                       investigation=investigation, type=icat_acquisition_dataset_type)
     dataset.create()
     inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
@@ -89,16 +89,16 @@ def investigation_with_no_dates(icat_client: ICATClient, unittest_user_prefix: s
 
 
 @pytest.fixture(scope="class")
-def investigation_with_no_instrument(icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+def investigation_with_no_instrument(icat_client: ICATClient, dynamic_prefix, icat_facility: Entity,
                                      icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
                                      icat_root_user: Entity):
-    investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-noinstr",
+    investigation: Entity = icat_client.new("Investigation", name=f"{dynamic_prefix}-investigation-noinstr",
                                             facility=icat_facility, title="test title",
                                             type=icat_investigation_type,
                                             visitId="bltest", startDate="2021-01-01", endDate="2021-01-31",
                                             releaseDate="2021-02-01")
     investigation.create()
-    dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
+    dataset: Entity = icat_client.new("Dataset", name=f"{dynamic_prefix}-dataset",
                                       investigation=investigation, type=icat_acquisition_dataset_type)
     dataset.create()
     inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
@@ -113,10 +113,10 @@ def investigation_with_no_instrument(icat_client: ICATClient, unittest_user_pref
 
 
 @pytest.fixture(scope="class")
-def investigation_with_future_end_date(icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+def investigation_with_future_end_date(icat_client: ICATClient, dynamic_prefix, icat_facility: Entity,
                                        icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
                                        icat_root_user: Entity, icat_instrument: Entity):
-    investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-good",
+    investigation: Entity = icat_client.new("Investigation", name=f"{dynamic_prefix}-investigation-good",
                                             facility=icat_facility, title="test title",
                                             type=icat_investigation_type,
                                             visitId="bltest", startDate="2021-01-01",
@@ -124,7 +124,7 @@ def investigation_with_future_end_date(icat_client: ICATClient, unittest_user_pr
                                                 "%Y-%m-%d"),
                                             releaseDate="2021-02-01")
     investigation.create()
-    dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
+    dataset: Entity = icat_client.new("Dataset", name=f"{dynamic_prefix}-dataset",
                                       investigation=investigation, type=icat_acquisition_dataset_type)
     dataset.create()
     inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
@@ -143,16 +143,16 @@ def investigation_with_future_end_date(icat_client: ICATClient, unittest_user_pr
 
 
 @pytest.fixture(scope="class")
-def investigation_good_for_doi(icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
+def investigation_good_for_doi(icat_client: ICATClient, dynamic_prefix, icat_facility: Entity,
                                icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
                                icat_root_user: Entity, icat_instrument: Entity):
-    investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-future",
+    investigation: Entity = icat_client.new("Investigation", name=f"{dynamic_prefix}-investigation-future",
                                             facility=icat_facility, title="test title",
                                             type=icat_investigation_type,
                                             visitId="bltest", startDate="2021-01-01", endDate="2021-01-31",
                                             releaseDate="2021-02-01")
     investigation.create()
-    dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
+    dataset: Entity = icat_client.new("Dataset", name=f"{dynamic_prefix}-dataset",
                                       investigation=investigation, type=icat_acquisition_dataset_type)
     dataset.create()
     inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
@@ -170,16 +170,16 @@ def investigation_good_for_doi(icat_client: ICATClient, unittest_user_prefix: st
     icat_client.delete(investigation)
 
 @pytest.fixture(scope="class")
-def investigation_good_for_item_creation(icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                               icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
-                               icat_root_user: Entity, icat_instrument: Entity):
-    investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-future",
+def investigation_good_for_item_creation(icat_client: ICATClient, dynamic_prefix, icat_facility: Entity,
+                                         icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
+                                         icat_root_user: Entity, icat_instrument: Entity):
+    investigation: Entity = icat_client.new("Investigation", name=f"{dynamic_prefix}-investigation-future",
                                             facility=icat_facility, title="test title",
                                             type=icat_investigation_type, doi="10.1234/test-doi",
                                             visitId="bltest", startDate="2021-01-01", endDate="2021-01-31",
                                             releaseDate="2021-02-01")
     investigation.create()
-    dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
+    dataset: Entity = icat_client.new("Dataset", name=f"{dynamic_prefix}-dataset",
                                       investigation=investigation, type=icat_acquisition_dataset_type)
     dataset.create()
     inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,
@@ -197,16 +197,16 @@ def investigation_good_for_item_creation(icat_client: ICATClient, unittest_user_
     icat_client.delete(investigation)
 
 @pytest.fixture(scope="class")
-def investigation_with_no_doi(icat_client: ICATClient, unittest_user_prefix: str, icat_facility: Entity,
-                               icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
-                               icat_root_user: Entity, icat_instrument: Entity):
-    investigation: Entity = icat_client.new("Investigation", name=f"{unittest_user_prefix}-investigation-nodoi",
+def investigation_with_no_doi(icat_client: ICATClient, dynamic_prefix, icat_facility: Entity,
+                              icat_investigation_type: Entity, icat_acquisition_dataset_type: Entity,
+                              icat_root_user: Entity, icat_instrument: Entity):
+    investigation: Entity = icat_client.new("Investigation", name=f"{dynamic_prefix}-investigation-nodoi",
                                             facility=icat_facility, title="test title",
                                             type=icat_investigation_type,
                                             visitId="bltest", startDate="2021-01-01", endDate="2021-01-31",
                                             releaseDate="2021-02-01")
     investigation.create()
-    dataset: Entity = icat_client.new("Dataset", name=f"{unittest_user_prefix}-dataset",
+    dataset: Entity = icat_client.new("Dataset", name=f"{dynamic_prefix}-dataset",
                                       investigation=investigation, type=icat_acquisition_dataset_type)
     dataset.create()
     inv_user: Entity = icat_client.new("InvestigationUser", investigation=investigation, user=icat_root_user,

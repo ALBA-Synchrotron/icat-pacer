@@ -4,12 +4,12 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 
-from helpers import labels
+from helpers import settings
 from helpers.dataclasses import InvestigationContext
 from helpers.datetime import try_parse_datetime
 
 
-def create_investigation_context(investigation_data: str or dict) -> InvestigationContext:
+def create_investigation_context(investigation_data: str or dict, name_prefix: str = '') -> InvestigationContext:
     investigation_dict: dict = json.loads(investigation_data) if isinstance(investigation_data, str) else investigation_data
 
     if not investigation_dict.get("name", ""):
@@ -27,10 +27,10 @@ def create_investigation_context(investigation_data: str or dict) -> Investigati
     if release_date_str:
         release_date: datetime = try_parse_datetime(release_date_str)
     else:
-        release_date: datetime = end_date + relativedelta(years=labels.ICAT_EMBARGO_YEARS_AMOUNT)
+        release_date: datetime = end_date + relativedelta(years=settings.ICAT_EMBARGO_YEARS_AMOUNT)
 
     return InvestigationContext(
-        name=investigation_dict.get("name"),
+        name=f"{name_prefix}{investigation_dict.get('name')}",
         facility=investigation_dict.get("facility", "ALBA"),
         start_date=start_date,
         end_date=end_date,
