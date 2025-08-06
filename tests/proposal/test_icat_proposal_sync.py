@@ -11,11 +11,11 @@ from tests.utils.generic_unit_test import GenericPACERUnitTest
 logger: logging.Logger = logging.getLogger(__name__)
 
 
+@pytest.mark.digit_only_prefix
 class TestICATProposalTasks(GenericPACERUnitTest):
     fixtures: list = ["proposal.json"]
     entities_teardown: list = ["Investigation", "InvestigationInstrument", "InvestigationUser",
                                "InvestigationParameter", "InvestigationType", "Facility"]
-    digit_only_prefix: bool = True
 
     @pytest.fixture(scope="class")
     def proposal_tasks(self) -> ProposalTasks:
