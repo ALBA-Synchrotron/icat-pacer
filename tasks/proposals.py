@@ -139,6 +139,10 @@ class ProposalTasks:
                 },
                 flatten_single=True
             )
+            if not reimbursed_parcels_param_type:
+                raise ValueError(f"Parameter type reimbursedParcels not found in ICAT investigation {investigation_context.name}.")
+            reimbursed_parcels_investigation_param.investigation = investigation
+            reimbursed_parcels_investigation_param.type = reimbursed_parcels_param_type
             reimbursed_parcels_investigation_param.stringValue = str(investigation_context.visit_count)
             reimbursed_parcels_investigation_param.update()
         except Exception as e:
