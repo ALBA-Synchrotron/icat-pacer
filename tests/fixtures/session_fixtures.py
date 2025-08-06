@@ -26,7 +26,7 @@ def unittest_numeric_prefix() -> str:
 
 @pytest.fixture(scope="session")
 def dynamic_prefix(request, unittest_prefix, unittest_numeric_prefix) -> str:
-    use_numeric = getattr(request.cls, "digit_only_prefix", False)
+    use_numeric = request.node.get_closest_marker("digit_only_prefix") is not None
     return unittest_numeric_prefix if use_numeric else unittest_prefix
 
 
