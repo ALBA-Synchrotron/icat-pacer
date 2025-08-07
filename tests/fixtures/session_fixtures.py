@@ -9,9 +9,9 @@ import pytest
 from helpers.icat_utils import ICATClient
 
 ICAT_AUTH_PLUGIN: str = os.getenv("ICAT_AUTH_PLUGIN", "db")
-ICAT_SERVER_URL: str = os.getenv("ICAT_SERVER_URL", "")
-ICAT_AUTH_USERNAME: str = os.getenv("ICAT_AUTH_USERNAME", "")
-ICAT_AUTH_PASSWORD: str = os.getenv("ICAT_AUTH_PASSWORD", "")
+ICAT_SERVER_URL: str = os.getenv("ICAT_SERVER_URL", "https://icattest.cells.es/iws/icat_server/ICATService/ICAT?wsdl")
+ICAT_AUTH_USERNAME: str = os.getenv("ICAT_AUTH_USERNAME", "root")
+ICAT_AUTH_PASSWORD: str = os.getenv("ICAT_AUTH_PASSWORD", "12345")
 
 
 @pytest.fixture(scope="session")

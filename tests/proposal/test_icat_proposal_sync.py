@@ -14,7 +14,7 @@ logger: logging.Logger = logging.getLogger(__name__)
 class TestICATProposalTasks(GenericPACERUnitTest):
     fixtures: list = ["proposal.json"]
     entities_teardown: list = ["Investigation"]
-    digit_only_prefix: bool = False
+    digit_only_prefix: bool = True
 
     @pytest.fixture(scope="class")
     def proposal_tasks(self) -> ProposalTasks:

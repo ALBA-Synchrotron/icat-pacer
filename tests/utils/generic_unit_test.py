@@ -3,7 +3,6 @@ import os
 from typing import Any, Generator
 
 import pytest
-from _pytest.fixtures import SubRequest
 
 from helpers.icat_utils import ICATClient
 
@@ -12,7 +11,7 @@ class GenericPACERUnitTest:
     fixtures_dict: dict = {}
     fixtures: list
     entities_teardown: list
-    digit_only_prefix: bool
+    digit_only_prefix: bool = False
 
     @pytest.fixture(scope="class", autouse=True)
     def load_fixtures(self) -> None:
@@ -28,12 +27,11 @@ class GenericPACERUnitTest:
                     self.fixtures_dict[name] = json.load(f)
 
     @pytest.fixture(scope="class", autouse=True)
-    def class_cleanup(self, request: SubRequest, icat_client: ICATClient, ascii_prefix: str, numeric_prefix: str) -> Generator[None, Any, None]:
+    def class_cleanup(self, icat_client: ICATClient, ascii_prefix: str, numeric_prefix: str) -> Generator[None, Any, None]:
         yield
-        test_cls: GenericPACERUnitTest = request.cls
-        if hasattr(test_cls, 'entities_teardown') and isinstance(test_cls.entities_teardown, list):
-            unittest_prefix: str = ascii_prefix if hasattr(test_cls, 'digit_only_prefix') and test_cls.digit_only_prefix else numeric_prefix
-            for entity in test_cls.entities_teardown:
+        if hasattr(self, 'entities_teardown') and isinstance(self.entities_teardown, list):
+            unittest_prefix: str = ascii_prefix if not self.digit_only_prefix else numeric_prefix
+            for entity in self.entities_teardown:
                 results: list = icat_client.search(entity, conditions={"name__startswith": unittest_prefix},
                                                    flatten_single=False)
                 if results is not None:
