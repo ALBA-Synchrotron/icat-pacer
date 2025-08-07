@@ -23,3 +23,4 @@ img.pdf
 temp.pdf
 config.yaml
 logs/
+.coverage
