@@ -162,7 +162,7 @@ class VISALoader:
                             raise Exception(error_msg)
 
     @classmethod
-    def db_sync_proposal(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger):
+    def db_sync_proposal(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger) -> None:
         with pool.connection() as conn:
             with conn.cursor() as cur:
                 query: str = """
@@ -192,7 +192,7 @@ class VISALoader:
                     logger.error(f"Error synchronizing Proposal {investigation_context.name} to visa db: {e}")
 
     @classmethod
-    def db_sync_experiment(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger):
+    def db_sync_experiment(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger) -> None:
         with pool.connection() as conn:
             with conn.cursor() as cur:
                 query: str = "select id from instrument where name LIKE %s"
@@ -238,7 +238,7 @@ class VISALoader:
                     logger.error(f"Error synchronizing Experiment {investigation_context.name} to visa db: {e}")
 
     @classmethod
-    def db_sync_experiment_user(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger):
+    def db_sync_experiment_user(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger) -> None:
         with pool.connection() as conn:
             with conn.cursor() as cur:
                 for ctx_user in investigation_context.user_list:
