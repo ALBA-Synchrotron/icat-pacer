@@ -18,7 +18,7 @@ class ProposalTasks:
         self.logger = logger
 
     def sync_investigation_visa(self, pg_pool: ConnectionPool, investigation_context: InvestigationContext, *_args,
-                                **_kwargs):
+                                **_kwargs) -> None:
         self.logger.info(f"VISA sync: Synchronizing proposal {investigation_context.name}")
 
         VISALoader.db_sync_proposal(pg_pool, investigation_context, self.logger)
@@ -26,7 +26,7 @@ class ProposalTasks:
         VISALoader.db_sync_experiment_user(pg_pool, investigation_context, self.logger)
 
     def sync_investigation_icat(self, icat_client: ICATClient, investigation_context: InvestigationContext, *_args,
-                                **_kwargs):
+                                **_kwargs) -> None:
         self.logger.info(f"ICAT sync: Synchronizing proposal {investigation_context.name}")
 
         investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": investigation_context.name},
@@ -49,7 +49,7 @@ class ProposalTasks:
         # Users and Roles
         self.__handle_user_roles(icat_client, investigation, investigation_context)
 
-    def __handle_foreign_keys(self, icat_client: ICATClient, investigation: Entity, investigation_context: InvestigationContext):
+    def __handle_foreign_keys(self, icat_client: ICATClient, investigation: Entity, investigation_context: InvestigationContext) -> None:
         try:
             # Facility
             investigation.facility = icat_client.search(
@@ -69,7 +69,7 @@ class ProposalTasks:
             self.logger.error(e)
             raise e
 
-    def __save_investigation(self, icat_client: ICATClient, investigation: Entity, investigation_context: InvestigationContext):
+    def __save_investigation(self, icat_client: ICATClient, investigation: Entity, investigation_context: InvestigationContext) -> None:
         if investigation.id:
             try:
                 self.logger.info(f"ICAT sync: Updating investigation {investigation.name}")
@@ -122,7 +122,7 @@ class ProposalTasks:
                 raise e
 
     def __update_reimbursed_parcels_parameter(self, icat_client: ICATClient, investigation: Entity,
-                                              investigation_context: InvestigationContext):
+                                              investigation_context: InvestigationContext) -> None:
         try:
             self.logger.info(f"ICAT sync: Updating reimbursedParcels parameter for investigation {investigation.name}")
 
@@ -151,7 +151,7 @@ class ProposalTasks:
             raise e
 
     def __update_investigation_instrument(self, icat_client: ICATClient, investigation: Entity,
-                                          investigation_context: InvestigationContext):
+                                          investigation_context: InvestigationContext) -> None:
         try:
             self.logger.info(f"ICAT sync: Updating investigation instrument for {investigation.name}")
 
@@ -174,7 +174,7 @@ class ProposalTasks:
             self.logger.error(e)
             raise e
 
-    def __create_statistics_parameters(self, icat_client: ICATClient, investigation: Entity):
+    def __create_statistics_parameters(self, icat_client: ICATClient, investigation: Entity) -> None:
         try:
             parameter_tye_list: list = ['__datasetCount', '__sampleCount', '__fileCount', '__volume']
             self.logger.info(f"ICAT sync: Initializing statistics parameters {parameter_tye_list} for investigation {investigation.name}")
@@ -199,7 +199,7 @@ class ProposalTasks:
             raise e
 
     def __create_reimbursed_parcels_parameter(self, icat_client: ICATClient, investigation: Entity,
-                                              investigation_context: InvestigationContext):
+                                              investigation_context: InvestigationContext) -> None:
         try:
             self.logger.info(
                 f"ICAT sync: Initializing reimbursedParcels parameter for investigation {investigation.name}")
@@ -220,7 +220,7 @@ class ProposalTasks:
             raise e
 
     def __create_investigation_instrument(self, icat_client: ICATClient, investigation: Entity,
-                                          investigation_context: InvestigationContext):
+                                          investigation_context: InvestigationContext) -> None:
         try:
             self.logger.info(f"ICAT sync: Creating investigation instrument for {investigation.name}")
 
@@ -241,7 +241,7 @@ class ProposalTasks:
             self.logger.error(e)
             raise e
 
-    def __handle_user_roles(self, icat_client: ICATClient, investigation: Entity, investigation_context: InvestigationContext):
+    def __handle_user_roles(self, icat_client: ICATClient, investigation: Entity, investigation_context: InvestigationContext) -> None:
         # Main Proposer
         self.logger.info(f"ICAT sync: Saving main proposer for investigation {investigation_context.name}")
         self.__save_investigation_user_role_unique(icat_client, investigation, investigation_context,
@@ -258,7 +258,7 @@ class ProposalTasks:
         self.__save_investigation_user_role_set(icat_client, investigation, investigation_context, settings.ICAT_USER_ROLE_PARTICIPANT)
 
     def __save_investigation_user_role_unique(self, icat_client: ICATClient, investigation: Entity,
-                                              investigation_context: InvestigationContext, role: str):
+                                              investigation_context: InvestigationContext, role: str) -> None:
         try:
             try:
                 context_investigation_user: Entity = [u['username'] for u in investigation_context.user_list if u['role'].lower() == role.lower()][0]
@@ -298,7 +298,7 @@ class ProposalTasks:
             raise e
 
     def __save_investigation_user_role_set(self, icat_client: ICATClient, investigation: Entity,
-                                           investigation_context: InvestigationContext, role: str):
+                                           investigation_context: InvestigationContext, role: str) -> None:
         try:
             context_investigation_usernames: list[str] = [u['username'] for u in investigation_context.user_list if u['role'] == role]
             if not context_investigation_usernames:

@@ -123,10 +123,12 @@ class PACERConsumer(ConsumerMixin):
             getattr(self, attr) for attr in dir(self)
             if callable(getattr(self, attr)) and attr.startswith('callback_func_')
         ]
-        callback_functions.sort(key=lambda f: (
-            1 if f.__name__ == "callback_func_dashboard_message_logging" else 0,
-            f.__name__
-        ) if any(f.__name__ == "callback_func_dashboard_message_logging" for f in callback_functions) else f.__name__)
+        callback_functions.sort(
+            key=lambda f: (
+                1 if f.__name__ == "__dashboard_message_logging_callback" else 0,
+                f.__name__
+            )
+        )
         return callback_functions
 
     def start(self) -> None:
