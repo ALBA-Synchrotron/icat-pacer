@@ -80,11 +80,12 @@ class ICATClient:
                 except ValueError:
                     raise ValueError(f"Invalid custom condition format: {c}")
 
-                if value is None:
-                    raise ValueError(f"Value cannot be None for condition: {c}")
-
                 match operator:
                     case "eq":
+                        if value is None:
+                            result[field] = "IS NULL"
+                            continue
+
                         result[field] = f"= '{value}'"
                     case "in":
                         if not isinstance(value, Iterable) or isinstance(value, (str, bytes)):
