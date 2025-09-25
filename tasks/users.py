@@ -17,13 +17,13 @@ class UserTasks:
         self.logger = logger
 
     def sync_user_visa(self, pg_pool: ConnectionPool, user_context: UserContext, *_args, **_kwargs) -> None:
-        self.logger.info(f"VISA sync: Synchronizing user {",".join(user_context.usernames)}")
+        self.logger.info(f"VISA sync: Synchronizing user {','.join(user_context.usernames)}")
 
         VISALoader.db_sync_affiliation(pg_pool, user_context.affiliation, self.logger)
         VISALoader.db_sync_user(pg_pool, user_context, self.logger)
 
     def sync_user_icat(self, icat_client: ICATClient, user_context: UserContext, *_args, **_kwargs) -> None:
-        self.logger.info(f"ICAT sync: Synchronizing user {",".join(user_context.usernames)}")
+        self.logger.info(f"ICAT sync: Synchronizing user {','.join(user_context.usernames)}")
 
         user_usernames: list = [*user_context.usernames,
                                 *[f"{i}{self.USER_DISABLED_SUFFIX}" for i in user_context.usernames]]

@@ -1,0 +1,8 @@
+
+# ICAT User roles
+ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR = 'Principal investigator'
+ICAT_USER_ROLE_PROPOSER = 'Proposal scientist'
+ICAT_USER_ROLE_PARTICIPANT = 'Participant'
+ICAT_USER_ROLE_LOCAL_CONTACT = 'Local contact'
+
+ICAT_EMBARGO_YEARS_AMOUNT = 3

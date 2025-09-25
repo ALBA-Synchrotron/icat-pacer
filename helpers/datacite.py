@@ -105,7 +105,7 @@ class DataciteClient:
                                        headers={"Accept": "application/vnd.api+json",
                                                 "Content-Type": "application/json"})
         if resp.status_code != 201:
-            error_msg: str = f"Error creating DOI {"asd"}, error: {resp.text}"
+            error_msg: str = f"Error creating DOI {doi}, error: {resp.text}"
             self.logger.error(error_msg)
             raise Exception(error_msg)
 
