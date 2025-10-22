@@ -10,7 +10,8 @@ from helpers.datetime import try_parse_datetime
 
 
 def create_investigation_context(investigation_data: str or dict, name_prefix: str = '') -> InvestigationContext:
-    investigation_dict: dict = json.loads(investigation_data) if isinstance(investigation_data, str) else investigation_data
+    investigation_dict: dict = json.loads(investigation_data) if isinstance(investigation_data,
+                                                                            str) else investigation_data
 
     if not investigation_dict.get("name", ""):
         raise ValueError("Investigation name must be provided.")
@@ -43,6 +44,7 @@ def create_investigation_context(investigation_data: str or dict, name_prefix: s
         visit_count=investigation_dict.get("visit_count", 0),
         is_reimbursed=investigation_dict.get("is_reimbursed", False),
         doi=investigation_dict.get("doi", ""),
-        url=investigation_dict.get("url", "")
+        url=investigation_dict.get("url", ""),
+        visa_sync=investigation_dict.get("visa_sync", False),
+        icat_sync=investigation_dict.get("icat_sync", False)
     )
-
