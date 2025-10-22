@@ -70,3 +70,5 @@ class InvestigationContext:
     is_reimbursed: bool = False
     doi: str = ""
     url: str = ""
+    visa_sync: bool = False
+    icat_sync: bool = False
