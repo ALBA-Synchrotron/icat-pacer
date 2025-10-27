@@ -9,16 +9,10 @@ from helpers.dataclasses import InvestigationOperationsContext
 from helpers.icat_utils import ICATClient
 from helpers.datacite import DataciteClient
 from helpers.panosc import PaNOSCClient
+from helpers.settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PARTICIPANT, \
+    DATACITE_CONTRIBUTOR_DATA_COLLECTOR, ICAT_USER_ROLE_LOCAL_CONTACT, DATACITE_CONTRIBUTOR_PROJECT_MANAGER, \
+    DATACITE_CONTRIBUTOR_PROJECT_MEMBER, ICAT_USER_ROLE_PROPOSER
 from helpers.visa_utils import VISALoader
-
-ICAT_ROLE_PRINCIPAL_INVESTIGATOR: str = "Principal investigator"
-ICAT_ROLE_PARTICIPANT: str = "Participant"
-ICAT_ROLE_LOCAL_CONTACT: str = "Local contact"
-ICAT_ROLE_SCIENTIST: str = "Scientist"
-
-DATACITE_CONTRIBUTOR_PROJECT_MANAGER: str = "ProjectManager"
-DATACITE_CONTRIBUTOR_PROJECT_MEMBER: str = "ProjectMember"
-DATACITE_CONTRIBUTOR_DATA_COLLECTOR: str = "DataCollector"
 
 
 class InvestigationOpsTasks:
@@ -132,17 +126,18 @@ class InvestigationOpsTasks:
             f"Investigation mint: Identifiers: {identifiers}, DOI: {doi}, DOI landing URL: {doi_landing_url}")
 
         creators: list = datacite_client.generate_user_data_structure(
-            investigation_users_role.get(ICAT_ROLE_PRINCIPAL_INVESTIGATOR, []),
-            investigation_users_role.get(ICAT_ROLE_PARTICIPANT, [])
+            investigation_users_role.get(ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, []),
+            investigation_users_role.get(ICAT_USER_ROLE_PARTICIPANT, [])
         )
         contributor_data_collector: list = datacite_client.generate_user_data_structure(
-            investigation_users_role.get(ICAT_ROLE_LOCAL_CONTACT, []),
+            investigation_users_role.get(ICAT_USER_ROLE_LOCAL_CONTACT, []),
             contributor_type=DATACITE_CONTRIBUTOR_DATA_COLLECTOR)
         contributor_project_manager: list = datacite_client.generate_user_data_structure(
-            investigation_users_role.get(ICAT_ROLE_PRINCIPAL_INVESTIGATOR, []),
+            investigation_users_role.get(ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, []),
             contributor_type=DATACITE_CONTRIBUTOR_PROJECT_MANAGER)
         contributor_project_member: list = datacite_client.generate_user_data_structure(
-            investigation_users_role.get(ICAT_ROLE_SCIENTIST, []), contributor_type=DATACITE_CONTRIBUTOR_PROJECT_MEMBER)
+            investigation_users_role.get(ICAT_USER_ROLE_PROPOSER, []),
+            contributor_type=DATACITE_CONTRIBUTOR_PROJECT_MEMBER)
 
         contributors: list = contributor_data_collector + contributor_project_manager + contributor_project_member
         self.logger.debug(f"Investigation mint: Total {len(creators)} creators,{len(contributors)} contributors")
