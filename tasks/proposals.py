@@ -271,7 +271,7 @@ class ProposalTasks:
 
         errors = proposer_errors + co_proposer_errors + lc_errors + participants_errors
         if errors:
-            raise ";".join(f"{type(e).__name__}: {e}" for e in errors)
+            raise Exception(";".join(f"{type(e).__name__}: {e}" for e in errors))
 
     def __save_investigation_user_role_unique(self, icat_client: ICATClient, investigation: Entity,
                                               investigation_context: InvestigationContext, role: str) -> list:
