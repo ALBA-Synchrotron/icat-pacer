@@ -326,7 +326,7 @@ class ProposalTasks:
             if not context_investigation_usernames:
                 self.logger.warning(
                     f"No InvestigationUsers found for investigation {investigation_context.name} with role {role}")
-                return
+                return errors
 
             current_investigation_users: list[Entity] = icat_client.search(
                 "InvestigationUser",
