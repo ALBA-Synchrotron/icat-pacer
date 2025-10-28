@@ -161,7 +161,7 @@ config_yaml_schema: dict = {
                 "type": "dict",
                 "required": True,
                 "schema": {
-                    "defaultEmbargoPeriodYears": {"type": "integer", "required": True}
+                    "defaultEmbargoYears": {"type": "integer", "required": True}
                 }
             }
         }
