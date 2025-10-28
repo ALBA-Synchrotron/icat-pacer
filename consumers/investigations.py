@@ -19,7 +19,7 @@ class InvestigationConsumer(PACERConsumer):
             investigation_str: str = message.payload or message.body
             investigation_context: InvestigationContext = create_investigation_context(investigation_str,
                                                                                        self.__get_ingestion_settings())
-            return {"name": investigation_context.name}
+            return {"name": investigation_context.name, "instrument": investigation_context.instrument.code}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
