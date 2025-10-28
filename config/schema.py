@@ -154,14 +154,17 @@ config_yaml_schema: dict = {
                 "type": "dict",
                 "required": True,
                 "schema": {
-                    "acceptXMLPayloads": {"type": "boolean", "required": True}
+                    "acceptXMLPayloads": {"type": "boolean", "required": True},
+                    "mandatoryPathsExistence": {"type": "boolean", "required": True},
+                    "mandatorySampleType": {"type": "boolean", "required": True},
                 }
             },
             "investigation": {
                 "type": "dict",
                 "required": True,
                 "schema": {
-                    "defaultEmbargoYears": {"type": "integer", "required": True}
+                    "defaultEmbargoYears": {"type": "integer", "required": True},
+                    "defaultFacilityName": {"type": "string", "required": True},
                 }
             }
         }

@@ -1,4 +1,4 @@
-from helpers.dataclasses import Affiliation
+from helpers.dataclasses.user import Affiliation
 
 
 def get_affiliation_name(affiliation: Affiliation, limit: int = -1) -> str:

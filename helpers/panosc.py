@@ -24,7 +24,7 @@ class PaNOSCClient:
         self.logger = logger
 
     def __generic_pss_call(self, url: str, method: str, data: dict = None) -> Response:
-        basic_auth: tuple = (self.username, self.password) if self.username and self.password else None
+        basic_auth: tuple = (self.username, self.password) if self.username and self.password else ()
         resp: Response = requests.request(method=method, url=url,
                                           **({"data": json.dumps(data)} if data else {}),
                                           **({"auth": basic_auth} if self.username and self.password else {}))
@@ -106,7 +106,7 @@ class PaNOSCClient:
 
     def retrieve_public_investigation_info(self, investigation_name: str) -> dict:
         self.logger.debug(f"Retrieving public investigation info for {investigation_name} through search API")
-        basic_auth: tuple = (self.username, self.password) if self.username and self.password else None
+        basic_auth: tuple = (self.username, self.password) if self.username and self.password else ()
         params: dict = {"where": json.dumps({"pid": {"eq": investigation_name}})}
 
         resp: Response = requests.get(url=f"{self.search_api_url}/Documents", params=params,
@@ -131,14 +131,14 @@ class PaNOSCClient:
         return resp_json[0]
 
 
-def get_panosc_client(config: dict, logger: logging.Logger) -> PaNOSCClient or None:
+def get_panosc_client(config: dict, logger: logging.Logger) -> PaNOSCClient | None:
     panosc_config: dict = config.get("integrations", {}).get("panosc", {})
     if not panosc_config or not panosc_config.get("enabled"):
         return None
     return PaNOSCClient(
-        url=panosc_config.get("apiUrl"),
-        username=panosc_config.get("username"),
-        password=panosc_config.get("password"),
-        search_api_url=panosc_config.get("searchApiUrl"),
+        url=panosc_config.get("apiUrl", ""),
+        username=panosc_config.get("username", ""),
+        password=panosc_config.get("password", ""),
+        search_api_url=panosc_config.get("searchApiUrl", ""),
         logger=logger,
     )

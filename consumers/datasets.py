@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from kombu import Message
 
-from helpers.dataclasses import DatasetContext
+from helpers.dataclasses.dataset import DatasetContext
 from helpers.dataset import create_dataset_context
 from helpers.pacer_consumer import PACERConsumer
 from tasks.investigation_ops import InvestigationOpsTasks
@@ -20,7 +20,7 @@ class DatasetsConsumer(PACERConsumer):
     def get_message_object_identifiers(self, message: Message) -> dict:
         try:
             dataset_str: str = message.payload or message.body
-            dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__is_xml_payload_accepted())
+            dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__get_ingestion_settings())
             return {"investigation": dataset_ctx.investigation, "dataset": dataset_ctx.name}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
@@ -30,8 +30,7 @@ class DatasetsConsumer(PACERConsumer):
         self.logger.info(
             f"callback_func_main_dataset_ingestion > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_str: str = message.payload or message.body
-        dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__is_xml_payload_accepted())
+        dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__get_ingestion_settings())
 
-
-    def __is_xml_payload_accepted(self) -> bool:
-        return self.pacer_config.get("ingestionSettings", {}).get("dataset", {}).get("acceptXMLPayloads", "false") == "true"
+    def __get_ingestion_settings(self) -> dict:
+        return self.pacer_config.get("ingestionSettings", {}).get("dataset", {})

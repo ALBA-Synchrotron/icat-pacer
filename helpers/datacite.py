@@ -50,7 +50,7 @@ class DataciteClient:
     @classmethod
     def generate_user_data_structure(cls, *args, **kwargs) -> list:
         users: list = list(chain.from_iterable(args))
-        contributor_type: str = kwargs.get("contributor_type") if kwargs.get("contributor_type") else ""
+        contributor_type: str = kwargs.get("contributor_type", "")
         ret: list = []
 
         for inv_user in users:
@@ -98,7 +98,7 @@ class DataciteClient:
                 "doi": doi, "event": "publish", "identifiers": identifiers,
             }
         }
-        basic_auth: tuple = (self.username, self.password) if self.username and self.password else None
+        basic_auth: tuple = (self.username, self.password) if self.username and self.password else ()
         self.logger.debug(f"Creating DOI {json.dumps(data)}")
         resp: Response = requests.post(url=f"{self.api_url}/dois", json={"data": data},
                                        **({"auth": basic_auth} if self.username and self.password else {}),
@@ -110,26 +110,26 @@ class DataciteClient:
             raise Exception(error_msg)
 
 
-def get_datacite_client(config: dict, logger: logging.Logger) -> DataciteClient or None:
+def get_datacite_client(config: dict, logger: logging.Logger) -> DataciteClient | None:
     datacite_config: dict = config.get("integrations", {}).get("datacite", {})
     if not datacite_config or not datacite_config.get("enabled"):
         return None
     return DataciteClient(
-        data_catalogue_doi_base_url=datacite_config.get("dataCatalogueDoiBaseUrl"),
-        publisher=datacite_config.get("publisher"),
-        prefix=datacite_config.get("prefix"),
-        session_suffix=datacite_config.get("sessionSuffix"),
-        username=datacite_config.get("username"),
-        password=datacite_config.get("password"),
-        api_url=datacite_config.get("apiUrl"),
-        language=datacite_config.get("language"),
-        rights_name=datacite_config.get("rightsName"),
-        rights_scheme_uri=datacite_config.get("rightsSchemeUri"),
-        rights_uri=datacite_config.get("rightsUri"),
-        rights_identifier_scheme=datacite_config.get("rightsIdentifierScheme"),
-        rights_identifier=datacite_config.get("rightsIdentifier"),
-        funder_name=datacite_config.get("funderName"),
-        funder_identifier=datacite_config.get("funderIdentifier"),
-        funder_identifier_type=datacite_config.get("funderIdentifierType"),
+        data_catalogue_doi_base_url=datacite_config.get("dataCatalogueDoiBaseUrl", ""),
+        publisher=datacite_config.get("publisher", ""),
+        prefix=datacite_config.get("prefix", ""),
+        session_suffix=datacite_config.get("sessionSuffix", ""),
+        username=datacite_config.get("username", ""),
+        password=datacite_config.get("password", ""),
+        api_url=datacite_config.get("apiUrl", ""),
+        language=datacite_config.get("language", ""),
+        rights_name=datacite_config.get("rightsName", ""),
+        rights_scheme_uri=datacite_config.get("rightsSchemeUri", ""),
+        rights_uri=datacite_config.get("rightsUri", ""),
+        rights_identifier_scheme=datacite_config.get("rightsIdentifierScheme", ""),
+        rights_identifier=datacite_config.get("rightsIdentifier", ""),
+        funder_name=datacite_config.get("funderName", ""),
+        funder_identifier=datacite_config.get("funderIdentifier", ""),
+        funder_identifier_type=datacite_config.get("funderIdentifierType", ""),
         logger=logger
     )

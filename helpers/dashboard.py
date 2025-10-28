@@ -6,7 +6,7 @@ from typing import Callable
 
 from kombu import Message
 
-from helpers.dataclasses import MessageContext
+from helpers.dataclasses.dashboard import MessageContext
 from producers.dashboard import DashboardProducer
 
 
@@ -30,7 +30,7 @@ def create_message_context(message: Message, message_type: str, error_message: s
     )
 
 
-def get_configured_dashboard_callback(consumer: "PACERConsumer") -> Callable or None:
+def get_configured_dashboard_callback(consumer: "PACERConsumer") -> Callable | None:
     dashboard_integration: dict = consumer.pacer_config.get("integrations", {}).get("dashboard", {})
     if dashboard_integration.get("enabled", False):
         exchange_name: str = dashboard_integration.get("exchangeName", "")

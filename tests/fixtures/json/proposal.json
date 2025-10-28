@@ -12,11 +12,9 @@
   },
   "type": "MX",
   "user_list": [
-    {"username": "testuser", "email": "", "role": "Principal investigator"},
-    {"username": "testuser", "email": "", "role": "Local contact"}
+    {"username": "testuser", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+    {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
   ],
   "visit_count": 1,
-  "is_reimbursed": true,
-  "doi": "",
-  "url": ""
+  "is_reimbursed": true
 }

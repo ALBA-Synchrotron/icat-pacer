@@ -11,13 +11,13 @@ DEFAULT_LOGGING_FORMAT: str = "%(asctime)s [%(levelname)s] %(name)s -- %(message
 
 
 def configure_handler_format_and_level(handler: logging.StreamHandler, log_level: str,
-                                       print_format: str or None) -> None:
+                                       print_format: str | None) -> None:
     if print_format:
         handler.setFormatter(logging.Formatter(print_format))
     handler.setLevel(log_level)
 
 
-def configure_worker_logger(handler: logging.StreamHandler or logging.Handler, config: dict,
+def configure_worker_logger(handler: logging.StreamHandler | logging.Handler, config: dict,
                             logger: logging.Logger) -> None:
     log_level: str = config.get("logging").get("logLevel", "INFO")
 
@@ -28,14 +28,14 @@ def configure_worker_logger(handler: logging.StreamHandler or logging.Handler, c
 
 
 def configure_pacer_logger(config: dict, logger: logging.Logger) -> list:
-    logging_config: dict = config.get("logging")
+    logging_config: dict = config.get("logging", {})
 
     log_level: str = logging_config.get("logLevel", "INFO")
     print_format: str = logging_config.get("printFormat", DEFAULT_LOGGING_FORMAT)
 
     handlers: list = []
 
-    file_logging_config: dict = logging_config.get("file")
+    file_logging_config: dict = logging_config.get("file", {})
 
     if file_logging_config.get("enabled", False):
         log_file: str = file_logging_config.get("path", os.path.join(BASE_DIR, "logs", "icat-pacer.log"))
@@ -48,10 +48,10 @@ def configure_pacer_logger(config: dict, logger: logging.Logger) -> list:
         else:
             handlers.append(logging.FileHandler(log_file))
 
-    elastic_logging_config: dict = logging_config.get("elastic")
+    elastic_logging_config: dict = logging_config.get("elastic", {})
     if elastic_logging_config.get("enabled", False):
         server_url: str = elastic_logging_config.get("serverUrl", "")
-        index: str = elastic_logging_config.get("indexName")
+        index: str = elastic_logging_config.get("indexName", "")
         service_name: str = elastic_logging_config.get("serviceName", "icat-pacer")
         service_environment: str = elastic_logging_config.get("serviceEnvironment", "local")
         logging.getLogger('elastic_transport.transport').setLevel(logging.ERROR)

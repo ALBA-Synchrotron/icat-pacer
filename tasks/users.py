@@ -5,7 +5,7 @@ import logging
 from psycopg_pool import ConnectionPool
 
 from helpers.common import get_affiliation_name
-from helpers.dataclasses import UserContext
+from helpers.dataclasses.user import UserContext
 from helpers.icat_utils import ICATClient
 from helpers.visa_utils import VISALoader
 

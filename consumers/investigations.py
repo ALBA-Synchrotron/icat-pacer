@@ -2,13 +2,13 @@ from __future__ import absolute_import, unicode_literals
 
 from kombu import Message
 
-from helpers.dataclasses import InvestigationContext
+from helpers.dataclasses.investigation import InvestigationContext
 from helpers.pacer_consumer import PACERConsumer
 from helpers.proposals import create_investigation_context
-from tasks.proposals import ProposalTasks
+from tasks.investigations import ProposalTasks
 
 
-class ProposalConsumer(PACERConsumer):
+class InvestigationConsumer(PACERConsumer):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(dashboard_message_type="proposal-sync", *args, **kwargs)
@@ -18,7 +18,7 @@ class ProposalConsumer(PACERConsumer):
         try:
             investigation_str: str = message.payload or message.body
             investigation_context: InvestigationContext = create_investigation_context(investigation_str,
-                                                                                       self.__get_default_embargo_years())
+                                                                                       self.__get_ingestion_settings())
             return {"name": investigation_context.name}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
@@ -29,7 +29,7 @@ class ProposalConsumer(PACERConsumer):
             f"VISA_proposal_sync_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         investigation_str: str = message.payload or message.body
         investigation_context: InvestigationContext = create_investigation_context(investigation_str,
-                                                                                   self.__get_default_embargo_years())
+                                                                                   self.__get_ingestion_settings())
 
         if not investigation_context.visa_sync:
             return
@@ -41,12 +41,12 @@ class ProposalConsumer(PACERConsumer):
             f"ICAT_proposal_sync_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         investigation_str: str = message.payload or message.body
         investigation_context: InvestigationContext = create_investigation_context(investigation_str,
-                                                                                   self.__get_default_embargo_years())
+                                                                                   self.__get_ingestion_settings())
 
         if not investigation_context.icat_sync:
             return
 
         self.tasks.sync_investigation_icat(self.icat_client, investigation_context, message=message, body=body)
 
-    def __get_default_embargo_years(self) -> int:
-        return self.pacer_config.get("ingestionSettings", {}).get("investigation", {}).get("defaultEmbargoYears", 9999)
+    def __get_ingestion_settings(self) -> dict:
+        return self.pacer_config.get("ingestionSettings", {}).get("investigation", {})

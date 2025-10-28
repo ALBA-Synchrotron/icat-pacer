@@ -55,8 +55,8 @@ consumers:
       - "messageForwarding"
       - "icat"
       - "visa"
-  - className: "ProposalConsumer"
-    module: "consumers.proposals"
+  - className: "InvestigationConsumer"
+    module: "consumers.investigations"
     enabled: true
     queues:
       - "uos-sync-proposals"
@@ -82,7 +82,7 @@ consumers:
     module: "consumers.datasets"
     enabled: true
     queues:
-      - "icat-investigation-ops"
+      - "icat-dataset-ingest"
     workers: 1
     integrations:
       - "dashboard"
@@ -109,8 +109,11 @@ brokers:
 ingestionSettings:
   dataset:
     acceptXMLPayloads: true
+    mandatoryPathsExistence: false
+    mandatorySampleType: false
   investigation:
     defaultEmbargoYears: 3
+    defaultFacilityName: "ALBA"
 integrations:
   visa:
     enabled: true

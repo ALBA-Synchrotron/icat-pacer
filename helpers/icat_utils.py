@@ -36,7 +36,7 @@ class ICATClient:
         self.client.logout()
 
     @classmethod
-    def open_icat_session(cls, config: dict, session_id: str = None) -> Client or None:
+    def open_icat_session(cls, config: dict, session_id: str = None) -> Client | None:
         icat_config: dict = config.get("integrations", {}).get("icat", {})
         enabled: bool = icat_config.get("enabled", False)
 
@@ -44,15 +44,14 @@ class ICATClient:
             return None
 
         icat_server_config: dict = icat_config.get("server", {})
-        url: str = icat_server_config.get("url")
-        auth_plugin: str = icat_server_config.get("authPlugin")
-        username: str = icat_server_config.get("username")
-        password: str = icat_server_config.get("password")
+        url: str = icat_server_config.get("url", "")
+        auth_plugin: str = icat_server_config.get("authPlugin", "")
+        username: str = icat_server_config.get("username", "")
+        password: str = icat_server_config.get("password", "")
 
-        icat_client: cls = cls(url, username, password, auth_plugin, session_id=session_id)
+        icat_client = cls(url, username, password, auth_plugin, session_id=session_id)
         if session_id:
             icat_client.sessionId = session_id
-            return icat_client
         return icat_client
 
     @classmethod
@@ -112,7 +111,7 @@ class ICATClient:
 
     def search(self, entity: str, attributes=None, aggregate=None, order=None,
                conditions=None, includes=None, limit=None,
-               join_specs=None, flatten_single=True) -> Entity or list[Entity] or None:
+               join_specs=None, flatten_single=True) -> Entity | list[Entity] | None:
         if conditions:
             conditions = self.__parse_custom_conditions(conditions)
 

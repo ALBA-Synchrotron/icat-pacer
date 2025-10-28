@@ -4,7 +4,7 @@ import logging
 import pytest
 from icat.entity import Entity
 
-from helpers.dataclasses import InvestigationOperationsContext
+from helpers.dataclasses.investigation import InvestigationOperationsContext
 from helpers.icat_utils import ICATClient
 from tasks.investigation_ops import InvestigationOpsTasks
 

@@ -2,14 +2,13 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 
-from dateutil.relativedelta import relativedelta
+from icat.entity import Entity
 from psycopg_pool import ConnectionPool
 
-from helpers.dataclasses import InvestigationContext
+from helpers import settings
+from helpers.dataclasses.investigation import InvestigationContext
 from helpers.icat_utils import ICATClient
 from helpers.visa_utils import VISALoader
-from icat.entity import Entity
-from helpers import settings
 
 
 class ProposalTasks:
@@ -38,7 +37,7 @@ class ProposalTasks:
         # Attributes that are always overwritten
         investigation.title = investigation_context.title
         investigation.summary = investigation_context.summary
-        investigation.visitId = investigation_context.instrument['code'].lower()
+        investigation.visitId = investigation_context.instrument.code.lower()
 
         # Handle FKs
         self.__handle_foreign_keys(icat_client, investigation, investigation_context)
@@ -76,9 +75,6 @@ class ProposalTasks:
             try:
                 self.logger.info(f"ICAT sync: Updating investigation {investigation.name}")
 
-                if investigation.doi is None:
-                    investigation.doi = ""
-
                 # If new dates are provided, update Investigation dates
                 if investigation.startDate != investigation_context.start_date or investigation.endDate != investigation_context.end_date:
                     investigation.startDate = investigation_context.start_date
@@ -105,7 +101,7 @@ class ProposalTasks:
                 investigation.startDate = investigation_context.start_date
                 investigation.endDate = investigation_context.end_date
                 investigation.releaseDate = investigation_context.release_date
-                investigation.doi = investigation_context.doi or ""
+                investigation.doi = ""
 
                 investigation.create()
 
@@ -167,7 +163,7 @@ class ProposalTasks:
             if not investigation_instrument:
                 raise ValueError(f"InvestigationInstrument for {investigation_context.name} not found in ICAT.")
 
-            if investigation_context.instrument.get("name") != investigation_instrument.instrument.name:
+            if investigation_context.instrument.name != investigation_instrument.instrument.name:
                 self.logger.info(f"ICAT sync: Instrument changed for investigation {investigation.name}")
                 icat_client.delete(investigation_instrument)
                 self.__create_investigation_instrument(icat_client, investigation, investigation_context)
@@ -230,11 +226,11 @@ class ProposalTasks:
 
             instrument: Entity = icat_client.search(
                 "Instrument",
-                conditions={"name__eq": investigation_context.instrument.get("code")},
+                conditions={"name__eq": investigation_context.instrument.code},
                 flatten_single=True
             )
             if not instrument:
-                raise ValueError(f"Instrument {investigation_context.instrument.get('name')} not found in ICAT.")
+                raise ValueError(f"Instrument {investigation_context.instrument.name} not found in ICAT.")
 
             investigation_instrument: Entity = icat_client.new("InvestigationInstrument")
             investigation_instrument.investigation = investigation
@@ -279,7 +275,7 @@ class ProposalTasks:
         try:
             try:
                 context_investigation_user: Entity = \
-                    [u['username'] for u in investigation_context.user_list if u['role'].lower() == role.lower()][0]
+                    [u.username for u in investigation_context.user_list if u.role.lower() == role.lower()][0]
             except IndexError:
                 msg = f"InvestigationUser not found in user list provided for investigation {investigation_context.name}"
                 self.logger.error(msg)
@@ -321,9 +317,9 @@ class ProposalTasks:
                                            investigation_context: InvestigationContext, role: str) -> list:
         errors: list = []
         try:
-            context_investigation_usernames: list[str] = [u['username'].lower() for u in investigation_context.user_list
+            context_investigation_usernames: list[str] = [u.username.lower() for u in investigation_context.user_list
                                                           if
-                                                          u['role'] == role]
+                                                          u.role == role]
             if not context_investigation_usernames:
                 self.logger.warning(
                     f"No InvestigationUsers found for investigation {investigation_context.name} with role {role}")

@@ -6,7 +6,7 @@ from dataclasses import asdict
 
 from kombu import Connection
 
-from helpers.dataclasses import MessageContext, DashboardCeleryTask
+from helpers.dataclasses.dashboard import MessageContext, DashboardCeleryTask
 
 
 class DashboardProducer:

@@ -78,7 +78,7 @@ class PACERConsumer(ConsumerMixin):
         else:
             message.ack()
 
-    def __dashboard_message_logging_handler(self, message: Message, errors: list = []) -> None:
+    def __dashboard_message_logging_handler(self, message: Message, errors: list = ()) -> None:
         obj_identifiers: dict = self.get_message_object_identifiers(message)
         error_msg: str = "" if not errors else str(errors)
         msg_context = create_message_context(message, self.dashboard_message_type, error_message=error_msg,
@@ -92,15 +92,16 @@ class PACERConsumer(ConsumerMixin):
         msg_exchange_name: str = message.delivery_info.get("exchange", "")
         routing_key: str = message.delivery_info.get("routing_key", "")
         if msg_exchange_name and routing_key and (msg_exchange_name, routing_key) in self.recipient_fw_rules.keys():
-            broker_recipients: list = self.recipient_fw_rules.get((msg_exchange_name, routing_key))
+            broker_recipients: list = self.recipient_fw_rules.get((msg_exchange_name, routing_key), [])
             for i in broker_recipients:
                 self.logger.info(
                     f"Forwarding message from exchange {msg_exchange_name} with routing_key {routing_key} to broker: {i}")
-                broker_conn: Connection = self.recipients_connections.get(i)
-                try:
-                    MessageForwarder.forward_message(broker_conn, message)
-                except Exception as e:
-                    self.logger.error(f"Error forwarding message to broker {i}: {e!r}")
+                broker_conn: Connection | None = self.recipients_connections.get(i, None)
+                if broker_conn:
+                    try:
+                        MessageForwarder.forward_message(broker_conn, message)
+                    except Exception as e:
+                        self.logger.error(f"Error forwarding message to broker {i}: {e!r}")
 
     @override
     def get_consumers(self, Consumer, channel) -> list:

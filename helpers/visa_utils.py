@@ -3,8 +3,8 @@ from logging import Logger
 from psycopg_pool import ConnectionPool
 
 from helpers.common import get_affiliation_name
-from helpers.dataclasses import InvestigationContext
-from helpers.user import UserContext, Affiliation
+from helpers.dataclasses.investigation import InvestigationContext
+from helpers.dataclasses.user import UserContext, Affiliation
 
 
 def get_pg_connection_pool(config: dict) -> ConnectionPool:
@@ -162,27 +162,24 @@ class VISALoader:
                             raise Exception(error_msg)
 
     @classmethod
-    def db_sync_proposal(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger) -> None:
+    def db_sync_proposal(cls, pool: ConnectionPool, investigation_context: InvestigationContext,
+                         logger: Logger) -> None:
         with pool.connection() as conn:
             with conn.cursor() as cur:
                 query: str = """
-                        INSERT INTO proposal (id, identifier, title, doi, url, summary, public_at)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO
-                        UPDATE
-                            SET identifier = %s, title = %s, doi = %s, url = %s, summary = %s, public_at = %s
-                    """
+                             INSERT INTO proposal (id, identifier, title, summary, public_at)
+                             VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO
+                             UPDATE
+                                 SET identifier = %s, title = %s, summary = %s, public_at = %s \
+                             """
                 params: tuple = (
                     int(investigation_context.name),
                     investigation_context.name,
                     investigation_context.title,
-                    investigation_context.doi,
-                    investigation_context.url,
                     investigation_context.summary,
                     investigation_context.release_date,
                     investigation_context.name,
                     investigation_context.title,
-                    investigation_context.doi,
-                    investigation_context.url,
                     investigation_context.summary,
                     investigation_context.release_date
                 )
@@ -192,15 +189,16 @@ class VISALoader:
                     logger.error(f"Error synchronizing Proposal {investigation_context.name} to visa db: {e}")
 
     @classmethod
-    def db_sync_experiment(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger) -> None:
+    def db_sync_experiment(cls, pool: ConnectionPool, investigation_context: InvestigationContext,
+                           logger: Logger) -> None:
         with pool.connection() as conn:
             with conn.cursor() as cur:
                 query: str = "select id from instrument where name LIKE %s"
-                params: tuple = (investigation_context.instrument.get('name'),)
+                params: tuple = (investigation_context.instrument.name,)
                 cur.execute(query, params)
                 res = cur.fetchone()
                 if not res:
-                    error_msg: str = f"Instrument {investigation_context.instrument.get('name')} not found in visa db"
+                    error_msg: str = f"Instrument {investigation_context.instrument.name} not found in visa db"
                     logger.error(error_msg)
                     raise Exception(error_msg)
 
@@ -209,12 +207,11 @@ class VISALoader:
                     instrument_id = res[0]
 
                 insert_query: str = """
-                        INSERT INTO experiment (id, proposal_id, instrument_id, start_date, end_date, title, url, doi)
-                           VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                        ON CONFLICT (id) DO 
-                        UPDATE
-                            SET proposal_id=%s, instrument_id=%s, start_date=%s, end_date=%s, title=%s, url=%s, doi=%s
-                    """
+                                    INSERT INTO experiment (id, proposal_id, instrument_id, start_date, end_date, title)
+                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO
+                                    UPDATE
+                                        SET proposal_id=%s, instrument_id=%s, start_date=%s, end_date=%s, title=%s \
+                                    """
                 insert_params: tuple = (
                     investigation_context.name,
                     int(investigation_context.name),
@@ -222,15 +219,11 @@ class VISALoader:
                     investigation_context.start_date,
                     investigation_context.end_date,
                     investigation_context.title,
-                    investigation_context.url,
-                    investigation_context.doi,
                     int(investigation_context.name),
                     instrument_id,
                     investigation_context.start_date,
                     investigation_context.end_date,
                     investigation_context.title,
-                    investigation_context.url,
-                    investigation_context.doi
                 )
                 try:
                     cur.execute(insert_query, insert_params)
@@ -238,19 +231,21 @@ class VISALoader:
                     logger.error(f"Error synchronizing Experiment {investigation_context.name} to visa db: {e}")
 
     @classmethod
-    def db_sync_experiment_user(cls, pool: ConnectionPool, investigation_context: InvestigationContext, logger: Logger) -> None:
+    def db_sync_experiment_user(cls, pool: ConnectionPool, investigation_context: InvestigationContext,
+                                logger: Logger) -> None:
+        errors: list = []
         with pool.connection() as conn:
             with conn.cursor() as cur:
                 for ctx_user in investigation_context.user_list:
                     query: str = "select id from users where email = %s"
-                    params: tuple = (ctx_user['email'],)
+                    params: tuple = (ctx_user.email,)
                     cur.execute(query, params)
                     res = cur.fetchone()
                     user_id = res[0] if res else 1
                     insert_query: str = """
-                            INSERT INTO experiment_user (experiment_id, user_id)
-                            VALUES (%s, %s) ON CONFLICT DO NOTHING
-                        """
+                                        INSERT INTO experiment_user (experiment_id, user_id)
+                                        VALUES (%s, %s) ON CONFLICT DO NOTHING \
+                                        """
                     insert_params: tuple = (
                         int(investigation_context.name),
                         user_id
@@ -258,5 +253,8 @@ class VISALoader:
                     try:
                         cur.execute(insert_query, insert_params)
                     except Exception as e:
-                        logger.error(
-                            f"Error synchronizing Experiment User {ctx_user['email']} for {investigation_context.name} to visa db: {e}")
+                        error_msg: str = f"Error synchronizing Experiment User {ctx_user.email} for {investigation_context.name} to visa db: {e}"
+                        logger.error(error_msg)
+                        errors.append(Exception(error_msg))
+        if errors:
+            raise Exception("; ".join(f"{type(e).__name__}: {e}" for e in errors))

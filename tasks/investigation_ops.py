@@ -5,7 +5,7 @@ import logging
 
 from icat.entity import Entity
 from psycopg_pool import ConnectionPool
-from helpers.dataclasses import InvestigationOperationsContext
+from helpers.dataclasses.investigation import InvestigationOperationsContext
 from helpers.icat_utils import ICATClient
 from helpers.datacite import DataciteClient
 from helpers.panosc import PaNOSCClient
