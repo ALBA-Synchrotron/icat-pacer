@@ -9,7 +9,8 @@ from helpers.dataclasses import InvestigationContext
 from helpers.datetime import try_parse_datetime
 
 
-def create_investigation_context(investigation_data: str or dict, name_prefix: str = '') -> InvestigationContext:
+def create_investigation_context(investigation_data: str or dict, embargo_years: int,
+                                 name_prefix: str = '') -> InvestigationContext:
     investigation_dict: dict = json.loads(investigation_data) if isinstance(investigation_data,
                                                                             str) else investigation_data
 
@@ -28,7 +29,7 @@ def create_investigation_context(investigation_data: str or dict, name_prefix: s
     if release_date_str:
         release_date: datetime = try_parse_datetime(release_date_str)
     else:
-        release_date: datetime = end_date + relativedelta(years=settings.ICAT_EMBARGO_YEARS_AMOUNT)
+        release_date: datetime = end_date + relativedelta(years=embargo_years)
 
     return InvestigationContext(
         name=f"{name_prefix}{investigation_dict.get('name')}",
