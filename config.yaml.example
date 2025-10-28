@@ -21,29 +21,49 @@ customSerializers:
 exchanges:
   - name: "dashboard-logging-exchange"
     type: "direct"
-  - name: "users-exchange"
+  - name: "uos-sync-exchange"
     type: "direct"
   - name: "investigation-ops-exchange"
+    type: "direct"
+  - name: "dataset-ingest-exchange"
     type: "direct"
 queues:
   - name: "dashboard-logging"
     exchange: "dashboard-logging-exchange"
     routingKey: "message.logging"
-  - name: "user-sync"
-    exchange: "users-exchange"
-    routingKey: "user.sync"
+  - name: "uos-sync-users"
+    exchange: "uos-sync-exchange"
+    routingKey: "uos_user.sync"
+  - name: "uos-sync-proposals"
+    exchange: "uos-sync-exchange"
+    routingKey: "uos_proposal.sync"
   - name: "icat-investigation-ops"
     exchange: "investigation-ops-exchange"
     routingKey: "investigation.ops"
+  - name: "icat-dataset-ingest"
+    exchange: "dataset-ingest-exchange"
+    routingKey: "dataset.ingest"
 consumers:
-  - className: "UsersWorker"
-    module: "app.consumers.users"
+  - className: "UsersConsumer"
+    module: "consumers.users"
     enabled: true
     queues:
-      - "user-sync"
-    workers: 2
+      - "uos-sync-users"
+    workers: 1
     integrations:
       - "dashboard"
+      - "messageForwarding"
+      - "icat"
+      - "visa"
+  - className: "ProposalConsumer"
+    module: "consumers.proposals"
+    enabled: true
+    queues:
+      - "uos-sync-proposals"
+    workers: 1
+    integrations:
+      - "dashboard"
+      - "messageForwarding"
       - "icat"
       - "visa"
   - className: "InvestigationOperationsConsumer"
@@ -58,6 +78,15 @@ consumers:
       - "visa"
       - "datacite"
       - "panosc"
+  - className: "DatasetsConsumer"
+    module: "consumers.datasets"
+    enabled: true
+    queues:
+      - "icat-investigation-ops"
+    workers: 1
+    integrations:
+      - "dashboard"
+      - "icat"
 brokers:
   main:
     protocol: "amqp"
@@ -77,6 +106,11 @@ brokers:
   #    forwardingRules:
   #      - fromExchange: "uos-sync-exchange"
   #        toBroker: "pacer-prod"
+ingestionSettings:
+  dataset:
+    acceptXMLPayloads: true
+  investigation:
+    defaultEmbargoYears: 3
 integrations:
   visa:
     enabled: true
