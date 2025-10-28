@@ -132,7 +132,7 @@ class PaNOSCClient:
 
 
 def get_panosc_client(config: dict, logger: logging.Logger) -> PaNOSCClient | None:
-    panosc_config: dict = config.get("integrations", {}).get("panosc", {})
+    panosc_config: dict = config.get("", {}).get("panosc", {})
     if not panosc_config or not panosc_config.get("enabled"):
         return None
     return PaNOSCClient(

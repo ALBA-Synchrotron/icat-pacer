@@ -12,6 +12,11 @@ class Affiliation:
     city: str
     country_code: str
 
+    def get_affiliation_name(self, limit: int = -1) -> str:
+        ret: str = f"{', '.join(i for i in [self.name, self.unit, self.department_name] if i != '')}"
+        if limit > 0:
+            ret = ret[:limit]
+        return ret
 
 @dataclass
 class UserContext:

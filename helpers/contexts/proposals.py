@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 
 from helpers.dataclasses.investigation import InvestigationContext, InvestigationInstrumentContext, \
     InvestigationUserContext
-from helpers.datetime import try_parse_datetime
+from helpers.utils.datetime import try_parse_datetime
 
 
 def create_investigation_context(investigation_data: str | dict, ingestion_settings: dict,

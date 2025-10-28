@@ -4,10 +4,9 @@ import logging
 
 from psycopg_pool import ConnectionPool
 
-from helpers.common import get_affiliation_name
 from helpers.dataclasses.user import UserContext
-from helpers.icat_utils import ICATClient
-from helpers.visa_utils import VISALoader
+from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.visa_utils import VISALoader
 
 
 class UserTasks:
@@ -38,7 +37,7 @@ class UserTasks:
             u.familyName = user_context.last_name
             u.email = user_context.email
             u.orcidId = user_context.orcid
-            u.affiliation = get_affiliation_name(affiliation=user_context.affiliation, limit=255)
+            u.affiliation = user_context.affiliation.get_affiliation_name(limit=255)
             u.name = u.name.replace(self.USER_DISABLED_SUFFIX,
                                     "") if user_context.enabled else \
                 u.name if u.name.endswith(self.USER_DISABLED_SUFFIX) else \

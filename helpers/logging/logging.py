@@ -4,7 +4,7 @@ import os
 import sys
 from logging.handlers import RotatingFileHandler
 
-from helpers.elastic import CustomElasticHandler
+from helpers.logging.elastic import CustomElasticHandler
 
 BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_LOGGING_FORMAT: str = "%(asctime)s [%(levelname)s] %(name)s -- %(message)s"
@@ -19,7 +19,7 @@ def configure_handler_format_and_level(handler: logging.StreamHandler, log_level
 
 def configure_worker_logger(handler: logging.StreamHandler | logging.Handler, config: dict,
                             logger: logging.Logger) -> None:
-    log_level: str = config.get("logging").get("logLevel", "INFO")
+    log_level: str = config.get("").get("logLevel", "INFO")
 
     configure_handler_format_and_level(handler, log_level, None)
     handler.setLevel(log_level)
@@ -28,7 +28,7 @@ def configure_worker_logger(handler: logging.StreamHandler | logging.Handler, co
 
 
 def configure_pacer_logger(config: dict, logger: logging.Logger) -> list:
-    logging_config: dict = config.get("logging", {})
+    logging_config: dict = config.get("", {})
 
     log_level: str = logging_config.get("logLevel", "INFO")
     print_format: str = logging_config.get("printFormat", DEFAULT_LOGGING_FORMAT)

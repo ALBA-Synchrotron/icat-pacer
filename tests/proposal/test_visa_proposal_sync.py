@@ -1,10 +1,9 @@
 import logging
-from datetime import datetime
 
 import pytest
 from psycopg_pool import ConnectionPool
 
-from helpers.proposals import create_investigation_context, InvestigationContext
+from helpers.contexts.proposals import create_investigation_context, InvestigationContext
 from tasks.investigations import ProposalTasks
 from tests.utils.generic_unit_test import GenericPACERUnitTest
 

@@ -6,13 +6,13 @@ import logging
 from icat.entity import Entity
 from psycopg_pool import ConnectionPool
 from helpers.dataclasses.investigation import InvestigationOperationsContext
-from helpers.icat_utils import ICATClient
-from helpers.datacite import DataciteClient
-from helpers.panosc import PaNOSCClient
-from helpers.settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PARTICIPANT, \
+from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.datacite import DataciteClient
+from helpers.integrations.panosc import PaNOSCClient
+from helpers.static_settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PARTICIPANT, \
     DATACITE_CONTRIBUTOR_DATA_COLLECTOR, ICAT_USER_ROLE_LOCAL_CONTACT, DATACITE_CONTRIBUTOR_PROJECT_MANAGER, \
     DATACITE_CONTRIBUTOR_PROJECT_MEMBER, ICAT_USER_ROLE_PROPOSER
-from helpers.visa_utils import VISALoader
+from helpers.integrations.visa_utils import VISALoader
 
 
 class InvestigationOpsTasks:

@@ -3,8 +3,8 @@ from __future__ import absolute_import, unicode_literals
 from kombu import Message
 
 from helpers.dataclasses.dataset import DatasetContext
-from helpers.dataset import create_dataset_context
-from helpers.pacer_consumer import PACERConsumer
+from helpers.contexts.dataset import create_dataset_context
+from helpers.utils.pacer_consumer import PACERConsumer
 from tasks.investigation_ops import InvestigationOpsTasks
 
 
@@ -26,7 +26,7 @@ class DatasetsConsumer(PACERConsumer):
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
-    def callback_func_main_dataset_ingestion(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_main_dataset_creation(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
             f"callback_func_main_dataset_ingestion > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_str: str = message.payload or message.body

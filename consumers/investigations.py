@@ -3,8 +3,8 @@ from __future__ import absolute_import, unicode_literals
 from kombu import Message
 
 from helpers.dataclasses.investigation import InvestigationContext
-from helpers.pacer_consumer import PACERConsumer
-from helpers.proposals import create_investigation_context
+from helpers.utils.pacer_consumer import PACERConsumer
+from helpers.contexts.proposals import create_investigation_context
 from tasks.investigations import ProposalTasks
 
 

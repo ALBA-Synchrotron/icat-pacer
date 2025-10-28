@@ -5,10 +5,10 @@ import logging
 from icat.entity import Entity
 from psycopg_pool import ConnectionPool
 
-from helpers import settings
+from helpers import static_settings
 from helpers.dataclasses.investigation import InvestigationContext
-from helpers.icat_utils import ICATClient
-from helpers.visa_utils import VISALoader
+from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.visa_utils import VISALoader
 
 
 class ProposalTasks:

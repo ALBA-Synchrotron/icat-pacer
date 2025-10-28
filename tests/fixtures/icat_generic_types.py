@@ -1,7 +1,7 @@
 import pytest
 from icat.entity import Entity
 
-from helpers.icat_utils import ICATClient
+from helpers.integrations.icat_utils import ICATClient
 
 
 @pytest.fixture(scope="session")

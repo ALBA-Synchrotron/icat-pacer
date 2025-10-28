@@ -1,14 +1,14 @@
 import datetime
 from logging import Logger
+
 from psycopg_pool import ConnectionPool
 
-from helpers.common import get_affiliation_name
 from helpers.dataclasses.investigation import InvestigationContext
 from helpers.dataclasses.user import UserContext, Affiliation
 
 
 def get_pg_connection_pool(config: dict) -> ConnectionPool:
-    visa_config: dict = config.get("integrations", {}).get("visa", {})
+    visa_config: dict = config.get("", {}).get("visa", {})
 
     enabled: bool = visa_config.get("enabled", False)
     if not enabled:
@@ -71,10 +71,10 @@ class VISALoader:
         logger.debug(
             f"Writing to VISA db affiliation / employer: id={affiliation.id} name={affiliation.name} city={affiliation.city} country={affiliation.country_code}")
         params: tuple = (affiliation.id,
-                         get_affiliation_name(affiliation=affiliation, limit=200),
+                         affiliation.get_affiliation_name(limit=200),
                          affiliation.city,
                          affiliation.country_code,
-                         get_affiliation_name(affiliation=affiliation, limit=200),
+                         affiliation.get_affiliation_name(limit=200),
                          affiliation.city,
                          affiliation.country_code)
         try:

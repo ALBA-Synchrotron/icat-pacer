@@ -4,7 +4,7 @@ from typing import Any, Generator
 
 import pytest
 
-from helpers.icat_utils import ICATClient
+from helpers.integrations.icat_utils import ICATClient
 
 
 class GenericPACERUnitTest:
