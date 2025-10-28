@@ -271,7 +271,7 @@ class ProposalTasks:
 
         errors = proposer_errors + co_proposer_errors + lc_errors + participants_errors
         if errors:
-            raise Exception(";".join(f"{type(e).__name__}: {e}" for e in errors))
+            raise Exception("; ".join(f"{type(e).__name__}: {e}" for e in errors))
 
     def __save_investigation_user_role_unique(self, icat_client: ICATClient, investigation: Entity,
                                               investigation_context: InvestigationContext, role: str) -> list:
@@ -292,6 +292,7 @@ class ProposalTasks:
             )
             if not user:
                 errors.append(ValueError(f"User {context_investigation_user} not found in ICAT."))
+                return errors
 
             current_investigation_user = icat_client.search(
                 "InvestigationUser",
@@ -347,6 +348,7 @@ class ProposalTasks:
                     )
                     if not user:
                         errors.append(ValueError(f"User {context_investigation_username} not found in ICAT."))
+                        continue
 
                     investigation_user: Entity = icat_client.new("InvestigationUser")
                     investigation_user.investigation = investigation
