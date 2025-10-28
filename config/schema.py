@@ -146,6 +146,26 @@ config_yaml_schema: dict = {
             }
         }
     },
+    "ingestionSettings": {
+        "type": "dict",
+        "required": True,
+        "schema": {
+            "dataset": {
+                "type": "dict",
+                "required": True,
+                "schema": {
+                    "acceptXMLPayloads": {"type": "boolean", "required": True}
+                }
+            },
+            "investigation": {
+                "type": "dict",
+                "required": True,
+                "schema": {
+                    "defaultEmbargoPeriodYears": {"type": "integer", "required": True}
+                }
+            }
+        }
+    },
     "integrations": {
         "type": "dict",
         "required": True,

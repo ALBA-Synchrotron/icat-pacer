@@ -72,3 +72,28 @@ class InvestigationContext:
     url: str = ""
     visa_sync: bool = False
     icat_sync: bool = False
+
+
+@dataclass
+class DatasetSampleContext:
+    name: str
+    type: str
+
+
+@dataclass
+class DatasetDatafileContext:
+    location: str
+    size: str
+
+
+@dataclass
+class DatasetContext:
+    investigation: str
+    instrument: str
+    name: str
+    parameters: list
+    location: str
+    start_date: str
+    end_date: str
+    sample: DatasetSampleContext
+    datafiles: list[DatasetDatafileContext]
