@@ -149,6 +149,7 @@ config_yaml_schema: dict = {
     "ingestionSettings": {
         "type": "dict",
         "required": True,
+        "check_allowed_root_location_paths": True,
         "schema": {
             "dataset": {
                 "type": "dict",
@@ -157,6 +158,10 @@ config_yaml_schema: dict = {
                     "acceptXMLPayloads": {"type": "boolean", "required": True},
                     "mandatoryPathsExistence": {"type": "boolean", "required": True},
                     "mandatorySampleType": {"type": "boolean", "required": True},
+                    "checkAllowedLocationPaths": {"type": "boolean", "required": True},
+                    "allowedRootLocationPaths": {
+                        "type": "list", "required": False, "nullable": True,
+                        "schema": {"type": "string", "required": True}}
                 }
             },
             "investigation": {

@@ -12,10 +12,10 @@ from kombu import Connection, Exchange, Queue
 
 from config.config import ConfigParser
 from helpers.integrations.icat_utils import ICATClient
-from helpers.logging import configure_pacer_logger
+from helpers.logging.general import configure_pacer_logger
 from helpers.utils.pacer_consumer import PACERConsumer
 from helpers.utils.serializers import register_custom_serializers
-from helpers.utils import Singleton, mask_amqp_password
+from helpers.utils.utils import Singleton, mask_amqp_password
 
 MAIN_LOOP_WAIT_TIME: int = 15 * 60
 

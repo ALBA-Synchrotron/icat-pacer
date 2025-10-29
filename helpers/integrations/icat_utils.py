@@ -37,7 +37,7 @@ class ICATClient:
 
     @classmethod
     def open_icat_session(cls, config: dict, session_id: str = None) -> Client | None:
-        icat_config: dict = config.get("", {}).get("icat", {})
+        icat_config: dict = config.get("integrations", {}).get("icat", {})
         enabled: bool = icat_config.get("enabled", False)
 
         if not icat_config or not enabled:

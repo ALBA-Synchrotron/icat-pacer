@@ -62,4 +62,17 @@ def create_dataset_context(dataset_data: str | dict, ingestion_settings: dict) -
             if not os.path.exists(datafile.location):
                 raise ValueError(f"Dataset root location does not exist: {datafile.location}")
 
+
+
+def is_under_data_path(path_str):
+    base_dir = Path("/data").resolve()
+    target_path = Path(path_str).resolve()
+
+    try:
+        # Python 3.9+:
+        return target_path.is_relative_to(base_dir)
+    except AttributeError:
+        # For Python < 3.9:
+        return base_dir in target_path.parents
+
     return dataset_ctx

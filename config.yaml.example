@@ -111,6 +111,9 @@ ingestionSettings:
     acceptXMLPayloads: true
     mandatoryPathsExistence: false
     mandatorySampleType: false
+    checkAllowedLocationPaths: true
+    allowedRootLocationPaths:
+      - "/beamlines"
   investigation:
     defaultEmbargoYears: 3
     defaultFacilityName: "ALBA"

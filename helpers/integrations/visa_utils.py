@@ -8,7 +8,7 @@ from helpers.dataclasses.user import UserContext, Affiliation
 
 
 def get_pg_connection_pool(config: dict) -> ConnectionPool:
-    visa_config: dict = config.get("", {}).get("visa", {})
+    visa_config: dict = config.get("integrations", {}).get("visa", {})
 
     enabled: bool = visa_config.get("enabled", False)
     if not enabled:

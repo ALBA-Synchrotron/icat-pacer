@@ -285,3 +285,21 @@ class PACERValidator(Validator):
             if not scoring_url or not scoring_username or not scoring_password or not search_api_url:
                 self._error(field,
                             "'apiUrl', 'username', 'password' and 'searchApiUrl' are required when 'integrations.panosc.enabled' is True")
+
+    def _validate_check_allowed_root_location_paths(self, check, field, _) -> None:
+        """
+        The rule's arguments are validated against this schema:
+
+        {'type': 'boolean'}
+        """
+        # For some reason custom rules are not checked when set on a nested schema.
+        # This rule is a workaround that checks that if you've enabled the `checkAllowedLocationPaths` inside
+        # `ingestionSettings.dataset` that you have set a list of root paths in also in `allowedRootLocationPaths`.
+        if not check:
+            return
+        ds_ingestion_settings = self.document.get("ingestionSettings").get("dataset")
+        if ds_ingestion_settings.get("checkAllowedLocationPaths"):
+            allowed_location_paths = ds_ingestion_settings.get("allowedRootLocationPaths")
+            if not allowed_location_paths:
+                self._error(field,
+                            "a list of root paths is expected when dataset ingestionSetting `checkAllowedLocationPaths is set` ")

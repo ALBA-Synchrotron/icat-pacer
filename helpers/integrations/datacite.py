@@ -111,7 +111,7 @@ class DataciteClient:
 
 
 def get_datacite_client(config: dict, logger: logging.Logger) -> DataciteClient | None:
-    datacite_config: dict = config.get("", {}).get("datacite", {})
+    datacite_config: dict = config.get("integrations", {}).get("datacite", {})
     if not datacite_config or not datacite_config.get("enabled"):
         return None
     return DataciteClient(

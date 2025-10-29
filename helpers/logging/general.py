@@ -19,7 +19,7 @@ def configure_handler_format_and_level(handler: logging.StreamHandler, log_level
 
 def configure_worker_logger(handler: logging.StreamHandler | logging.Handler, config: dict,
                             logger: logging.Logger) -> None:
-    log_level: str = config.get("").get("logLevel", "INFO")
+    log_level: str = config.get("logging").get("logLevel", "INFO")
 
     configure_handler_format_and_level(handler, log_level, None)
     handler.setLevel(log_level)
@@ -28,7 +28,7 @@ def configure_worker_logger(handler: logging.StreamHandler | logging.Handler, co
 
 
 def configure_pacer_logger(config: dict, logger: logging.Logger) -> list:
-    logging_config: dict = config.get("", {})
+    logging_config: dict = config.get("logging", {})
 
     log_level: str = logging_config.get("logLevel", "INFO")
     print_format: str = logging_config.get("printFormat", DEFAULT_LOGGING_FORMAT)
