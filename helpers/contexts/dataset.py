@@ -1,5 +1,6 @@
 import json
 import os.path
+from pathlib import Path
 
 import xmltodict
 
@@ -11,9 +12,13 @@ def create_dataset_context(dataset_data: str | dict, ingestion_settings: dict) -
     dataset_dict: dict
     dataset_ctx: DatasetContext
 
-    if ingestion_settings.get("acceptXMLPayloads") and isinstance(dataset_data, str):
+    if ingestion_settings.get("acceptXMLPayloads") and isinstance(dataset_data, str) and dataset_data.endswith(">"):
         try:
             dataset_dict = xmltodict.parse(dataset_data)["dataset"]
+            dataset_dict["datafiles"] = dataset_dict["datafile"]
+            dataset_dict["parameters"] = dataset_dict["parameter"]
+            dataset_dict["start_date"] = dataset_dict["startDate"]
+            dataset_dict["end_date"] = dataset_dict["endDate"]
         except Exception as e:
             raise ValueError(f"Error parsing XML payload: {e!r}")
 
@@ -27,16 +32,16 @@ def create_dataset_context(dataset_data: str | dict, ingestion_settings: dict) -
     investigation_name: str = dataset_dict.get("investigation", "")
     instrument: str = dataset_dict.get("instrument", "")
     dataset_name: str = dataset_dict.get("name", "")
-    parameters: list = dataset_dict.get("parameter", []) if isinstance(dataset_dict.get("parameter"), list) else [
-        dataset_dict.get("parameter")]
+    parameters: list = dataset_dict.get("parameters", []) if isinstance(dataset_dict.get("parameters"), list) else [
+        dataset_dict.get("parameters")]
     location: str = dataset_dict.get("location", "")
-    start_date: str = dataset_dict.get("startDate", "")
-    end_date: str = dataset_dict.get("endDate", "")
+    start_date: str = dataset_dict.get("start_date", "")
+    end_date: str = dataset_dict.get("end_date", "")
     sample: dict = dataset_dict.get("sample", {})
     sample_name: str = sample.get("name", "")
     sample_type: str = sample.get("type", "")
-    datafiles: list = dataset_dict.get("datafile", []) if isinstance(dataset_dict.get("datafile"), list) else [
-        dataset_dict.get("datafile")]
+    datafiles: list = dataset_dict.get("datafiles", []) if isinstance(dataset_dict.get("datafiles"), list) else [
+        dataset_dict.get("datafiles")]
 
     dataset_ctx = DatasetContext(
         investigation=investigation_name,
@@ -54,25 +59,31 @@ def create_dataset_context(dataset_data: str | dict, ingestion_settings: dict) -
     if not dataset_ctx.sample.type and ingestion_settings.get("mandatorySampleType"):
         raise ValueError("Sample type not found in payload.")
 
-    if ingestion_settings.get("mandatoryPathsExistence"):
+    if ingestion_settings.get("checkAllowedLocationPaths"):
+        strict_checking: bool = ingestion_settings.get("mandatoryPathsExistence", False)
+        allowed_root_locations: list = ingestion_settings.get("allowedRootLocationPaths", [])
+
+        def is_df_location_in_allowed_roots(path: str) -> bool:
+            try:
+                df_location: Path = Path(path).resolve(strict=strict_checking)
+                for allowed_root_path in allowed_root_locations:
+                    if df_location.is_relative_to(allowed_root_path):
+                        return True
+            except OSError:
+                pass
+            return False
+
+        if not all(is_df_location_in_allowed_roots(i.location) for i in dataset_ctx.datafiles):
+            raise ValueError(
+                f"Datafile location(s) outside of allowed root location(s), valid root are: {",".join(allowed_root_locations)}")
+
+    # Avoid double file existence check if strict check / resolution has been done before.
+    if ingestion_settings.get("mandatoryPathsExistence") and not ingestion_settings.get("checkAllowedLocationPaths"):
         if not os.path.exists(location):
             raise ValueError(f"Dataset root location does not exist: {location}")
 
         for datafile in dataset_ctx.datafiles:
             if not os.path.exists(datafile.location):
                 raise ValueError(f"Dataset root location does not exist: {datafile.location}")
-
-
-
-def is_under_data_path(path_str):
-    base_dir = Path("/data").resolve()
-    target_path = Path(path_str).resolve()
-
-    try:
-        # Python 3.9+:
-        return target_path.is_relative_to(base_dir)
-    except AttributeError:
-        # For Python < 3.9:
-        return base_dir in target_path.parents
 
     return dataset_ctx
