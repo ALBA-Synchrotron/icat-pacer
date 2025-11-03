@@ -247,33 +247,43 @@ class ProposalTasks:
 
     def __handle_user_roles(self, icat_client: ICATClient, investigation: Entity,
                             investigation_context: InvestigationContext) -> None:
+        errors: list
+
         # Main Proposer
         self.logger.info(f"ICAT sync: Saving main proposer for investigation {investigation_context.name}")
-        self.__save_investigation_user_role_unique(icat_client, investigation, investigation_context,
-                                                   settings.ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR)
+        proposer_errors: list = self.__save_investigation_user_role_unique(icat_client, investigation,
+                                                                           investigation_context,
+                                                                           settings.ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR)
         # Co-Proposers
         self.logger.info(f"ICAT sync: Saving proposers for investigation {investigation_context.name}")
-        self.__save_investigation_user_role_set(icat_client, investigation, investigation_context,
-                                                settings.ICAT_USER_ROLE_PROPOSER)
+        co_proposer_errors: list = self.__save_investigation_user_role_set(icat_client, investigation,
+                                                                           investigation_context,
+                                                                           settings.ICAT_USER_ROLE_PROPOSER)
         # Local contact
         self.logger.info(f"ICAT sync: Saving local contact for investigation {investigation_context.name}")
-        self.__save_investigation_user_role_set(icat_client, investigation, investigation_context,
-                                                   settings.ICAT_USER_ROLE_LOCAL_CONTACT)
+        lc_errors: list = self.__save_investigation_user_role_set(icat_client, investigation, investigation_context,
+                                                                  settings.ICAT_USER_ROLE_LOCAL_CONTACT)
         # Participants (visitors)
         self.logger.info(f"ICAT sync: Saving Participants for investigation {investigation_context.name}")
-        self.__save_investigation_user_role_set(icat_client, investigation, investigation_context,
-                                                settings.ICAT_USER_ROLE_PARTICIPANT)
+        participants_errors: list = self.__save_investigation_user_role_set(icat_client, investigation,
+                                                                            investigation_context,
+                                                                            settings.ICAT_USER_ROLE_PARTICIPANT)
+
+        errors = proposer_errors + co_proposer_errors + lc_errors + participants_errors
+        if errors:
+            raise Exception(";".join(f"{type(e).__name__}: {e}" for e in errors))
 
     def __save_investigation_user_role_unique(self, icat_client: ICATClient, investigation: Entity,
-                                              investigation_context: InvestigationContext, role: str) -> None:
+                                              investigation_context: InvestigationContext, role: str) -> list:
+        errors: list = []
         try:
             try:
                 context_investigation_user: Entity = \
-                [u['username'] for u in investigation_context.user_list if u['role'].lower() == role.lower()][0]
+                    [u['username'] for u in investigation_context.user_list if u['role'].lower() == role.lower()][0]
             except IndexError:
                 msg = f"InvestigationUser not found in user list provided for investigation {investigation_context.name}"
                 self.logger.error(msg)
-                raise IndexError(msg)
+                errors.append(IndexError(msg))
 
             user: Entity = icat_client.search(
                 "User",
@@ -281,39 +291,42 @@ class ProposalTasks:
                 flatten_single=True
             )
             if not user:
-                raise ValueError(f"User {context_investigation_user} not found in ICAT.")
-
-            current_investigation_user = icat_client.search(
-                "InvestigationUser",
-                conditions={
-                    "investigation.name__eq": investigation_context.name,
-                    "role__eq": role
-                },
-                flatten_single=True,
-                includes=['user']
-            )
-            if current_investigation_user and current_investigation_user.user.name.lower() != context_investigation_user.lower():
-                icat_client.delete(current_investigation_user)
-
-                investigation_user: Entity = icat_client.new("InvestigationUser")
-                investigation_user.investigation = investigation
-                investigation_user.user = user
-                investigation_user.role = role
-                investigation_user.create()
+                errors.append(ValueError(f"User {context_investigation_user} not found in ICAT."))
+            else:
+                current_investigation_user = icat_client.search(
+                    "InvestigationUser",
+                    conditions={
+                        "investigation.name__eq": investigation_context.name,
+                        "role__eq": role
+                    },
+                    flatten_single=True,
+                    includes=['user']
+                )
+                if current_investigation_user and current_investigation_user.user.name.lower() != context_investigation_user.lower():
+                    icat_client.delete(current_investigation_user)
+                elif not current_investigation_user:
+                    investigation_user: Entity = icat_client.new("InvestigationUser")
+                    investigation_user.investigation = investigation
+                    investigation_user.user = user
+                    investigation_user.role = role
+                    investigation_user.create()
         except Exception as e:
             self.logger.error(f"Error saving InvestigationUser for investigation {investigation_context.name}")
             self.logger.error(e)
-            raise e
+            errors.append(e)
+        return errors
 
     def __save_investigation_user_role_set(self, icat_client: ICATClient, investigation: Entity,
-                                           investigation_context: InvestigationContext, role: str) -> None:
+                                           investigation_context: InvestigationContext, role: str) -> list:
+        errors: list = []
         try:
-            context_investigation_usernames: list[str] = [u['username'].lower() for u in investigation_context.user_list if
+            context_investigation_usernames: list[str] = [u['username'].lower() for u in investigation_context.user_list
+                                                          if
                                                           u['role'] == role]
             if not context_investigation_usernames:
                 self.logger.warning(
                     f"No InvestigationUsers found for investigation {investigation_context.name} with role {role}")
-                return
+                return errors
 
             current_investigation_users: list[Entity] = icat_client.search(
                 "InvestigationUser",
@@ -321,7 +334,8 @@ class ProposalTasks:
                 flatten_single=False,
                 includes=['user']
             )
-            current_investigation_usernames: list[str] = [investigation_proposer.user.name.lower() for investigation_proposer in
+            current_investigation_usernames: list[str] = [investigation_proposer.user.name.lower() for
+                                                          investigation_proposer in
                                                           current_investigation_users] if current_investigation_users else []
 
             for context_investigation_username in context_investigation_usernames:
@@ -332,13 +346,13 @@ class ProposalTasks:
                         flatten_single=True
                     )
                     if not user:
-                        raise ValueError(f"User {context_investigation_username} not found in ICAT.")
-
-                    investigation_user: Entity = icat_client.new("InvestigationUser")
-                    investigation_user.investigation = investigation
-                    investigation_user.user = user
-                    investigation_user.role = role
-                    investigation_user.create()
+                        errors.append(ValueError(f"User {context_investigation_username} not found in ICAT."))
+                    else:
+                        investigation_user: Entity = icat_client.new("InvestigationUser")
+                        investigation_user.investigation = investigation
+                        investigation_user.user = user
+                        investigation_user.role = role
+                        investigation_user.create()
 
             if current_investigation_users:
                 for current_investigation_user in current_investigation_users:
@@ -351,4 +365,5 @@ class ProposalTasks:
             self.logger.error(
                 f"Error saving InvestigationUsers with role {role} for investigation {investigation_context.name}")
             self.logger.error(e)
-            raise e
+            errors.append(e)
+        return errors
