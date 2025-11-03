@@ -12,8 +12,8 @@ from helpers.settings import ICAT_USER_ROLE_PARTICIPANT
 
 def simplify_redundant_user_roles(user_list: list) -> list:
     ret: list = []
-    for user in user_list:
-        username: str = user.get("username")
+    usernames: list = list(set([i["username"] for i in user_list]))
+    for username in usernames:
         user_roles = list(filter(lambda x: x["username"] == username, user_list))
         if len(user_roles) > 1 and ICAT_USER_ROLE_PARTICIPANT in [i["role"] for i in user_roles]:
             user_roles = list(filter(lambda x: x["role"] != ICAT_USER_ROLE_PARTICIPANT, user_roles))

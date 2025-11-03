@@ -246,7 +246,7 @@ class ProposalTasks:
             raise e
 
     def __handle_user_roles(self, icat_client: ICATClient, investigation: Entity,
-                            investigation_context: InvestigationContext, clear_existing_roles: bool = True) -> None:
+                            investigation_context: InvestigationContext) -> None:
         errors: list
 
         # Main Proposer
