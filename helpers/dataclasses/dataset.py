@@ -6,6 +6,9 @@ class DatasetSampleContext:
     name: str
     type: str
 
+    def __post_init__(self):
+        if not self.name:
+            raise ValueError("Sample name cannot be empty")
 
 @dataclass
 class DatasetDatafileContext:

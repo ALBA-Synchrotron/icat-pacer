@@ -9,6 +9,8 @@ from helpers import static_settings
 from helpers.dataclasses.investigation import InvestigationContext
 from helpers.integrations.icat_utils import ICATClient
 from helpers.integrations.visa_utils import VISALoader
+from helpers.static_settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PROPOSER, \
+    ICAT_USER_ROLE_LOCAL_CONTACT, ICAT_USER_ROLE_PARTICIPANT
 
 
 class ProposalTasks:
@@ -249,21 +251,21 @@ class ProposalTasks:
         self.logger.info(f"ICAT sync: Saving main proposer for investigation {investigation_context.name}")
         proposer_errors: list = self.__save_investigation_user_role_unique(icat_client, investigation,
                                                                            investigation_context,
-                                                                           settings.ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR)
+                                                                           ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR)
         # Co-Proposers
         self.logger.info(f"ICAT sync: Saving proposers for investigation {investigation_context.name}")
         co_proposer_errors: list = self.__save_investigation_user_role_set(icat_client, investigation,
                                                                            investigation_context,
-                                                                           settings.ICAT_USER_ROLE_PROPOSER)
+                                                                           ICAT_USER_ROLE_PROPOSER)
         # Local contact
         self.logger.info(f"ICAT sync: Saving local contact for investigation {investigation_context.name}")
         lc_errors: list = self.__save_investigation_user_role_set(icat_client, investigation, investigation_context,
-                                                                  settings.ICAT_USER_ROLE_LOCAL_CONTACT)
+                                                                  ICAT_USER_ROLE_LOCAL_CONTACT)
         # Participants (visitors)
         self.logger.info(f"ICAT sync: Saving Participants for investigation {investigation_context.name}")
         participants_errors: list = self.__save_investigation_user_role_set(icat_client, investigation,
                                                                             investigation_context,
-                                                                            settings.ICAT_USER_ROLE_PARTICIPANT)
+                                                                            ICAT_USER_ROLE_PARTICIPANT)
 
         errors = proposer_errors + co_proposer_errors + lc_errors + participants_errors
         if errors:

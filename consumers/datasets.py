@@ -31,6 +31,7 @@ class DatasetsConsumer(PACERConsumer):
             f"callback_func_main_dataset_ingestion > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__get_ingestion_settings())
+
         self.tasks.create_base_dataset_icat(icat_client=self.icat_client, dataset_ctx=dataset_ctx, *_args, **_kwargs)
 
     def __get_ingestion_settings(self) -> dict:
