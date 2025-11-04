@@ -24,7 +24,8 @@ def configure_worker_logger(handler: logging.StreamHandler | logging.Handler, co
     configure_handler_format_and_level(handler, log_level, None)
     handler.setLevel(log_level)
     logger.setLevel(log_level)
-    logger.addHandler(handler)
+    if type(handler) not in [type(i) for i in logger.handlers]:
+        logger.addHandler(handler)
 
 
 def configure_pacer_logger(config: dict, logger: logging.Logger) -> list:
