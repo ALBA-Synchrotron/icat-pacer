@@ -168,7 +168,7 @@ class VISALoader:
             with conn.cursor() as cur:
                 query: str = """
                              INSERT INTO proposal (id, identifier, title, summary, public_at)
-                             VALUES (%s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO
+                             VALUES (%s, %s, %s, %s, %s) ON CONFLICT (id) DO
                              UPDATE
                                  SET identifier = %s, title = %s, summary = %s, public_at = %s \
                              """
@@ -208,7 +208,7 @@ class VISALoader:
 
                 insert_query: str = """
                                     INSERT INTO experiment (id, proposal_id, instrument_id, start_date, end_date, title)
-                                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO
+                                    VALUES (%s, %s, %s, %s, %s, %s) ON CONFLICT (id) DO
                                     UPDATE
                                         SET proposal_id=%s, instrument_id=%s, start_date=%s, end_date=%s, title=%s \
                                     """
