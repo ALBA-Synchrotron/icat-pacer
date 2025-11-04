@@ -20,8 +20,22 @@ class _TrackedObjectProxy:
         object.__setattr__(self, '_context', context)
         object.__setattr__(self, '_key', key)
 
-    def __getattr__(self, name: str) -> T:
-        return getattr(object.__getattribute__(self, '_obj'), name)
+    def __getattr__(self, name: str):
+        obj = object.__getattribute__(self, '_obj')
+        attr = getattr(obj, name)
+
+        if callable(attr) and name in ('create', 'update'):
+            context = object.__getattribute__(self, '_context')
+            _key = object.__getattribute__(self, '_key')
+
+            def tracked_method(*args, **kwargs) -> T | None:
+                result = attr(*args, **kwargs)
+                setattr(context, _key, obj)
+                return result
+
+            return tracked_method
+
+        return attr
 
     def __setattr__(self, key: str, value: T):
         obj = object.__getattribute__(self, '_obj')
@@ -86,12 +100,9 @@ class ICATRollbackContext(AbstractContextManager):
         if key in self._rollbackable_objects:
             previous_obj: T = self._rollbackable_objects[key][-2] if len(self._rollbackable_objects[key]) >= 2 else \
                 self._rollbackable_objects[key][0]
-            if self._keep_history:
-                self._rollbackable_objects[key] = self._rollbackable_objects[key][:-1:]
-            else:
-                self._rollbackable_objects[key] = self._rollbackable_objects[key][0::-1]
 
-            latest_obj: T = self._rollbackable_objects[key][-1]
+            latest_obj: T = self._rollbackable_objects[key].pop(-1)
+
             if previous_obj.__module__ == "icat.entities" and latest_obj.__module__ == "icat.entities":
                 self.__icat_entity_rollback(previous_obj, latest_obj, force_delete)
             return latest_obj
