@@ -6,6 +6,7 @@ import xmltodict
 
 from helpers.dataclasses.dataset import DatasetParameterContext, DatasetSampleContext, DatasetDatafileContext, \
     DatasetContext
+from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME, PROCESSED_DATASET_TYPE_NAME, RAW_DATASET_TYPE_NAME
 
 
 def create_dataset_context(dataset_data: str | dict, ingestion_settings: dict) -> DatasetContext:
@@ -52,10 +53,15 @@ def create_dataset_context(dataset_data: str | dict, ingestion_settings: dict) -
         start_date=start_date,
         end_date=end_date,
         sample=DatasetSampleContext(name=sample_name, type=sample_type),
-        datafiles=[DatasetDatafileContext(location=i.get("location", "")) for i in datafiles]
+        datafiles=[DatasetDatafileContext(location=i.get("location", "")) for i in datafiles],
     )
 
     # Dynamic validations
+    if INPUT_DATASET_PARAMETER_NAME in [i.name for i in dataset_ctx.parameters]:
+        dataset_ctx.type = PROCESSED_DATASET_TYPE_NAME
+    else:
+        dataset_ctx.type = RAW_DATASET_TYPE_NAME
+
     if not dataset_ctx.sample.type and ingestion_settings.get("mandatorySampleType"):
         raise ValueError("Sample type not found in payload.")
 

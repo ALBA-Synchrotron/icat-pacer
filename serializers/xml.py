@@ -108,4 +108,3 @@ def register_xml() -> None:
         content_type='application/xml',
         content_encoding='utf-8'
     )
-    print("XML serializer 'xml' registered with Kombu.")

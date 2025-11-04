@@ -42,6 +42,7 @@ class DatasetContext:
     end_date: str
     sample: DatasetSampleContext
     datafiles: list[DatasetDatafileContext]
+    type: str = ""
 
     def __post_init__(self):
         if not self.investigation:

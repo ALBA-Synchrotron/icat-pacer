@@ -18,14 +18,20 @@ class DatasetsTasks:
 
     def create_base_dataset_icat(self, icat_client: ICATClient, dataset_ctx: DatasetContext, *_args, **_kwargs) -> None:
         with ICATRollbackContext(icat_client, self.logger) as rb:
-            asd = 23
             rb.new_dataset = icat_client.new("Dataset")
-            new_dataset_sample: Entity = icat_client.new("Sample")
-            new_investigation_instrument: Entity
+            rb.new_dataset_sample = icat_client.new("Sample")
+            rb.new_investigation_instrument = icat_client.new("InvestigationInstrument")
 
             try:
                 self.logger.info(
                     f"Creating dataset {dataset_ctx.name}, inv={dataset_ctx.investigation}, instr={dataset_ctx.instrument}")
+
+                dataset_type: Entity = icat_client.search("DatasetType", conditions={"name__eq": dataset_ctx.type},
+                                                          flatten_single=True)
+                if dataset_type is None:
+                    error_msg = f"Dataset type {dataset_ctx.type} not found."
+                    self.logger.error(error_msg)
+                    raise ValueError(error_msg)
 
                 instrument: Entity = icat_client.search("Instrument",
                                                         conditions={"name__eq": dataset_ctx.instrument},
@@ -38,7 +44,8 @@ class DatasetsTasks:
 
                 investigation: Entity | None = icat_client.search("Investigation",
                                                                   conditions={"name__eq": dataset_ctx.investigation},
-                                                                  includes=["InvestigationInstrument", "Instrument"],
+                                                                  includes=["investigationInstruments",
+                                                                            "investigationInstruments.instrument"],
                                                                   flatten_single=True)
 
                 if not investigation:
@@ -46,43 +53,49 @@ class DatasetsTasks:
                     self.logger.error(error_msg)
                     raise Exception(error_msg)
 
-                if investigation.instrument.name != instrument.name:
-                    error_msg: str = "Investigation's instrument does not match dataset's instrument, it will be added as a new investigation instrument"
-                    self.logger.warning(error_msg)
+                if dataset_ctx.instrument.upper() not in [i.instrument.name for i in
+                                                          investigation.investigationInstruments]:
+                    error_msg: str = "Investigation's instrument does not match dataset's instrument"
+                    self.error(error_msg)
+                    raise Exception(error_msg)
 
-                if dataset_ctx.sample.type:
-                    sample_type: Entity = icat_client.search("SampleType",
-                                                             conditions={"name__eq": dataset_ctx.sample.type},
-                                                             flatten_single=True)
-                    if not sample_type:
-                        error_msg: str = f"Could not create dataset {dataset_ctx.name}, sample type not found"
-                        self.logger.error(error_msg)
-                        raise Exception(error_msg)
+                sample: Entity | None = icat_client.search("Sample", conditions={"name__eq": dataset_ctx.sample.name,
+                                                                                 "investigation.name__eq": dataset_ctx.investigation},
+                                                           includes=["investigation"])
+                if not sample:
+                    if dataset_ctx.sample.type:
+                        sample_type: Entity = icat_client.search("SampleType",
+                                                                 conditions={"name__eq": dataset_ctx.sample.type},
+                                                                 flatten_single=True)
+                        if not sample_type:
+                            error_msg: str = f"Could not create dataset {dataset_ctx.name}, sample type not found"
+                            self.logger.error(error_msg)
+                            raise Exception(error_msg)
 
-                    new_dataset_sample.type = sample_type
+                        rb.new_dataset_sample.type = sample_type
 
-                new_dataset_sample.name = dataset_ctx.sample.name
-                new_dataset_sample.save()
+                    rb.new_dataset_sample.name = dataset_ctx.sample.name
+                    rb.new_dataset_sample.investigation = investigation
+                    rb.new_dataset_sample.create()
 
-                new_dataset.sample = new_dataset_sample
-                new_dataset.investigation = investigation
-                new_dataset.instrument = instrument
-                new_dataset.location = dataset_ctx.location
-                new_dataset.startDate = dataset_ctx.start_date
-                new_dataset.endDate = dataset_ctx.end_date
+                rb.new_dataset.type = dataset_type
+                rb.new_dataset.sample = sample if sample else rb.new_dataset_sample
+                rb.new_dataset.investigation = investigation
+                rb.new_dataset.location = dataset_ctx.location
+                rb.new_dataset.startDate = dataset_ctx.start_date
+                rb.new_dataset.endDate = dataset_ctx.end_date
 
                 same_name_dataset: list = icat_client.search("Dataset",
                                                              conditions={"name__eq": dataset_ctx.name,
                                                                          "investigation.name__eq": dataset_ctx.investigation})
 
                 date: str = datetime.datetime.now().strftime(DATETIME_EU)
-                new_dataset.name = dataset_ctx.name if not same_name_dataset else f"{dataset_ctx.name} [{date}]"
-                new_dataset.save()
-
-                self.logger.info(f"Created dataset {new_dataset.name} with id {new_dataset.id}")
+                rb.new_dataset.name = dataset_ctx.name if not same_name_dataset else f"{dataset_ctx.name} [{date}]"
+                rb.new_dataset.create()
+                rb.rollback_all()
+                self.logger.info(f"Created dataset {rb.new_dataset.name} with id {rb.new_dataset.id}")
             except Exception as e:
-                new_dataset_sample.rollback()
-                new_dataset.rollback()
+                rb.rollback_all()
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
