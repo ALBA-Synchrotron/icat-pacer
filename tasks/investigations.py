@@ -5,7 +5,6 @@ import logging
 from icat.entity import Entity
 from psycopg_pool import ConnectionPool
 
-from helpers import static_settings
 from helpers.dataclasses.investigation import InvestigationContext
 from helpers.integrations.icat_utils import ICATClient
 from helpers.integrations.visa_utils import VISALoader
@@ -165,7 +164,7 @@ class ProposalTasks:
             if not investigation_instrument:
                 raise ValueError(f"InvestigationInstrument for {investigation_context.name} not found in ICAT.")
 
-            if investigation_context.instrument.name != investigation_instrument.instrument.name:
+            if investigation_context.instrument.code != investigation_instrument.instrument.name:
                 self.logger.info(f"ICAT sync: Instrument changed for investigation {investigation.name}")
                 icat_client.delete(investigation_instrument)
                 self.__create_investigation_instrument(icat_client, investigation, investigation_context)
@@ -232,7 +231,7 @@ class ProposalTasks:
                 flatten_single=True
             )
             if not instrument:
-                raise ValueError(f"Instrument {investigation_context.instrument.name} not found in ICAT.")
+                raise ValueError(f"Instrument {investigation_context.instrument.get('name')} not found in ICAT.")
 
             investigation_instrument: Entity = icat_client.new("InvestigationInstrument")
             investigation_instrument.investigation = investigation
@@ -290,25 +289,24 @@ class ProposalTasks:
             )
             if not user:
                 errors.append(ValueError(f"User {context_investigation_user} not found in ICAT."))
-                return errors
-
-            current_investigation_user = icat_client.search(
-                "InvestigationUser",
-                conditions={
-                    "investigation.name__eq": investigation_context.name,
-                    "role__eq": role
-                },
-                flatten_single=True,
-                includes=['user']
-            )
-            if current_investigation_user and current_investigation_user.user.name.lower() != context_investigation_user.lower():
-                icat_client.delete(current_investigation_user)
-
-                investigation_user: Entity = icat_client.new("InvestigationUser")
-                investigation_user.investigation = investigation
-                investigation_user.user = user
-                investigation_user.role = role
-                investigation_user.create()
+            else:
+                current_investigation_user = icat_client.search(
+                    "InvestigationUser",
+                    conditions={
+                        "investigation.name__eq": investigation_context.name,
+                        "role__eq": role
+                    },
+                    flatten_single=True,
+                    includes=['user']
+                )
+                if current_investigation_user and current_investigation_user.user.name.lower() != context_investigation_user.lower():
+                    icat_client.delete(current_investigation_user)
+                elif not current_investigation_user:
+                    investigation_user: Entity = icat_client.new("InvestigationUser")
+                    investigation_user.investigation = investigation
+                    investigation_user.user = user
+                    investigation_user.role = role
+                    investigation_user.create()
         except Exception as e:
             self.logger.error(f"Error saving InvestigationUser for investigation {investigation_context.name}")
             self.logger.error(e)

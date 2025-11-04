@@ -5,8 +5,20 @@ from dateutil.relativedelta import relativedelta
 
 from helpers.dataclasses.investigation import InvestigationContext, InvestigationInstrumentContext, \
     InvestigationUserContext
+from helpers.static_settings import ICAT_USER_ROLE_PARTICIPANT
 from helpers.utils.datetime import try_parse_datetime
 
+
+def simplify_redundant_user_roles(user_list: list) -> list:
+    ret: list = []
+    usernames: list = list(set([i.username for i in user_list]))
+    for username in usernames:
+        user_roles = list(filter(lambda x: x.username == username, user_list))
+        if len(user_roles) > 1 and ICAT_USER_ROLE_PARTICIPANT in [i.role for i in user_roles]:
+            user_roles = list(filter(lambda x: x.role != ICAT_USER_ROLE_PARTICIPANT, user_roles))
+        if user_roles not in ret:
+            ret.extend(user_roles)
+    return ret
 
 def create_investigation_context(investigation_data: str | dict, ingestion_settings: dict,
                                  name_prefix: str = '') -> InvestigationContext:
@@ -28,6 +40,10 @@ def create_investigation_context(investigation_data: str | dict, ingestion_setti
     sync_with_icat: bool = investigation_dict.get("icat_sync", False)
     sync_with_visa: bool = investigation_dict.get("visa_sync", False)
 
+    investigation_users_ctx: list = [
+        InvestigationUserContext(username=i.get("username", ""), email=i.get("email", ""), role=i.get("role", ""))
+        for i in investigation_user_list]
+
     start_date: datetime = try_parse_datetime(start_date_str)
     end_date: datetime = try_parse_datetime(end_date_str)
 
@@ -47,9 +63,7 @@ def create_investigation_context(investigation_data: str | dict, ingestion_setti
         summary=investigation_summary,
         instrument=InvestigationInstrumentContext(name=instrument.get("name", ""), code=instrument.get("code", "")),
         type=investigation_type,
-        user_list=[
-            InvestigationUserContext(username=i.get("username", ""), email=i.get("email", ""), role=i.get("role", ""))
-            for i in investigation_user_list],
+        user_list=simplify_redundant_user_roles(investigation_users_ctx),
         visit_count=investigation_visit_count,
         is_reimbursed=is_investigation_reimbursed,
         visa_sync=sync_with_visa,

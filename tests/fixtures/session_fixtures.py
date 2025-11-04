@@ -34,7 +34,7 @@ def icat_client() -> Generator[ICATClient, Any, None]:
 
 @pytest.fixture(scope="session")
 def datacite_client_mock() -> Generator[MagicMock, Any, None]:
-    with patch("helpers.datacite.DataciteClient") as DataciteClientMock:
+    with patch("helpers.integrations.datacite.DataciteClient") as DataciteClientMock:
         client_mock = DataciteClientMock.return_value
         client_mock.create_doi.return_value = None
         client_mock.__check_weight_recomputation_in_progress.return_value = False
@@ -44,7 +44,7 @@ def datacite_client_mock() -> Generator[MagicMock, Any, None]:
 
 @pytest.fixture(scope="session")
 def panosc_client_mock() -> Generator[MagicMock, Any, None]:
-    with patch("helpers.panosc.PaNOSCClient") as PaNOSCClientMock:
+    with patch("helpers.integrations.panosc.PaNOSCClient") as PaNOSCClientMock:
         client_mock = PaNOSCClientMock.return_value
         client_mock.item_exists.return_value = False
 
