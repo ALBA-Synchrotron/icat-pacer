@@ -44,7 +44,7 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__get_ingestion_settings())
         dataset_id: int = message.headers.get("dataset_id", 0)
 
-        self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id)
+        self.tasks.create_dataset_parameters(self.icat_client, dataset_ctx, dataset_id)
 
     def __get_ingestion_settings(self) -> dict:
         return self.pacer_config.get("ingestionSettings", {}).get("dataset", {})
