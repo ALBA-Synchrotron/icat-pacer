@@ -16,7 +16,7 @@ class DatasetsTasks:
     def __init__(self, logger: logging.Logger = None):
         self.logger = logger
 
-    def create_base_dataset_icat(self, icat_client: ICATClient, dataset_ctx: DatasetContext, *_args, **_kwargs) -> None:
+    def create_base_dataset_icat(self, icat_client: ICATClient, dataset_ctx: DatasetContext, *_args, **_kwargs) -> int:
         with ICATRollbackContext(icat_client, self.logger) as rb:
             rb.new_dataset = icat_client.new("Dataset")
             rb.new_dataset_sample = icat_client.new("Sample")
@@ -92,8 +92,8 @@ class DatasetsTasks:
                 date: str = datetime.datetime.now().strftime(DATETIME_EU)
                 rb.new_dataset.name = dataset_ctx.name if not same_name_dataset else f"{dataset_ctx.name} [{date}]"
                 rb.new_dataset.create()
-                rb.rollback_all()
                 self.logger.info(f"Created dataset {rb.new_dataset.name} with id {rb.new_dataset.id}")
+                return rb.new_dataset.id
             except Exception as e:
                 rb.rollback_all()
 

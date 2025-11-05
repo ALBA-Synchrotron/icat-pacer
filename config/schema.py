@@ -161,7 +161,10 @@ config_yaml_schema: dict = {
                     "checkAllowedLocationPaths": {"type": "boolean", "required": True},
                     "allowedRootLocationPaths": {
                         "type": "list", "required": False, "nullable": True,
-                        "schema": {"type": "string", "required": True}}
+                        "schema": {"type": "string", "required": True}
+                    },
+                    "internalDatasetExchangeName": {"type": "string", "required": True},
+                    "internalDatasetRoutingKey": {"type": "string", "required": True},
                 }
             },
             "investigation": {

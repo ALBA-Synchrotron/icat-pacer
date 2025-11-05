@@ -27,6 +27,8 @@ exchanges:
     type: "direct"
   - name: "dataset-ingest-exchange"
     type: "direct"
+  - name: "dataset-internal-ingest-exchange"
+    type: "direct"
 queues:
   - name: "dashboard-logging"
     exchange: "dashboard-logging-exchange"
@@ -43,6 +45,9 @@ queues:
   - name: "icat-dataset-ingest"
     exchange: "dataset-ingest-exchange"
     routingKey: "dataset.ingest"
+  - name: "icat-internal-dataset-ingest"
+    exchange: "dataset-internal-ingest-exchange"
+    routingKey: "dataset.internal_ingest"
 consumers:
   - className: "UsersConsumer"
     module: "consumers.users"
@@ -87,6 +92,15 @@ consumers:
     integrations:
       - "dashboard"
       - "icat"
+  - className: "InternalDatasetsConsumer"
+    module: "consumers.datasets"
+    enabled: true
+    queues:
+      - "icat-internal-dataset-ingest"
+    workers: 1
+    integrations:
+      - "dashboard"
+      - "icat"
 brokers:
   main:
     protocol: "amqp"
@@ -114,6 +128,8 @@ ingestionSettings:
     checkAllowedLocationPaths: true
     allowedRootLocationPaths:
       - "/beamlines"
+    internalDatasetExchangeName: "dataset-internal-ingest-exchange"
+    internalDatasetRoutingKey: "dataset.internal_ingest"
   investigation:
     defaultEmbargoYears: 3
     defaultFacilityName: "ALBA"
