@@ -10,6 +10,7 @@ from helpers.integrations.icat_utils import ICATClient
 from helpers.integrations.visa_utils import VISALoader
 from helpers.static_settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PROPOSER, \
     ICAT_USER_ROLE_LOCAL_CONTACT, ICAT_USER_ROLE_PARTICIPANT
+from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 
 
 class ProposalTasks:
@@ -43,8 +44,36 @@ class ProposalTasks:
         # Handle FKs
         self.__handle_foreign_keys(icat_client, investigation, investigation_context)
 
-        # SAVE Investigation
-        self.__save_investigation(icat_client, investigation, investigation_context)
+        investigation.startDate = investigation_context.start_date
+        investigation.endDate = investigation_context.end_date
+        investigation.releaseDate = investigation_context.release_date
+
+        instrument: Entity = icat_client.search(
+            "Instrument",
+            conditions={"name__eq": investigation_context.instrument.code},
+            flatten_single=True
+        )
+
+        if not instrument:
+            raise ValueError(f"Instrument {investigation_context.instrument.get('name')} not found in ICAT.")
+
+        if investigation.id:
+            investigation.update()
+
+            if investigation_context.is_reimbursed:
+                self.__update_reimbursed_parcels_parameter(icat_client, investigation, investigation_context)
+        else:
+            investigation.doi = ""
+
+            investigation_instrument: Entity = icat_client.new("InvestigationInstrument")
+            investigation_instrument.investigation = investigation
+            investigation_instrument.instrument = instrument
+
+            investigation.create()
+            investigation_instrument.create()
+
+            self.__create_reimbursed_parcels_parameter(icat_client, investigation, investigation_context)
+            self.__create_statistics_parameters(icat_client, investigation)
 
         # Users and Roles
         self.__handle_user_roles(icat_client, investigation, investigation_context)
@@ -69,56 +98,6 @@ class ProposalTasks:
             self.logger.error(f"Error handling foreign keys for investigation {investigation_context.name}")
             self.logger.error(e)
             raise e
-
-    def __save_investigation(self, icat_client: ICATClient, investigation: Entity,
-                             investigation_context: InvestigationContext) -> None:
-        if investigation.id:
-            try:
-                self.logger.info(f"ICAT sync: Updating investigation {investigation.name}")
-
-                # If new dates are provided, update Investigation dates
-                if investigation.startDate != investigation_context.start_date or investigation.endDate != investigation_context.end_date:
-                    investigation.startDate = investigation_context.start_date
-                    investigation.endDate = investigation_context.end_date
-                    investigation.releaseDate = investigation_context.release_date
-
-                    # If reimbursed, gotta update the number of parcels allowed to be reimbursed -> 1 visit = 1 parcel
-                    if investigation_context.is_reimbursed:
-                        self.__update_reimbursed_parcels_parameter(icat_client, investigation, investigation_context)
-
-                investigation.update()
-
-                # update InvestigationInstrument
-                self.__update_investigation_instrument(icat_client, investigation, investigation_context)
-
-            except Exception as e:
-                self.logger.error(f"Error updating investigation {investigation.name}")
-                self.logger.error(e)
-                raise e
-        else:
-            try:
-                self.logger.info(f"ICAT sync: Creating investigation {investigation.name}")
-
-                investigation.startDate = investigation_context.start_date
-                investigation.endDate = investigation_context.end_date
-                investigation.releaseDate = investigation_context.release_date
-                investigation.doi = ""
-
-                investigation.create()
-
-                # create InvestigationInstrument
-                self.__create_investigation_instrument(icat_client, investigation, investigation_context)
-
-                # create investigation statistic parameters
-                self.__create_statistics_parameters(icat_client, investigation)
-
-                # create reimbursedParcels parameter
-                self.__create_reimbursed_parcels_parameter(icat_client, investigation, investigation_context)
-
-            except Exception as e:
-                self.logger.error(f"Error creating investigation {investigation.name}")
-                self.logger.error(e)
-                raise e
 
     def __update_reimbursed_parcels_parameter(self, icat_client: ICATClient, investigation: Entity,
                                               investigation_context: InvestigationContext) -> None:
@@ -147,30 +126,6 @@ class ProposalTasks:
             reimbursed_parcels_investigation_param.update()
         except Exception as e:
             self.logger.error(f"Error updating reimbursedParcels parameter for investigation {investigation.name}")
-            self.logger.error(e)
-            raise e
-
-    def __update_investigation_instrument(self, icat_client: ICATClient, investigation: Entity,
-                                          investigation_context: InvestigationContext) -> None:
-        try:
-            self.logger.info(f"ICAT sync: Updating investigation instrument for {investigation.name}")
-
-            investigation_instrument: Entity = icat_client.search(
-                "InvestigationInstrument",
-                conditions={"investigation.name__eq": investigation_context.name},
-                flatten_single=True,
-                includes=['instrument']
-            )
-            if not investigation_instrument:
-                raise ValueError(f"InvestigationInstrument for {investigation_context.name} not found in ICAT.")
-
-            if investigation_context.instrument.code != investigation_instrument.instrument.name:
-                self.logger.info(f"ICAT sync: Instrument changed for investigation {investigation.name}")
-                icat_client.delete(investigation_instrument)
-                self.__create_investigation_instrument(icat_client, investigation, investigation_context)
-
-        except Exception as e:
-            self.logger.error(f"Error updating investigation instrument for {investigation.name}")
             self.logger.error(e)
             raise e
 
@@ -217,28 +172,6 @@ class ProposalTasks:
             param.create()
         except Exception as e:
             self.logger.error(f"Error initializing reimbursedParcels parameter for investigation {investigation.name}")
-            self.logger.error(e)
-            raise e
-
-    def __create_investigation_instrument(self, icat_client: ICATClient, investigation: Entity,
-                                          investigation_context: InvestigationContext) -> None:
-        try:
-            self.logger.info(f"ICAT sync: Creating investigation instrument for {investigation.name}")
-
-            instrument: Entity = icat_client.search(
-                "Instrument",
-                conditions={"name__eq": investigation_context.instrument.code},
-                flatten_single=True
-            )
-            if not instrument:
-                raise ValueError(f"Instrument {investigation_context.instrument.get('name')} not found in ICAT.")
-
-            investigation_instrument: Entity = icat_client.new("InvestigationInstrument")
-            investigation_instrument.investigation = investigation
-            investigation_instrument.instrument = instrument
-            investigation_instrument.create()
-        except Exception as e:
-            self.logger.error(f"Error creating investigation instrument for {investigation.name}")
             self.logger.error(e)
             raise e
 

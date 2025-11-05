@@ -94,7 +94,9 @@ class ICATRollbackContext(AbstractContextManager):
         if (previous_entity.id is None and latest_entity.id is not None) or force_delete:
             self._icat_client.delete(latest_entity)
         elif previous_entity.id is not None and latest_entity.id is not None:
-            latest_entity.update()
+            previous_entity.update()
+        elif previous_entity.id is not None and latest_entity.id is None:
+            previous_entity.create()
 
     def rollback(self, key: str, force_delete: bool = False) -> T:
         if key in self._rollbackable_objects:

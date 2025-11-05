@@ -26,5 +26,5 @@ class GenericProducer:
                     headers=headers
                 )
         except Exception as e:
-            error_msg: str = f"Error sending message through GenericProducer: {e}"
+            error_msg: str = f"Error sending message to {exchange_name} with routing key {routing_key} through GenericProducer: {e}"
             raise Exception(error_msg)

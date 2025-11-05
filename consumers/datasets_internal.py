@@ -21,18 +21,25 @@ class InternalDatasetsConsumer(PACERConsumer):
         try:
             dataset_str: str = message.payload or message.body
             dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__get_ingestion_settings())
-
             dataset_id: int = message.headers.get("dataset_id", 0)
 
-            return {"investigation": dataset_ctx.investigation, "dataset": dataset_ctx.name, **{
-                {"dataset_id": dataset_id} if dataset_id > 0 else {}}}
+            return {"investigation": dataset_ctx.investigation, "dataset": dataset_ctx.name, "dataset_id": dataset_id}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
-    def callback_func_create_datafiles(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_create_dataset_datafiles(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
-            f"callback_func_create_datafiles > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+            f"callback_func_create_dataset_datafiles > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+        dataset_str: str = message.payload or message.body
+        dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__get_ingestion_settings())
+        dataset_id: int = message.headers.get("dataset_id", 0)
+
+        self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id)
+
+    def callback_func_create_dataset_parameters(self, _body, message: Message, *_args, **_kwargs) -> None:
+        self.logger.info(
+            f"callback_func_create_dataset_parameters > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__get_ingestion_settings())
         dataset_id: int = message.headers.get("dataset_id", 0)
