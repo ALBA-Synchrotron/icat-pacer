@@ -55,7 +55,7 @@ class ProposalTasks:
         )
 
         if not instrument:
-            raise ValueError(f"Instrument {investigation_context.instrument.get('name')} not found in ICAT.")
+            raise ValueError(f"Instrument {investigation_context.instrument.name} not found in ICAT.")
 
         if investigation.id:
             investigation.update()
