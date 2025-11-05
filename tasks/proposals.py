@@ -167,7 +167,7 @@ class ProposalTasks:
             if not investigation_instrument:
                 raise ValueError(f"InvestigationInstrument for {investigation_context.name} not found in ICAT.")
 
-            if investigation_context.instrument.get("name") != investigation_instrument.instrument.name:
+            if investigation_context.instrument.get("code") != investigation_instrument.instrument.name:
                 self.logger.info(f"ICAT sync: Instrument changed for investigation {investigation.name}")
                 icat_client.delete(investigation_instrument)
                 self.__create_investigation_instrument(icat_client, investigation, investigation_context)
