@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import logging
 import multiprocessing
 from logging.handlers import QueueHandler
@@ -64,10 +65,11 @@ class PACERConsumer(ConsumerMixin):
 
     def __callback_router(self, body, message: Message) -> None:
         errors: list = []
+        processed_timestamp: str = datetime.datetime.now().isoformat()
         for func in self.__get_callback_functions():
             try:
                 self.logger.info(f"Calling callback function: {func.__name__}")
-                func(body, message, errors=errors)
+                func(body, message, errors=errors, headers={"received_at": processed_timestamp, **message.headers})
 
             except Exception as e:
                 self.logger.error(f"Error processing callback router: {e!r}")
@@ -188,5 +190,13 @@ class PACERConsumer(ConsumerMixin):
         self.logger.info("Consumer ended.")
 
     def run_tasks(self, body: str, message: str) -> None:
-        """Call tasks here"""
         raise NotImplementedError('run_tasks method is not implemented. Use callback methods instead.')
+
+    def receive(self, *args, **kwargs):
+        """Intercept message receipt and add arrival timestamp."""
+        message = kwargs.get('message') or args[1]
+        if message:
+            # Add received timestamp (UTC ISO 8601)
+            message.headers = message.headers or {}
+            message.headers['received_at'] = datetime.now(timezone.utc).isoformat()
+        return super().receive(*args, **kwargs)
