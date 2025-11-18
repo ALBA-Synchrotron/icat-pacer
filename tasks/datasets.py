@@ -6,7 +6,7 @@ import logging
 from icat.entity import Entity
 
 from helpers.dataclasses.dataset import DatasetContext
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 from helpers.utils.datetime import DATETIME_EU
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 

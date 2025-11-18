@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import copy
 from contextlib import AbstractContextManager
 from logging import Logger
 from typing import TypeVar
 
-from elasticsearch.esql.functions import starts_with
 from icat.entity import Entity
 
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 
 T = TypeVar("T")
 

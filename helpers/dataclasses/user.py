@@ -40,7 +40,7 @@ class UserContext:
         if not self.email:
             raise ValueError("Email is required")
 
-        if not self.enabled:
+        if not hasattr(self, "enabled"):
             raise ValueError("Enabled is required")
 
         if not self.uos_id:

@@ -13,7 +13,7 @@ from kombu.transport.virtual import Channel
 from psycopg_pool import ConnectionPool
 
 from helpers.contexts.dashboard import get_configured_dashboard_callback, create_message_context
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.datacite import get_datacite_client, DataciteClient
 from helpers.integrations.panosc import PaNOSCClient, get_panosc_client
 from helpers.integrations.visa_utils import get_pg_connection_pool

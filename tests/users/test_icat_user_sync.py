@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 from helpers.contexts.user import create_user_context, UserContext
 from tasks.users import UserTasks
 from tests.utils.generic_unit_test import GenericPACERUnitTest
