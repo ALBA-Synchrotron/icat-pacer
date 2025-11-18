@@ -44,8 +44,6 @@ class DatasetsTasks:
 
                 investigation: Entity | None = icat_client.search("Investigation",
                                                                   conditions={"name__eq": dataset_ctx.investigation},
-                                                                  includes=["investigationInstruments",
-                                                                            "investigationInstruments.instrument"],
                                                                   flatten_single=True)
 
                 if not investigation:
@@ -60,8 +58,7 @@ class DatasetsTasks:
                     raise Exception(error_msg)
 
                 sample: Entity | None = icat_client.search("Sample", conditions={"name__eq": dataset_ctx.sample.name,
-                                                                                 "investigation.name__eq": dataset_ctx.investigation},
-                                                           includes=["investigation"])
+                                                                                 "investigation.name__eq": dataset_ctx.investigation})
                 if not sample:
                     if dataset_ctx.sample.type:
                         sample_type: Entity = icat_client.search("SampleType",
@@ -79,7 +76,7 @@ class DatasetsTasks:
                     rb.new_dataset_sample.create()
 
                 rb.new_dataset.type = dataset_type
-                rb.new_dataset.sample = sample if sample else rb.new_dataset_sample
+                rb.new_dataset.sample = sample if sample else rb.new_dataset_sample._obj
                 rb.new_dataset.investigation = investigation
                 rb.new_dataset.location = dataset_ctx.location
                 rb.new_dataset.startDate = dataset_ctx.start_date
