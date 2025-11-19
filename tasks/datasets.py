@@ -54,7 +54,7 @@ class DatasetsTasks:
                 if dataset_ctx.instrument.upper() not in [i.instrument.name for i in
                                                           investigation.investigationInstruments]:
                     error_msg: str = "Investigation's instrument does not match dataset's instrument"
-                    self.error(error_msg)
+                    self.logger.error(error_msg)
                     raise Exception(error_msg)
 
                 sample: Entity | None = icat_client.search("Sample", conditions={"name__eq": dataset_ctx.sample.name,

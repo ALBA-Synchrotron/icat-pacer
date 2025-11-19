@@ -8,30 +8,31 @@ from helpers.utils.strings import to_camel_case
 ENTITIES_WITH_PARAMETERS: list = ["Dataset", "Sample", "Investigation", "DataCollection", "Datafile"]
 
 
-def get_entity_parameter(icat_client: ICATClient, entity_name: str, parameter_name: str, conditions: dict = {},
-                         create_if_missing: bool = True) -> Entity | None:
-    if entity_name not in ENTITIES_WITH_PARAMETERS:
-        raise Exception(f"{entity_name} does not support parameters.")
-
-    entity: Entity | None = icat_client.search(entity_name, conditions=conditions,
-                                               includes=["parameters", "parameters.type"],
-                                               flatten_single=True)
+def get_entity_parameter(icat_client: ICATClient, parameter_name: str, conditions: dict = {},
+                         create_if_missing: bool = True, entity_name: str = "",
+                         entity: Entity | None = None) -> Entity | None:
+    if (entity_name and entity_name not in ENTITIES_WITH_PARAMETERS) or (
+            entity and entity.BeanName not in ENTITIES_WITH_PARAMETERS):
+        raise Exception(f"{entity_name or Entity.BeanName} does not support parameters.")
 
     if not entity:
-        raise Exception(f"{entity_name} with filters {conditions} not found in ICAT.")
+        entity = icat_client.search(entity_name, conditions=conditions,
+                                    flatten_single=True)
 
-    entity_param: Entity | None = None
-    for i in entity.parameters:
-        if i.type.name == parameter_name:
-            entity_param = i
-            break
+    if not entity:
+        raise Exception(f"{entity_name or Entity.BeanName} with filters {conditions} not found in ICAT.")
+
+    entity_param: Entity | None = next(
+        (p for p in entity.parameters if p.type.name == parameter_name),
+        None
+    )
 
     if not entity_param and create_if_missing:
-        entity_param = icat_client.new(f"{entity_name}Parameter")
+        entity_param = icat_client.new(f"{entity_name or entity.BeanName}Parameter")
         type: Entity = get_parameter_type(icat_client, parameter_name)
 
         entity_param.type = type
-        setattr(entity_param, to_camel_case(entity_name), entity)
+        setattr(entity_param, to_camel_case(entity_name or entity.BeanName), entity)
 
     return entity_param
 

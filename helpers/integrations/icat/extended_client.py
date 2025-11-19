@@ -35,16 +35,16 @@ class ICATClient(Client):
     def __replace_entity_getattr_method(cls):
         old_getattr = Entity.__getattr__
 
-        def new_get_attr_func(self, name) -> T:
+        def new_get_attr_func(self, name, lazy_loaded: bool = False) -> T:
             res = old_getattr(self, name)
 
             if callable(res):
                 return res
 
-            if not res and name in [*self.InstRel, *self.InstMRel]:
+            if not res and name in [*self.InstRel, *self.InstMRel] and not lazy_loaded:
                 updated_entity = self.client.query_search(
                     f"SELECT b FROM {self.BeanName} b WHERE b.id = {self.id} INCLUDE b.{name}")
-                loaded_value = updated_entity.__getattr__(name)
+                loaded_value = updated_entity.__getattr__(name, lazy_loaded=True)
                 setattr(self, name, loaded_value)
                 return loaded_value
             return res
