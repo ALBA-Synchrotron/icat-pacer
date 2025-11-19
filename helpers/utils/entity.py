@@ -19,20 +19,25 @@ def get_entity_parameter(icat_client: ICATClient, parameter_name: str, condition
         entity = icat_client.search(entity_name, conditions=conditions,
                                     flatten_single=True)
 
+    entity_param_main_fk_name: str = to_camel_case(entity_name or entity.BeanName)
+
     if not entity:
-        raise Exception(f"{entity_name or Entity.BeanName} with filters {conditions} not found in ICAT.")
+        raise Exception(f"{entity_param_main_fk_name} with filters {conditions} not found in ICAT.")
 
     entity_param: Entity | None = next(
         (p for p in entity.parameters if p.type.name == parameter_name),
         None
     )
 
+    if entity_param and not hasattr(entity_param, entity_param_main_fk_name):
+        raise Exception(f"{entity_param_main_fk_name}Parameter does not have foreign key {entity_param_main_fk_name}.")
+
     if not entity_param and create_if_missing:
-        entity_param = icat_client.new(f"{entity_name or entity.BeanName}Parameter")
+        entity_param = icat_client.new(f"{entity_param_main_fk_name}Parameter")
         type: Entity = get_parameter_type(icat_client, parameter_name)
 
         entity_param.type = type
-        setattr(entity_param, to_camel_case(entity_name or entity.BeanName), entity)
+        setattr(entity_param, entity_param_main_fk_name, entity)
 
     return entity_param
 
