@@ -141,7 +141,7 @@ class PACERConsumer(ConsumerMixin):
                 process: Process = Process(target=self._consumer_main, args=(self.log_queue,))
                 process.start()
                 self.logger.debug(
-                    f"Spawned {self.module} process {len(self.processes) + 1}/{self.workers}: pid={process.pid}")
+                    f"Spawned {self.module} process: pid={process.pid}")
                 self.processes.append(process)
 
     def stop(self) -> None:
