@@ -241,8 +241,7 @@ class InternalStatisticsTasks:
                 self.logger.error(error_msg)
                 raise Exception(error_msg)
 
-    def update_sample_statistics(self, icat_client: ICATClient, investigation_name: str, dataset_id: int, *_args,
-                                 **_kwargs) -> None:
+    def update_sample_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **_kwargs) -> None:
         if not dataset_id:
             raise Exception("Dataset ID not received")
 
@@ -348,8 +347,8 @@ class InternalStatisticsTasks:
 
                 # Total volume of all raw datasets of sample
                 rb.sample_acq_vol_param = get_sample_parameter(icat_client,
-                                                                      SAMPLE_ACQUISITION_VOLUME_PARAMETER,
-                                                                      entity=dataset_sample)
+                                                               SAMPLE_ACQUISITION_VOLUME_PARAMETER,
+                                                               entity=dataset_sample)
 
                 sample_acq_vol_params: filter = filter(
                     lambda x: x.type == dataset_vol_param_type, (j for i in dataset_sample.datasets for j in
@@ -363,8 +362,8 @@ class InternalStatisticsTasks:
 
                 # Total volume of all processed datasets of sample
                 rb.sample_proc_vol_param = get_sample_parameter(icat_client,
-                                                                       SAMPLE_PROCESSED_VOLUME_PARAMETER,
-                                                                       entity=dataset_sample)
+                                                                SAMPLE_PROCESSED_VOLUME_PARAMETER,
+                                                                entity=dataset_sample)
 
                 sample_proc_vol_params: filter = filter(
                     lambda x: x.type == dataset_vol_param_type, (j for i in dataset_sample.datasets for j in
@@ -385,24 +384,9 @@ class InternalStatisticsTasks:
                 self.logger.error(error_msg)
                 raise Exception(error_msg)
 
-    def update_per_dataset_parameter_statistics(self, icat_client: ICATClient, investigation_name: str, dataset_id: int, *_args,
-                                 **_kwargs) -> None:
-        investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": investigation_name},
-                                                   flatten_single=True)
-
-        if not dataset_id:
-            raise Exception("Dataset ID not received")
-
-        with ICATRollbackContext(icat_client, self.logger) as rb:
-            rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
-            if not rb.dataset:
-                raise Exception("Dataset not found")
-
-            try:
-                pass
-            except Exception as e:
-                rb.rollback_all(force_delete=True)
-
-                error_msg: str = f"Error: {e}"
-                self.logger.error(error_msg)
-                raise Exception(error_msg)
+    """
+    def update_per_dataset_parameter_statistics(self, icat_client: ICATClient, investigation_name: str, dataset_id: int,
+                                                *_args,
+                                                **_kwargs) -> None:
+        # Not implemented
+    """
