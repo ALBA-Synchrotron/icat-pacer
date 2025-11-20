@@ -18,7 +18,7 @@ from helpers.static_settings import DATASET_NAME_PARAMETER, DATASET_FILE_COUNT_P
     SAMPLE_DATASET_COUNT_PARAMETER, SAMPLE_ACQUISITION_DATASET_COUNT_PARAMETER, \
     SAMPLE_PROCESSED_DATASET_COUNT_PARAMETER, SAMPLE_FILE_COUNT_PARAMETER, SAMPLE_ACQUISITION_FILE_COUNT_PARAMETER, \
     SAMPLE_PROCESSED_FILE_COUNT_PARAMETER, INVESTIGATION_PROCESSED_VOLUME_PARAMETER, SAMPLE_VOLUME_PARAMETER, \
-    SAMPLE_ACQUISITION_VOLUME_PARAMETER
+    SAMPLE_ACQUISITION_VOLUME_PARAMETER, SAMPLE_PROCESSED_VOLUME_PARAMETER
 from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 from helpers.utils.investigation import set_investigation_parameter, get_investigation_parameter
@@ -243,9 +243,6 @@ class InternalStatisticsTasks:
 
     def update_sample_statistics(self, icat_client: ICATClient, investigation_name: str, dataset_id: int, *_args,
                                  **_kwargs) -> None:
-        investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": investigation_name},
-                                                   flatten_single=True)
-
         if not dataset_id:
             raise Exception("Dataset ID not received")
 
@@ -259,7 +256,7 @@ class InternalStatisticsTasks:
                 # Total number of datasets referencing sample
                 rb.sample_dataset_count_param = get_sample_parameter(icat_client,
                                                                      SAMPLE_DATASET_COUNT_PARAMETER,
-                                                                     entity=investigation)
+                                                                     entity=dataset_sample)
                 rb.sample_dataset_count_param = set_sample_parameter(rb.sample_dataset_count_param._obj,
                                                                      dataset_sample.count("datasets"))
                 self.logger.debug("Updated sample statistic: Total number of datasets referencing sample")
@@ -267,7 +264,7 @@ class InternalStatisticsTasks:
                 # Total number of raw datasets referencing sample
                 rb.sample_acq_dataset_count_param = get_sample_parameter(icat_client,
                                                                          SAMPLE_ACQUISITION_DATASET_COUNT_PARAMETER,
-                                                                         entity=investigation)
+                                                                         entity=dataset_sample)
                 rb.sample_acq_dataset_count_param = set_sample_parameter(rb.sample_acq_dataset_count_param._obj,
                                                                          sum(1 for i in dataset_sample.datasets if
                                                                              i.type.name == RAW_DATASET_TYPE_NAME))
@@ -276,7 +273,7 @@ class InternalStatisticsTasks:
                 # Total number of processed datasets referencing sample
                 rb.sample_proc_dataset_count_param = get_sample_parameter(icat_client,
                                                                           SAMPLE_PROCESSED_DATASET_COUNT_PARAMETER,
-                                                                          entity=investigation)
+                                                                          entity=dataset_sample)
                 rb.sample_proc_dataset_count_param = set_sample_parameter(rb.sample_proc_dataset_count_param._obj,
                                                                           sum(1 for i in dataset_sample.datasets if
                                                                               i.type.name == PROCESSED_DATASET_TYPE_NAME))
@@ -285,7 +282,7 @@ class InternalStatisticsTasks:
                 # Total number of files referencing sample
                 rb.sample_file_count_param = get_sample_parameter(icat_client,
                                                                   SAMPLE_FILE_COUNT_PARAMETER,
-                                                                  entity=investigation)
+                                                                  entity=dataset_sample)
 
                 file_count_param_type: Entity = get_parameter_type(icat_client, DATASET_FILE_COUNT_PARAMETER)
                 file_count_params: filter = filter(
@@ -302,7 +299,7 @@ class InternalStatisticsTasks:
                 # Total number of raw files referencing sample
                 rb.sample_acq_file_count_param = get_sample_parameter(icat_client,
                                                                       SAMPLE_ACQUISITION_FILE_COUNT_PARAMETER,
-                                                                      entity=investigation)
+                                                                      entity=dataset_sample)
 
                 sample_acq_file_count_params: filter = filter(
                     lambda x: x.type == file_count_param_type, (j for i in dataset_sample.datasets for j in
@@ -318,7 +315,7 @@ class InternalStatisticsTasks:
                 # Total number of processed files referencing sample
                 rb.sample_proc_file_count_param = get_sample_parameter(icat_client,
                                                                        SAMPLE_PROCESSED_FILE_COUNT_PARAMETER,
-                                                                       entity=investigation)
+                                                                       entity=dataset_sample)
 
                 sample_proc_file_count_params: filter = filter(
                     lambda x: x.type == file_count_param_type, (j for i in dataset_sample.datasets for j in
@@ -335,7 +332,7 @@ class InternalStatisticsTasks:
                 # Total volume of all datasets of sample
                 rb.sample_vol_param = get_sample_parameter(icat_client,
                                                            SAMPLE_VOLUME_PARAMETER,
-                                                           entity=investigation)
+                                                           entity=dataset_sample)
 
                 dataset_vol_param_type: Entity = get_parameter_type(icat_client, DATASET_VOLUME_PARAMETER)
 
@@ -350,9 +347,9 @@ class InternalStatisticsTasks:
                 self.logger.debug("Updated sample statistic: Total volume of all datasets of sample")
 
                 # Total volume of all raw datasets of sample
-                rb.sample_acq_vol_param = get_investigation_parameter(icat_client,
+                rb.sample_acq_vol_param = get_sample_parameter(icat_client,
                                                                       SAMPLE_ACQUISITION_VOLUME_PARAMETER,
-                                                                      entity=investigation)
+                                                                      entity=dataset_sample)
 
                 sample_acq_vol_params: filter = filter(
                     lambda x: x.type == dataset_vol_param_type, (j for i in dataset_sample.datasets for j in
@@ -361,13 +358,13 @@ class InternalStatisticsTasks:
                 sample_acq_vol: int = sum(
                     int(p.stringValue) if p.stringValue else p.numericValue for p in sample_acq_vol_params)
 
-                rb.sample_acq_vol_param = set_investigation_parameter(rb.sample_acq_vol_param._obj, sample_acq_vol)
+                rb.sample_acq_vol_param = set_sample_parameter(rb.sample_acq_vol_param._obj, sample_acq_vol)
                 self.logger.debug("Updated sample statistic: Total volume of all raw datasets of sample")
 
                 # Total volume of all processed datasets of sample
-                rb.sample_proc_vol_param = get_investigation_parameter(icat_client,
-                                                                       SAMPLE_ACQUISITION_VOLUME_PARAMETER,
-                                                                       entity=investigation)
+                rb.sample_proc_vol_param = get_sample_parameter(icat_client,
+                                                                       SAMPLE_PROCESSED_VOLUME_PARAMETER,
+                                                                       entity=dataset_sample)
 
                 sample_proc_vol_params: filter = filter(
                     lambda x: x.type == dataset_vol_param_type, (j for i in dataset_sample.datasets for j in
@@ -377,10 +374,32 @@ class InternalStatisticsTasks:
                 sample_proc_vol: int = sum(
                     int(p.stringValue) if p.stringValue else p.numericValue for p in sample_proc_vol_params)
 
-                rb.sample_proc_vol_param = set_investigation_parameter(rb.sample_proc_vol_param._obj, sample_proc_vol)
+                rb.sample_proc_vol_param = set_sample_parameter(rb.sample_proc_vol_param._obj, sample_proc_vol)
                 self.logger.debug("Updated sample statistic: Total volume of all processed datasets of sample")
 
                 self.logger.info(f"Updated sample statistics for dataset={dataset_id}")
+            except Exception as e:
+                rb.rollback_all(force_delete=True)
+
+                error_msg: str = f"Error: {e}"
+                self.logger.error(error_msg)
+                raise Exception(error_msg)
+
+    def update_per_dataset_parameter_statistics(self, icat_client: ICATClient, investigation_name: str, dataset_id: int, *_args,
+                                 **_kwargs) -> None:
+        investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": investigation_name},
+                                                   flatten_single=True)
+
+        if not dataset_id:
+            raise Exception("Dataset ID not received")
+
+        with ICATRollbackContext(icat_client, self.logger) as rb:
+            rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
+            if not rb.dataset:
+                raise Exception("Dataset not found")
+
+            try:
+                pass
             except Exception as e:
                 rb.rollback_all(force_delete=True)
 

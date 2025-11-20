@@ -61,4 +61,4 @@ class InternalStatisticsConsumer(PACERConsumer):
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
 
-        self.tasks.update_sample_statistics(self.icat_client, dataset_ctx.investigation, dataset_id)
+        self.tasks.update_per_dataset_parameter_statistics(self.icat_client, dataset_ctx.investigation, dataset_id)
