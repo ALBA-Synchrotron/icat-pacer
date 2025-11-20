@@ -23,6 +23,7 @@ class ICATClient(Client):
                 {"username": username, "password": password}
             )
         self.__replace_entity_getattr_method()
+        self.__add_entity_count_method()
 
     def __del__(self) -> None:
         super().__del__()
@@ -30,6 +31,18 @@ class ICATClient(Client):
 
     def auto_refresh_session(self) -> None:
         self.autoRefresh()
+
+    @classmethod
+    def __add_entity_count_method(cls):
+
+        def count(self, name: str) -> int:
+            if name not in self.InstMRel:
+                raise ValueError(f"Entity {self.BeanName} has no many-to-many relation named {name}")
+
+            return self.client.search(self.BeanName, attributes=[f"{name}"], aggregate="COUNT",
+                                      conditions={"id__eq": self.id})
+
+        Entity.count = count
 
     @classmethod
     def __replace_entity_getattr_method(cls):
