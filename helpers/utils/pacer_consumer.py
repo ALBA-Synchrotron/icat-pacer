@@ -59,7 +59,7 @@ class PACERConsumer(ConsumerMixin):
         self.dashboard_message_type = dashboard_message_type
 
         handler: QueueHandler = QueueHandler(log_queue)
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__name__)
         configure_worker_logger(handler, config, self.logger)
         self.logger.info(f"Consumer {self.module} initialized.")
 
@@ -156,7 +156,7 @@ class PACERConsumer(ConsumerMixin):
     def _consumer_main(self, log_queue: multiprocessing.Queue) -> None:
         import os
         handler: QueueHandler = QueueHandler(log_queue)
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__name__)
         configure_worker_logger(handler, self.pacer_config, self.logger)
 
         if "messageForwarding" in self.integrations:

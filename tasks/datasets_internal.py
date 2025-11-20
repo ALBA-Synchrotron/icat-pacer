@@ -113,7 +113,7 @@ class DatasetsInternalTasks:
                 # Dataset file count
                 rb.file_count_param = get_dataset_parameter(icat_client, DATASET_FILE_COUNT_PARAMETER,
                                                             entity=rb.dataset._obj)
-                rb.file_count_param = set_dataset_parameter(rb.file_count_param._obj, len(rb.dataset.datafiles))
+                rb.file_count_param = set_dataset_parameter(rb.file_count_param._obj, rb.dataset.count("datafiles"))
                 self.logger.debug("Updated dataset statistic: Dataset file count")
 
                 # Dataset file volume

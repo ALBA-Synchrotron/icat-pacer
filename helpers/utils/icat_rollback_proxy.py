@@ -68,17 +68,13 @@ class ICATRollbackContext(AbstractContextManager):
 
             if key not in self._rollbackable_objects:
                 self._rollbackable_objects[key] = [value]
-                self._logger.debug(f"Object with {key} added to ICAT rollback context {id(self)}")
             elif self._keep_history:
                 self._rollbackable_objects[key].append(value)
-                self._logger.debug(
-                    f"Object with {key} added to ICAT rollback context history {id(self)}")
             else:
                 if len(self._rollbackable_objects[key]) < 2:
                     self._rollbackable_objects[key].append(value)
                 else:
                     self._rollbackable_objects[key][-1] = value
-                self._logger.debug(f"Live object with {key} replaced running copy {id(self)}")
 
     def __getattr__(self, key: str) -> T:
         if key in self.__annotations__:
