@@ -17,7 +17,7 @@ class DatasetsConsumer(PACERConsumer):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(dashboard_message_type="dataset-ingestion", *args, **kwargs)
         self.tasks = DatasetsTasks(self.logger)
-        ingestion_settings: dict = self.__get_ingestion_settings()
+        ingestion_settings: dict = self._get_ingestion_settings()
 
         self.internal_dataset_exchange_name: str = ingestion_settings.get("internalDatasetExchangeName", "")
         self.internal_dataset_routing_key: str = ingestion_settings.get("internalDatasetRoutingKey", "")
@@ -25,7 +25,7 @@ class DatasetsConsumer(PACERConsumer):
     def get_message_object_identifiers(self, message: Message) -> dict:
         try:
             dataset_str: str = message.payload or message.body
-            dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__get_ingestion_settings())
+            dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self._get_ingestion_settings())
             return {"investigation": dataset_ctx.investigation, "dataset": dataset_ctx.name}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
@@ -35,7 +35,7 @@ class DatasetsConsumer(PACERConsumer):
         self.logger.info(
             f"callback_func_main_dataset_ingestion > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_str: str = message.payload or message.body
-        dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self.__get_ingestion_settings())
+        dataset_ctx: DatasetContext = create_dataset_context(dataset_str, self._get_ingestion_settings())
 
         new_dataset_id: int = self.tasks.create_base_dataset_icat(icat_client=self.icat_client, dataset_ctx=dataset_ctx,
                                                                   *_args, **_kwargs)
@@ -43,6 +43,3 @@ class DatasetsConsumer(PACERConsumer):
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
                                          self.internal_dataset_routing_key, dataset_ctx,
                                          {"dataset_id": new_dataset_id})
-
-    def __get_ingestion_settings(self) -> dict:
-        return self.pacer_config.get("ingestionSettings", {}).get("dataset", {})

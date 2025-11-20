@@ -165,6 +165,7 @@ config_yaml_schema: dict = {
                     },
                     "internalDatasetExchangeName": {"type": "string", "required": True},
                     "internalDatasetRoutingKey": {"type": "string", "required": True},
+                    "internalStatisticsRoutingKey": {"type": "string", "required": True},
                 }
             },
             "investigation": {

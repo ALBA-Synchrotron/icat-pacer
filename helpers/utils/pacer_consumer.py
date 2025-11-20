@@ -198,5 +198,8 @@ class PACERConsumer(ConsumerMixin):
         if message:
             # Add received timestamp (UTC ISO 8601)
             message.headers = message.headers or {}
-            message.headers['received_at'] = datetime.now(timezone.utc).isoformat()
+            message.headers['received_at'] = datetime.now(datetime.timezone.utc).isoformat()
         return super().receive(*args, **kwargs)
+
+    def _get_ingestion_settings(self) -> dict:
+        return self.pacer_config.get("ingestionSettings", {}).get("dataset", {})
