@@ -175,6 +175,13 @@ config_yaml_schema: dict = {
                     "defaultEmbargoYears": {"type": "integer", "required": True},
                     "defaultFacilityName": {"type": "string", "required": True},
                 }
+            },
+            "parameters": {
+                "type": "dict",
+                "required": True,
+                "schema": {
+                    "storeParametersValuesAlsoAsString": {"type": "boolean", "required": True},
+                }
             }
         }
     },

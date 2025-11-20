@@ -9,7 +9,7 @@ from urllib.parse import quote
 
 from amqp import Channel
 from kombu import Connection, Exchange, Queue
-
+import globals_var
 from config.config import ConfigParser
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.logging.general import configure_pacer_logger
@@ -174,6 +174,8 @@ class PACER:
     def __initial_setup(self) -> None:
         method: str = self.get_config_value("multiprocessStartMethod", "spawn")
         multiprocessing.set_start_method(method)
+
+        globals_var.ingestion_settings = self.config.get("ingestionSettings", {})
 
         self.__configure_logging()
         self.logger.info("Logging configured for PACER main process")

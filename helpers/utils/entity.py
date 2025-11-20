@@ -1,9 +1,13 @@
+from functools import partial
+
 from icat.entity import Entity
 
+from globals_var import ingestion_settings
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.static_settings import PARAMETER_STRING_VALUE_MAX_LENGTH
 from helpers.utils.parameters import get_parameter_type
 from helpers.utils.strings import to_camel_case
+import globals_var
 
 ENTITIES_WITH_PARAMETERS: list = ["Dataset", "Sample", "Investigation", "DataCollection", "Datafile"]
 
@@ -46,15 +50,20 @@ def set_entity_parameter(entity_parameter: Entity, parameter_value: str | int | 
     if len(str(parameter_value)) > PARAMETER_STRING_VALUE_MAX_LENGTH:
         raise Exception(f"Parameter value for {entity_parameter.type.name} is too long, exceeds max limit.")
 
-    # For some reason the good ol' ingester saves all parameters values as strings. So we'll do the same for now here.
+
+    store_value_also_as_text: bool = globals_var.ingestion_settings.get("parameters", {}).get(
+        "storeParametersValuesAlsoAsString",
+        False)
 
     match entity_parameter.type.valueType:
         case "DATE_AND_TIME":
+            if store_value_also_as_text:
+                entity_parameter.stringValue = parameter_value
             entity_parameter.dateTimeValue = parameter_value
-            entity_parameter.stringValue = parameter_value
         case "NUMERIC":
+            if store_value_also_as_text:
+                entity_parameter.stringValue = parameter_value
             entity_parameter.numericValue = parameter_value
-            entity_parameter.stringValue = parameter_value
         case "STRING":
             entity_parameter.stringValue = parameter_value
 

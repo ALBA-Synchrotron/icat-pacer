@@ -146,6 +146,8 @@ ingestionSettings:
   investigation:
     defaultEmbargoYears: 3
     defaultFacilityName: "ALBA"
+  parameters:
+    storeParametersValuesAlsoAsString: true
 integrations:
   visa:
     enabled: true

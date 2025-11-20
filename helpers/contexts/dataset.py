@@ -4,14 +4,17 @@ from pathlib import Path
 
 import xmltodict
 
+import globals_var
 from helpers.dataclasses.dataset import DatasetParameterContext, DatasetSampleContext, DatasetDatafileContext, \
     DatasetContext
 from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME, PROCESSED_DATASET_TYPE_NAME, RAW_DATASET_TYPE_NAME
 
 
-def create_dataset_context(dataset_data: str | dict, ingestion_settings: dict) -> DatasetContext:
+def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
     dataset_dict: dict
     dataset_ctx: DatasetContext
+
+    ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
     if ingestion_settings.get("acceptXMLPayloads") and isinstance(dataset_data, str) and dataset_data.endswith(">"):
         try:

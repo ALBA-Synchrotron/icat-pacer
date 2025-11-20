@@ -16,3 +16,5 @@ def get_dataset_parameter(icat_client: ICATClient, parameter_name: str,
 def set_dataset_parameter(dataset_parameter: Entity,
                           parameter_value: str | int | float) -> Entity:
     return set_entity_parameter(dataset_parameter, parameter_value)
+
+

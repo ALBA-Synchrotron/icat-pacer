@@ -2,6 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import datetime
 import logging
+import globals_var
 import multiprocessing
 from logging.handlers import QueueHandler
 from multiprocessing import Process
@@ -159,6 +160,8 @@ class PACERConsumer(ConsumerMixin):
         self.logger = logging.getLogger(__name__)
         configure_worker_logger(handler, self.pacer_config, self.logger)
 
+        globals_var.ingestion_settings = self.pacer_config.get("ingestionSettings", {})
+
         if "messageForwarding" in self.integrations:
             self.callback_func_broker_forwarder_callback = self.__broker_forwarder_callback
         if "dashboard" in self.integrations:
@@ -200,6 +203,3 @@ class PACERConsumer(ConsumerMixin):
             message.headers = message.headers or {}
             message.headers['received_at'] = datetime.now(datetime.timezone.utc).isoformat()
         return super().receive(*args, **kwargs)
-
-    def _get_ingestion_settings(self) -> dict:
-        return self.pacer_config.get("ingestionSettings", {}).get("dataset", {})
