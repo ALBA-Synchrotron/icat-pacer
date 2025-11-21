@@ -52,6 +52,14 @@ class InternalDatasetsConsumer(PACERConsumer):
 
         self.tasks.create_dataset_parameters(self.icat_client, dataset_ctx, dataset_id)
 
+    # This callback must always be the last one. If you've got anything to add, add it before this function.
+    def callback_func_forward_to_statistics_queue(self, _body, message: Message, *_args, **_kwargs) -> None:
+        self.logger.info(
+            f"callback_func_forward_to_statistics_queue > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+        dataset_str: str = message.payload or message.body
+        dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
+        dataset_id: int = message.headers.get("dataset_id", 0)
+
         GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
                                      self.internal_statistics_routing_key, dataset_ctx,
                                      {"dataset_id": dataset_id})

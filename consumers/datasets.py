@@ -41,6 +41,9 @@ class DatasetsConsumer(PACERConsumer):
         new_dataset_id: int = self.tasks.create_base_dataset_icat(icat_client=self.icat_client, dataset_ctx=dataset_ctx,
                                                                   *_args, **_kwargs)
         if new_dataset_id:
+            self.logger.info(
+                f"callback_func_main_dataset_ingestion > Forwarding message to internal ingest queue")
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
                                          self.internal_dataset_routing_key, dataset_ctx,
                                          {"dataset_id": new_dataset_id})
+

@@ -75,6 +75,7 @@ class DatasetsTasks:
                     rb.new_dataset_sample.investigation = investigation
                     rb.new_dataset_sample.create()
 
+                rb.new_dataset.complete = True
                 rb.new_dataset.type = dataset_type
                 rb.new_dataset.sample = sample if sample else rb.new_dataset_sample._obj
                 rb.new_dataset.investigation = investigation
