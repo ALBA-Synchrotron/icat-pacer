@@ -19,7 +19,8 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
     if ingestion_settings.get("acceptXMLPayloads") and isinstance(dataset_data, str) and dataset_data.endswith(">"):
         try:
             dataset_dict = xmltodict.parse(dataset_data)["dataset"]
-            dataset_dict["datafiles"] = dataset_dict["datafile"]
+            if "datafile" in dataset_dict:
+                dataset_dict["datafiles"] = dataset_dict["datafile"]
             dataset_dict["parameters"] = dataset_dict["parameter"]
             dataset_dict["start_date"] = dataset_dict["startDate"]
             dataset_dict["end_date"] = dataset_dict["endDate"]
@@ -60,7 +61,7 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
         start_date=start_date,
         end_date=end_date,
         sample=DatasetSampleContext(name=sample_name, type=sample_type),
-        datafiles=[DatasetDatafileContext(location=i.get("location", "")) for i in datafiles],
+        datafiles=[DatasetDatafileContext(location=i.get("location", "")) for i in datafiles if i],
     )
 
     # Dynamic validations
@@ -71,6 +72,9 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
 
     if not dataset_ctx.sample.type and ingestion_settings.get("mandatorySampleType"):
         raise ValueError("Sample type not found in payload.")
+
+    if not ingestion_settings.get("automaticDatasetLocationIndex") and not dataset_ctx.datafiles:
+        raise ValueError("No datafiles found in payload.")
 
     if ingestion_settings.get("checkAllowedLocationPaths"):
         strict_checking: bool = ingestion_settings.get("mandatoryPathsExistence", False)
@@ -90,6 +94,10 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
             raise ValueError(
                 f"Datafile location(s) outside of allowed root location(s), valid root are: {",".join(allowed_root_locations)}")
 
+        if not is_df_location_in_allowed_roots(dataset_ctx.location):
+            raise ValueError(
+                f"Dataset location outside of allowed root location(s), valid root are: {",".join(allowed_root_locations)}")
+
     # Avoid double file existence check if strict check / resolution has been done before.
     if ingestion_settings.get("mandatoryPathsExistence") and not ingestion_settings.get("checkAllowedLocationPaths"):
         if not os.path.exists(location):
@@ -97,6 +105,10 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
 
         for datafile in dataset_ctx.datafiles:
             if not os.path.exists(datafile.location):
-                raise ValueError(f"Dataset root location does not exist: {datafile.location}")
+                raise ValueError(f"Dataset's datafile root location does not exist: {datafile.location}")
+
+    if len(dataset_ctx.datafiles) > ingestion_settings.get("maxDatafilesPerDataset", 30000):
+        raise ValueError(
+            f"Too many datafiles ({len(dataset_ctx.datafiles)}) in dataset, ingestion rejected due to limit exceeded")
 
     return dataset_ctx

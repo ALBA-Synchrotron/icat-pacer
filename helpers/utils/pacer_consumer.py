@@ -41,6 +41,7 @@ class PACERConsumer(ConsumerMixin):
     dashboard_message_type: str = "unknown"
     datacite_client: DataciteClient = None
     panosc_client: PaNOSCClient = None
+    reject_msg_at_first_callback_error: bool = False
 
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
                  queues: list,
@@ -75,6 +76,8 @@ class PACERConsumer(ConsumerMixin):
             except Exception as e:
                 self.logger.error(f"Error processing callback router: {e!r}")
                 errors.append((func.__name__, e))
+                if self.reject_msg_at_first_callback_error:
+                    break
         if errors:
             self.logger.error(f"Message rejected due to errors: {errors}")
             message.reject(requeue=False)

@@ -63,6 +63,3 @@ class DatasetContext:
 
         if not self.end_date:
             raise ValueError(f"End date not found in payload")
-
-        if not self.datafiles:
-            raise ValueError(f"Data files not found in payload")

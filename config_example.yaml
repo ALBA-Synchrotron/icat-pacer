@@ -143,6 +143,8 @@ ingestionSettings:
     internalDatasetExchangeName: "dataset-internal-ingest-exchange"
     internalDatasetRoutingKey: "dataset.internal_ingest"
     internalStatisticsRoutingKey: "statistics.internal_ingest"
+    automaticDatasetLocationIndex: true
+    maxDatafilesPerDataset: 30000
   investigation:
     defaultEmbargoYears: 3
     defaultFacilityName: "ALBA"

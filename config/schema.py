@@ -166,6 +166,8 @@ config_yaml_schema: dict = {
                     "internalDatasetExchangeName": {"type": "string", "required": True},
                     "internalDatasetRoutingKey": {"type": "string", "required": True},
                     "internalStatisticsRoutingKey": {"type": "string", "required": True},
+                    "automaticDatasetLocationIndex": {"type": "boolean", "required": True},
+                    "maxDatafilesPerDataset": {"type": "integer", "required": True}
                 }
             },
             "investigation": {
@@ -182,7 +184,7 @@ config_yaml_schema: dict = {
                 "schema": {
                     "storeParametersValuesAlsoAsString": {"type": "boolean", "required": True},
                 }
-            }
+            },
         }
     },
     "integrations": {

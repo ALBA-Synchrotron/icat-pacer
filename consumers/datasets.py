@@ -17,6 +17,8 @@ class DatasetsConsumer(PACERConsumer):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(dashboard_message_type="dataset-ingestion", *args, **kwargs)
+        self.reject_msg_at_first_callback_error = True
+
         self.tasks = DatasetsTasks(self.logger)
         ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 

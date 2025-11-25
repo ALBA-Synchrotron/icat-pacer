@@ -15,6 +15,8 @@ class InternalStatisticsConsumer(PACERConsumer):
 
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(dashboard_message_type="internal-statistics", *args, **kwargs)
+        self.reject_msg_at_first_callback_error = True
+
         self.tasks = InternalStatisticsTasks(self.logger)
 
     def get_message_object_identifiers(self, message: Message) -> dict:

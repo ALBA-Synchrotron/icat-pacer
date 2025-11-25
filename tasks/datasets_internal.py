@@ -1,29 +1,17 @@
 from __future__ import absolute_import, unicode_literals
 
+import glob
 import logging
+import os
 from pathlib import Path
 
 from icat.entity import Entity
 
-from helpers.dataclasses.dataset import DatasetContext
+import globals_var
+from helpers.dataclasses.dataset import DatasetContext, DatasetDatafileContext
 from helpers.integrations.icat.extended_client import ICATClient
-from helpers.static_settings import DATASET_NAME_PARAMETER, DATASET_FILE_COUNT_PARAMETER, DATASET_VOLUME_PARAMETER, \
-    DATASET_ELAPSE_TIME_PARAMETER, INVESTIGATION_DATASET_COUNT_PARAMETER, \
-    INVESTIGATION_ACQUISITION_DATASET_COUNT_PARAMETER, \
-    RAW_DATASET_TYPE_NAME, \
-    INVESTIGATION_SAMPLE_COUNT_PARAMETER, INVESTIGATION_VOLUME_PARAMETER, INVESTIGATION_ACQUISITION_VOLUME_PARAMETER, \
-    PROCESSED_DATASET_TYPE_NAME, INVESTIGATION_PROCESSED_DATASET_COUNT_PARAMETER, \
-    INVESTIGATION_ELAPSE_TIME_PARAMETER, INVESTIGATION_FILE_COUNT_PARAMETER, \
-    INVESTIGATION_ACQUISITION_FILE_COUNT_PARAMETER, INVESTIGATION_PROCESSED_FILE_COUNT_PARAMETER, \
-    SAMPLE_DATASET_COUNT_PARAMETER, SAMPLE_ACQUISITION_DATASET_COUNT_PARAMETER, \
-    SAMPLE_PROCESSED_DATASET_COUNT_PARAMETER, SAMPLE_FILE_COUNT_PARAMETER, SAMPLE_ACQUISITION_FILE_COUNT_PARAMETER, \
-    SAMPLE_PROCESSED_FILE_COUNT_PARAMETER, INVESTIGATION_PROCESSED_VOLUME_PARAMETER, SAMPLE_VOLUME_PARAMETER, \
-    SAMPLE_ACQUISITION_VOLUME_PARAMETER
 from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
-from helpers.utils.investigation import set_investigation_parameter, get_investigation_parameter
-from helpers.utils.parameters import get_parameter_type
-from helpers.utils.sample import get_sample_parameter, set_sample_parameter
 
 
 class DatasetsInternalTasks:
@@ -34,6 +22,9 @@ class DatasetsInternalTasks:
     def create_dataset_datafiles(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int, *_args,
                                  **_kwargs) -> None:
 
+
+        ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
+
         if not dataset_id:
             raise Exception("Dataset ID not received")
 
@@ -42,6 +33,22 @@ class DatasetsInternalTasks:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
                     raise Exception("Dataset not found")
+
+                if not dataset_ctx.datafiles and ingestion_settings.get("automaticDatasetLocationIndex", False):
+                    dataset_file_limit: int = ingestion_settings.get("maxDatafilesPerDataset", 30000)
+
+                    for root, dirs, files in os.walk(dataset_ctx.location):
+                        for file in files:
+                            dataset_ctx.datafiles.append(DatasetDatafileContext(os.path.join(root, file)))
+
+                            if file.startswith("."):
+                                continue
+
+                            if len(dataset_ctx.datafiles) >= dataset_file_limit:
+                                break
+
+                        if len(dataset_ctx.datafiles) >= dataset_file_limit:
+                            break
 
                 for index, datafile in enumerate(dataset_ctx.datafiles):
                     new_datafile: Entity = icat_client.new("Datafile")

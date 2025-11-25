@@ -107,7 +107,11 @@ class ICATRollbackContext(AbstractContextManager):
     def rollback_all(self, force_delete: bool = False) -> None:
         self._logger.info(f"Rolling back all objects")
         for obj_key in self._rollbackable_objects.keys():
-            _ = self.rollback(obj_key, force_delete=force_delete)
+            try:
+                _ = self.rollback(obj_key, force_delete=force_delete)
+            except Exception:
+                # ICAT deletes on cascade, this ignores rollback errors for subobjects whose parent has already been deleted
+                pass
 
     def __enter__(self) -> ICATRollbackContext:
         return self
