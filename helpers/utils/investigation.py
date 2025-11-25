@@ -1,0 +1,18 @@
+from icat.entity import Entity
+
+from helpers.integrations.icat.extended_client import ICATClient
+from helpers.utils.entity import get_entity_parameter, set_entity_parameter
+
+
+def get_investigation_parameter(icat_client: ICATClient, parameter_name: str,
+                                create_if_missing: bool = True, investigation_name: str = "",
+                                entity: Entity | None = None) -> Entity | None:
+    return get_entity_parameter(icat_client, parameter_name,
+                                conditions={"name__eq": investigation_name} if investigation_name else {},
+                                create_if_missing=create_if_missing,
+                                entity_name="Investigation" if not entity else "", entity=entity)
+
+
+def set_investigation_parameter(dataset_parameter: Entity,
+                                parameter_value: str | int | float) -> Entity:
+    return set_entity_parameter(dataset_parameter, parameter_value)

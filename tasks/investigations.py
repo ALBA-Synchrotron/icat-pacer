@@ -6,11 +6,10 @@ from icat.entity import Entity
 from psycopg_pool import ConnectionPool
 
 from helpers.dataclasses.investigation import InvestigationContext
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.visa_utils import VISALoader
 from helpers.static_settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PROPOSER, \
     ICAT_USER_ROLE_LOCAL_CONTACT, ICAT_USER_ROLE_PARTICIPANT
-from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 
 
 class ProposalTasks:

@@ -9,13 +9,14 @@ from urllib.parse import quote
 
 from amqp import Channel
 from kombu import Connection, Exchange, Queue
-
+import globals_var
 from config.config import ConfigParser
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 from helpers.logging.general import configure_pacer_logger
 from helpers.utils.pacer_consumer import PACERConsumer
 from helpers.utils.serializers import register_custom_serializers
-from helpers.utils.utils import Singleton, mask_amqp_password
+from helpers.utils.strings import mask_amqp_password
+from helpers.utils.utils import Singleton
 
 MAIN_LOOP_WAIT_TIME: int = 15 * 60
 
@@ -174,6 +175,8 @@ class PACER:
         method: str = self.get_config_value("multiprocessStartMethod", "spawn")
         multiprocessing.set_start_method(method)
 
+        globals_var.ingestion_settings = self.config.get("ingestionSettings", {})
+
         self.__configure_logging()
         self.logger.info("Logging configured for PACER main process")
 
@@ -214,7 +217,7 @@ class PACER:
                                                          self.recipient_connections,
                                                          consumer_queues, self.recipient_fw_rules, self.log_queue,
                                                          self.config, integrations,
-                                                         self.icat_client.session_id)
+                                                         self.icat_client.sessionId)
             self.consumers.append(pacer_consumer)
 
     def main_background_loop(self) -> None:

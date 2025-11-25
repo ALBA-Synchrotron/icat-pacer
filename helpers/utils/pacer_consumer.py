@@ -1,6 +1,8 @@
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import logging
+import globals_var
 import multiprocessing
 from logging.handlers import QueueHandler
 from multiprocessing import Process
@@ -12,7 +14,7 @@ from kombu.transport.virtual import Channel
 from psycopg_pool import ConnectionPool
 
 from helpers.contexts.dashboard import get_configured_dashboard_callback, create_message_context
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.datacite import get_datacite_client, DataciteClient
 from helpers.integrations.panosc import PaNOSCClient, get_panosc_client
 from helpers.integrations.visa_utils import get_pg_connection_pool
@@ -39,6 +41,7 @@ class PACERConsumer(ConsumerMixin):
     dashboard_message_type: str = "unknown"
     datacite_client: DataciteClient = None
     panosc_client: PaNOSCClient = None
+    reject_msg_at_first_callback_error: bool = False
 
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
                  queues: list,
@@ -58,20 +61,23 @@ class PACERConsumer(ConsumerMixin):
         self.dashboard_message_type = dashboard_message_type
 
         handler: QueueHandler = QueueHandler(log_queue)
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__name__)
         configure_worker_logger(handler, config, self.logger)
         self.logger.info(f"Consumer {self.module} initialized.")
 
     def __callback_router(self, body, message: Message) -> None:
         errors: list = []
+        processed_timestamp: str = datetime.datetime.now().isoformat()
         for func in self.__get_callback_functions():
             try:
                 self.logger.info(f"Calling callback function: {func.__name__}")
-                func(body, message, errors=errors)
+                func(body, message, errors=errors, headers={"received_at": processed_timestamp, **message.headers})
 
             except Exception as e:
                 self.logger.error(f"Error processing callback router: {e!r}")
                 errors.append((func.__name__, e))
+                if self.reject_msg_at_first_callback_error:
+                    break
         if errors:
             self.logger.error(f"Message rejected due to errors: {errors}")
             message.reject(requeue=False)
@@ -139,7 +145,7 @@ class PACERConsumer(ConsumerMixin):
                 process: Process = Process(target=self._consumer_main, args=(self.log_queue,))
                 process.start()
                 self.logger.debug(
-                    f"Spawned {self.module} process {len(self.processes) + 1}/{self.workers}: pid={process.pid}")
+                    f"Spawned {self.module} process: pid={process.pid}")
                 self.processes.append(process)
 
     def stop(self) -> None:
@@ -154,8 +160,10 @@ class PACERConsumer(ConsumerMixin):
     def _consumer_main(self, log_queue: multiprocessing.Queue) -> None:
         import os
         handler: QueueHandler = QueueHandler(log_queue)
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(__name__)
         configure_worker_logger(handler, self.pacer_config, self.logger)
+
+        globals_var.ingestion_settings = self.pacer_config.get("ingestionSettings", {})
 
         if "messageForwarding" in self.integrations:
             self.callback_func_broker_forwarder_callback = self.__broker_forwarder_callback
@@ -188,5 +196,13 @@ class PACERConsumer(ConsumerMixin):
         self.logger.info("Consumer ended.")
 
     def run_tasks(self, body: str, message: str) -> None:
-        """Call tasks here"""
         raise NotImplementedError('run_tasks method is not implemented. Use callback methods instead.')
+
+    def receive(self, *args, **kwargs):
+        """Intercept message receipt and add arrival timestamp."""
+        message = kwargs.get('message') or args[1]
+        if message:
+            # Add received timestamp (UTC ISO 8601)
+            message.headers = message.headers or {}
+            message.headers['received_at'] = datetime.now(datetime.timezone.utc).isoformat()
+        return super().receive(*args, **kwargs)

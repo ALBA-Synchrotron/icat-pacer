@@ -5,7 +5,7 @@ import pytest
 from icat.entity import Entity
 
 from helpers.dataclasses.investigation import InvestigationOperationsContext
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 from tasks.investigation_ops import InvestigationOpsTasks
 
 logger: logging.Logger = logging.getLogger(__name__)

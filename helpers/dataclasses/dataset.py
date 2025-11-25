@@ -34,6 +34,7 @@ class DatasetParameterContext:
 @dataclass
 class DatasetContext:
     investigation: str
+    investigation_id: int
     instrument: str
     name: str
     parameters: list[DatasetParameterContext]
@@ -45,8 +46,8 @@ class DatasetContext:
     type: str = ""
 
     def __post_init__(self):
-        if not self.investigation:
-            raise ValueError(f"Investigation name not found in payload")
+        if not self.investigation and not self.investigation_id:
+            raise ValueError(f"Investigation name nor id not found in payload")
 
         if not self.instrument:
             raise ValueError(f"Instrument not found in payload")
@@ -62,6 +63,3 @@ class DatasetContext:
 
         if not self.end_date:
             raise ValueError(f"End date not found in payload")
-
-        if not self.datafiles:
-            raise ValueError(f"Data files not found in payload")

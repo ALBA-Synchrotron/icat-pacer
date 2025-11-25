@@ -6,7 +6,7 @@ from psycopg_pool import ConnectionPool
 
 from helpers.integrations.datacite import DataciteClient
 from helpers.dataclasses.investigation import InvestigationOperationsContext
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 from tasks.investigation_ops import InvestigationOpsTasks
 from tests.utils.generic_unit_test import GenericPACERUnitTest
 
