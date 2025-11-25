@@ -77,16 +77,14 @@ class InternalStatisticsTasks:
                 self.logger.error(error_msg)
                 raise Exception(error_msg)
 
-    def update_investigation_statistics(self, icat_client: ICATClient, investigation_name: str, dataset_id: int, *_args,
+    def update_investigation_statistics(self, icat_client: ICATClient, dataset_id: int, *_args,
                                         **_kwargs) -> None:
-        investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": investigation_name},
-                                                   flatten_single=True)
-
         if not dataset_id:
             raise Exception("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
+            investigation: Entity = rb.dataset.investigation
             if not rb.dataset:
                 raise Exception("Dataset not found")
 
@@ -233,7 +231,7 @@ class InternalStatisticsTasks:
                 rb.proc_file_count_param = set_investigation_parameter(rb.proc_file_count_param._obj, proc_file_count)
                 self.logger.debug("Updated investigation statistic: Total number of processed files")
 
-                self.logger.info(f"Updated investigation statistics for investigation={investigation_name}")
+                self.logger.info(f"Updated investigation statistics for investigation={investigation.name}/{investigation.visitId}")
             except Exception as e:
                 rb.rollback_all(force_delete=True)
 

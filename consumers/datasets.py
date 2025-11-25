@@ -27,7 +27,9 @@ class DatasetsConsumer(PACERConsumer):
         try:
             dataset_str: str = message.payload or message.body
             dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
-            return {"investigation": dataset_ctx.investigation, "dataset": dataset_ctx.name}
+            return {
+                "investigation": dataset_ctx.investigation if dataset_ctx.investigation else f"id={dataset_ctx.investigation_id}",
+                "dataset": dataset_ctx.name}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
@@ -38,12 +40,12 @@ class DatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
 
-        new_dataset_id: int = self.tasks.create_base_dataset_icat(icat_client=self.icat_client, dataset_ctx=dataset_ctx,
-                                                                  *_args, **_kwargs)
+        new_dataset_id, investigation_id = self.tasks.create_base_dataset_icat(icat_client=self.icat_client,
+                                                                               dataset_ctx=dataset_ctx,
+                                                                               *_args, **_kwargs)
         if new_dataset_id:
             self.logger.info(
                 f"callback_func_main_dataset_ingestion > Forwarding message to internal ingest queue")
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
                                          self.internal_dataset_routing_key, dataset_ctx,
-                                         {"dataset_id": new_dataset_id})
-
+                                         {"dataset_id": new_dataset_id, "investigation_id": investigation_id})

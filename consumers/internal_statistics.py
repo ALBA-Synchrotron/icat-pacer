@@ -22,8 +22,9 @@ class InternalStatisticsConsumer(PACERConsumer):
             dataset_str: str = message.payload or message.body
             dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
             dataset_id: int = message.headers.get("dataset_id", 0)
+            investigation_id: int = message.headers.get("investigation_id", 0)
 
-            return {"investigation": dataset_ctx.investigation, "dataset": dataset_ctx.name, "dataset_id": dataset_id}
+            return {"investigation": dataset_ctx.investigation if dataset_ctx.investigation else f"id={investigation_id}", "dataset": dataset_ctx.name, "dataset_id": dataset_id}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
@@ -38,11 +39,9 @@ class InternalStatisticsConsumer(PACERConsumer):
     def callback_func_update_investigation_statistics(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
             f"callback_func_update_investigation_statistics > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
-        dataset_str: str = message.payload or message.body
-        dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
 
-        self.tasks.update_investigation_statistics(self.icat_client, dataset_ctx.investigation, dataset_id)
+        self.tasks.update_investigation_statistics(self.icat_client, dataset_id)
 
     def callback_func_update_sample_statistics(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(

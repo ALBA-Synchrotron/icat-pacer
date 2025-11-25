@@ -23,6 +23,8 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
             dataset_dict["parameters"] = dataset_dict["parameter"]
             dataset_dict["start_date"] = dataset_dict["startDate"]
             dataset_dict["end_date"] = dataset_dict["endDate"]
+            if "investigationId" in dataset_dict:
+                dataset_dict["investigation_id"] = int(dataset_dict["investigationId"])
         except Exception as e:
             raise ValueError(f"Error parsing XML payload: {e!r}")
 
@@ -34,6 +36,7 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
                 f"Error parsing JSON payload (XML is{' not' if not ingestion_settings.get("acceptXMLPayloads") else ''} accepted): {e!r}")
 
     investigation_name: str = dataset_dict.get("investigation", "")
+    investigation_id: int = dataset_dict.get("investigation_id", 0)
     instrument: str = dataset_dict.get("instrument", "")
     dataset_name: str = dataset_dict.get("name", "")
     parameters: list = dataset_dict.get("parameters", []) if isinstance(dataset_dict.get("parameters"), list) else [
@@ -49,6 +52,7 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
 
     dataset_ctx = DatasetContext(
         investigation=investigation_name,
+        investigation_id=investigation_id,
         instrument=instrument,
         name=dataset_name,
         parameters=[DatasetParameterContext(name=i.get("name", ""), value=i.get("value", "")) for i in parameters],

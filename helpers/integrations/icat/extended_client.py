@@ -120,13 +120,25 @@ class ICATClient(Client):
                             raise ValueError(f"Value must be non-string iterable for IN operator: {value}")
                         result[field] = f"IN ({cls.__to_sql_in_clause(value)})"
                     case "gt":
-                        result[field] = f"> {value}"
+                        if isinstance(value, str):
+                            result[field] = f"> '{value}'"
+                        else:
+                            result[field] = f"> {value}"
                     case "gte":
-                        result[field] = f">= {value}"
+                        if isinstance(value, str):
+                            result[field] = f">= '{value}'"
+                        else:
+                            result[field] = f">= {value}"
                     case "lt":
-                        result[field] = f"< {value}"
+                        if isinstance(value, str):
+                            result[field] = f"< '{value}'"
+                        else:
+                            result[field] = f"< {value}"
                     case "lte":
-                        result[field] = f"<= {value}"
+                        if isinstance(value, str):
+                            result[field] = f"<= '{value}'"
+                        else:
+                            result[field] = f"<= {value}"
                     case "like" | "contains":
                         result[field] = f"LIKE '%{value}%'"
                     case "startswith":

@@ -28,8 +28,11 @@ class InternalDatasetsConsumer(PACERConsumer):
             dataset_str: str = message.payload or message.body
             dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
             dataset_id: int = message.headers.get("dataset_id", 0)
+            investigation_id: int = message.headers.get("investigation_id", 0)
 
-            return {"investigation": dataset_ctx.investigation, "dataset": dataset_ctx.name, "dataset_id": dataset_id}
+            return {
+                "investigation": dataset_ctx.investigation if dataset_ctx.investigation else f"id={investigation_id}",
+                "dataset": dataset_ctx.name, "dataset_id": dataset_id}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
@@ -59,7 +62,8 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
+        investigation_id: int = message.headers.get("investigation_id", 0)
 
         GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
                                      self.internal_statistics_routing_key, dataset_ctx,
-                                     {"dataset_id": dataset_id})
+                                     {"dataset_id": dataset_id, "investigation_id": investigation_id})
