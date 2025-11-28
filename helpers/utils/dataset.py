@@ -22,6 +22,13 @@ def set_dataset_parameter(dataset_parameter: Entity,
     return set_entity_parameter(dataset_parameter, parameter_value)
 
 
+def is_duplicated_dataset_investigation(icat_client: ICATClient, dataset_name: str, investigation_id: str) -> bool:
+    results: list = icat_client.search("Dataset", conditions={"name__like": dataset_name,
+                                                              "investigation.id__eq": investigation_id},
+                                       flatten_single=True)
+    return len(results) > 0
+
+
 def get_dataset_investigation(icat_client: ICATClient, logger: Logger, dataset_ctx: DatasetContext) -> Entity:
     investigation: Entity | None = None
     instrument: Entity = icat_client.search("Instrument",
@@ -47,8 +54,8 @@ def get_dataset_investigation(icat_client: ICATClient, logger: Logger, dataset_c
                                                                             dataset_ctx.start_date)),
                                                                         "endDate__gte": str(try_parse_datetime(
                                                                             dataset_ctx.end_date))},
-        flatten_single = True
-        )
+                                           flatten_single=True
+                                           )
 
         if isinstance(investigation, list):
             error_msg: str = f"Multiple colliding sessions found for investigation {dataset_ctx.investigation}, aborting ingestion"

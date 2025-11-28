@@ -46,6 +46,10 @@ SAMPLE_PROCESSED_VOLUME_PARAMETER: str = "__processedVolume"
 
 # Internal dataset parameters names
 DATASET_NAME_PARAMETER: str = "datasetName"
+INPUT_DATASET_IDS_PARAMETER_NAME: str = "input_datasetIds"
+OUTPUT_DATASET_IDS_PARAMETER_NAME: str = "output_datasetIds"
+OUTPUT_DATASET_NAMES_PARAMETER_NAME: str = "output_datasetNames"
+OUTPUT_DATASET_DATASETS_PARAMETER_NAME: str = "output_datasets"
 FULL_INPUT_DATASET_IDS_PARAM: str = "__full_input_datasetIds"
 FULL_OUTPUT_DATASET_IDS_PARAM: str = "__full_output_datasetIds"
 FULL_INPUT_DATASET_NAMES_PARAM: str = "__full_input_datasetNames"

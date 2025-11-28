@@ -4,6 +4,7 @@ from kombu import Message
 
 from helpers.contexts.dataset import create_dataset_context
 from helpers.dataclasses.dataset import DatasetContext
+from helpers.static_settings import RAW_DATASET_TYPE_NAME, PROCESSED_DATASET_TYPE_NAME
 from helpers.utils.pacer_consumer import PACERConsumer
 from producers.generic import GenericProducer
 from tasks.datasets_internal import DatasetsInternalTasks
@@ -56,6 +57,18 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_id: int = message.headers.get("dataset_id", 0)
 
         self.tasks.create_dataset_parameters(self.icat_client, dataset_ctx, dataset_id)
+
+    def callback_func_dataset_linkage(self, _body, message: Message, *_args, **_kwargs) -> None:
+        self.logger.info(
+            f"callback_func_dataset_linkage > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+        dataset_str: str = message.payload or message.body
+        dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
+        dataset_id: int = message.headers.get("dataset_id", 0)
+
+        if dataset_ctx.type == RAW_DATASET_TYPE_NAME:
+            self.tasks.raw_dataset_linkage(self.icat_client, dataset_id)
+        elif dataset_ctx.type == PROCESSED_DATASET_TYPE_NAME:
+            self.tasks.processed_dataset_linkage(self.icat_client, dataset_id)
 
     # This callback must always be the last one. If you've got anything to add, add it before this function.
     def callback_func_forward_to_statistics_queue(self, _body, message: Message, *_args, **_kwargs) -> None:
