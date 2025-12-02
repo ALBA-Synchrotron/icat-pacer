@@ -111,4 +111,8 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
         raise ValueError(
             f"Too many datafiles ({len(dataset_ctx.datafiles)}) in dataset, ingestion rejected due to limit exceeded")
 
+    param_names = [i.name for i in dataset_ctx.parameters]
+    if len(param_names) != len(set(param_names)):
+        raise ValueError(f"Duplicate parameter names found in dataset: {param_names}")
+
     return dataset_ctx

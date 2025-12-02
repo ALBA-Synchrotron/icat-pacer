@@ -30,6 +30,7 @@ class DatasetsConsumer(PACERConsumer):
             dataset_str: str = message.payload or message.body
             dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
             return {
+                "instrument": dataset_ctx.instrument,
                 "investigation": dataset_ctx.investigation if dataset_ctx.investigation else f"id={dataset_ctx.investigation_id}",
                 "dataset": dataset_ctx.name}
         except Exception as e:

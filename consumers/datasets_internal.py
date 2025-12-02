@@ -24,6 +24,7 @@ class InternalDatasetsConsumer(PACERConsumer):
         ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
         self.internal_dataset_exchange_name: str = ingestion_settings.get("internalDatasetExchangeName", "")
+        self.internal_datasets_links_routing_key: str = ingestion_settings.get("internalDatasetLinksRoutingKey", "")
         self.internal_statistics_routing_key: str = ingestion_settings.get("internalStatisticsRoutingKey", "")
 
     def get_message_object_identifiers(self, message: Message) -> dict:
@@ -34,6 +35,7 @@ class InternalDatasetsConsumer(PACERConsumer):
             investigation_id: int = message.headers.get("investigation_id", 0)
 
             return {
+                "instrument": dataset_ctx.instrument,
                 "investigation": dataset_ctx.investigation if dataset_ctx.investigation else f"id={investigation_id}",
                 "dataset": dataset_ctx.name, "dataset_id": dataset_id}
         except Exception as e:
@@ -46,9 +48,14 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
+        investigation_id: int = message.headers.get("investigation_id", 0)
         is_duplicated: bool = message.headers.get("is_duplicated", False)
 
         self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id, is_duplicated)
+
+        GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
+                                     self.internal_datasets_links_routing_key, dataset_ctx,
+                                     {"dataset_id": dataset_id, "investigation_id": investigation_id})
 
     def callback_func_create_dataset_parameters(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(

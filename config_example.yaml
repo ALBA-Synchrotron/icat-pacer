@@ -51,6 +51,9 @@ queues:
   - name: "icat-internal-statistics"
     exchange: "dataset-internal-ingest-exchange"
     routingKey: "statistics.internal_ingest"
+  - name: "icat-internal-dataset-links"
+    exchange: "dataset-internal-ingest-exchange"
+    routingKey: "dataset.internal_links"
 consumers:
   - className: "UsersConsumer"
     module: "consumers.users"
@@ -113,6 +116,15 @@ consumers:
     integrations:
       - "dashboard"
       - "icat"
+  - className: "InternalDatasetsLinksConsumer"
+    module: "consumers.internal_dataset_links"
+    enabled: true
+    queues:
+      - "icat-internal-dataset-links"
+    workers: 1
+    integrations:
+      - "dashboard"
+      - "icat"
 brokers:
   main:
     protocol: "amqp"
@@ -143,6 +155,7 @@ ingestionSettings:
     internalDatasetExchangeName: "dataset-internal-ingest-exchange"
     internalDatasetRoutingKey: "dataset.internal_ingest"
     internalStatisticsRoutingKey: "statistics.internal_ingest"
+    internalDatasetLinksRoutingKey: "dataset.internal_links"
     automaticDatasetLocationIndex: true
     maxDatafilesPerDataset: 30000
   investigation:
