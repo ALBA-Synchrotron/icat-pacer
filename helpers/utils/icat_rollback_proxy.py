@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import copy
 from contextlib import AbstractContextManager
 from logging import Logger
 from typing import TypeVar
 
-from elasticsearch.esql.functions import starts_with
 from icat.entity import Entity
 
-from helpers.integrations.icat_utils import ICATClient
+from helpers.integrations.icat.extended_client import ICATClient
 
 T = TypeVar("T")
 
@@ -70,17 +68,13 @@ class ICATRollbackContext(AbstractContextManager):
 
             if key not in self._rollbackable_objects:
                 self._rollbackable_objects[key] = [value]
-                self._logger.debug(f"Object with {key} added to ICAT rollback context {id(self)}")
             elif self._keep_history:
                 self._rollbackable_objects[key].append(value)
-                self._logger.debug(
-                    f"Object with {key} added to ICAT rollback context history {id(self)}")
             else:
                 if len(self._rollbackable_objects[key]) < 2:
                     self._rollbackable_objects[key].append(value)
                 else:
                     self._rollbackable_objects[key][-1] = value
-                self._logger.debug(f"Live object with {key} replaced running copy {id(self)}")
 
     def __getattr__(self, key: str) -> T:
         if key in self.__annotations__:
@@ -113,7 +107,11 @@ class ICATRollbackContext(AbstractContextManager):
     def rollback_all(self, force_delete: bool = False) -> None:
         self._logger.info(f"Rolling back all objects")
         for obj_key in self._rollbackable_objects.keys():
-            _ = self.rollback(obj_key, force_delete=force_delete)
+            try:
+                _ = self.rollback(obj_key, force_delete=force_delete)
+            except Exception:
+                # ICAT deletes on cascade, this ignores rollback errors for subobjects whose parent has already been deleted
+                pass
 
     def __enter__(self) -> ICATRollbackContext:
         return self

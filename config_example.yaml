@@ -48,6 +48,9 @@ queues:
   - name: "icat-internal-dataset-ingest"
     exchange: "dataset-internal-ingest-exchange"
     routingKey: "dataset.internal_ingest"
+  - name: "icat-internal-statistics"
+    exchange: "dataset-internal-ingest-exchange"
+    routingKey: "statistics.internal_ingest"
 consumers:
   - className: "UsersConsumer"
     module: "consumers.users"
@@ -101,6 +104,15 @@ consumers:
     integrations:
       - "dashboard"
       - "icat"
+  - className: "InternalStatisticsConsumer"
+    module: "consumers.internal_statistics"
+    enabled: true
+    queues:
+      - "icat-internal-statistics"
+    workers: 1
+    integrations:
+      - "dashboard"
+      - "icat"
 brokers:
   main:
     protocol: "amqp"
@@ -130,9 +142,14 @@ ingestionSettings:
       - "/beamlines"
     internalDatasetExchangeName: "dataset-internal-ingest-exchange"
     internalDatasetRoutingKey: "dataset.internal_ingest"
+    internalStatisticsRoutingKey: "statistics.internal_ingest"
+    automaticDatasetLocationIndex: true
+    maxDatafilesPerDataset: 30000
   investigation:
     defaultEmbargoYears: 3
     defaultFacilityName: "ALBA"
+  parameters:
+    storeParametersValuesAlsoAsString: true
 integrations:
   visa:
     enabled: true

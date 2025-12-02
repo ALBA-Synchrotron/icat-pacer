@@ -17,8 +17,7 @@ class InvestigationConsumer(PACERConsumer):
     def get_message_object_identifiers(self, message: Message) -> dict:
         try:
             investigation_str: str = message.payload or message.body
-            investigation_context: InvestigationContext = create_investigation_context(investigation_str,
-                                                                                       self.__get_ingestion_settings())
+            investigation_context: InvestigationContext = create_investigation_context(investigation_str)
             return {"name": investigation_context.name, "instrument": investigation_context.instrument.code}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
@@ -28,8 +27,7 @@ class InvestigationConsumer(PACERConsumer):
         self.logger.info(
             f"VISA_proposal_sync_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         investigation_str: str = message.payload or message.body
-        investigation_context: InvestigationContext = create_investigation_context(investigation_str,
-                                                                                   self.__get_ingestion_settings())
+        investigation_context: InvestigationContext = create_investigation_context(investigation_str)
 
         if not investigation_context.visa_sync:
             return
@@ -40,13 +38,9 @@ class InvestigationConsumer(PACERConsumer):
         self.logger.info(
             f"ICAT_proposal_sync_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         investigation_str: str = message.payload or message.body
-        investigation_context: InvestigationContext = create_investigation_context(investigation_str,
-                                                                                   self.__get_ingestion_settings())
+        investigation_context: InvestigationContext = create_investigation_context(investigation_str)
 
         if not investigation_context.icat_sync:
             return
 
         self.tasks.sync_investigation_icat(self.icat_client, investigation_context, message=message, body=body)
-
-    def __get_ingestion_settings(self) -> dict:
-        return self.pacer_config.get("ingestionSettings", {}).get("investigation", {})

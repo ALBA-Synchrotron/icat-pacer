@@ -1,39 +1,68 @@
 import re
-from typing import Iterable
+from typing import Iterable, TypeVar
 
-from icat import Client
+import suds
+from icat import Client, translateError
 from icat.entity import Entity
 from icat.query import Query
 
+T = TypeVar("T")
 
-class ICATClient:
-    client: Client
-    session_id: str = None
 
+class ICATClient(Client):
     def __init__(self, url: str, username: str = None, password: str = None, auth_plugin: str = None,
-                 session_id: str = None) -> None:
-        self.client = Client(url)
+                 session_id: str = None, *_args, **_kwargs) -> None:
+
+        super().__init__(url=url)
 
         if session_id:
-            self.session_id = session_id
-            self.client.sessionId = session_id
+            self.sessionId = session_id
         elif username and password and auth_plugin:
-            self.client.login(
+            self.login(
                 auth_plugin,
                 {"username": username, "password": password}
             )
-            if self.client.sessionId:
-                self.session_id = self.client.sessionId
+        self.__replace_entity_getattr_method()
+        self.__add_entity_count_method()
 
     def __del__(self) -> None:
-        if self.client and self.client.sessionId:
-            self.client.logout()
+        super().__del__()
+        self.logout()
 
     def auto_refresh_session(self) -> None:
-        self.client.autoRefresh()
+        self.autoRefresh()
 
-    def logout(self) -> None:
-        self.client.logout()
+    @classmethod
+    def __add_entity_count_method(cls):
+
+        def count(self, name: str) -> int:
+            if name not in self.InstMRel:
+                raise ValueError(f"Entity {self.BeanName} has no many-to-many relation named {name}")
+
+            return self.client.search(self.BeanName, attributes=[f"{name}"], aggregate="COUNT",
+                                      conditions={"id__eq": self.id})
+
+        Entity.count = count
+
+    @classmethod
+    def __replace_entity_getattr_method(cls):
+        old_getattr = Entity.__getattr__
+
+        def new_get_attr_func(self, name, lazy_loaded: bool = False) -> T:
+            res = old_getattr(self, name)
+
+            if callable(res):
+                return res
+
+            if not res and name in [*self.InstRel, *self.InstMRel] and not lazy_loaded:
+                updated_entity = self.client.query_search(
+                    f"SELECT b FROM {self.BeanName} b WHERE b.id = {self.id} INCLUDE b.{name}")
+                loaded_value = updated_entity.__getattr__(name, lazy_loaded=True)
+                setattr(self, name, loaded_value)
+                return loaded_value
+            return res
+
+        Entity.__getattr__ = new_get_attr_func
 
     @classmethod
     def open_icat_session(cls, config: dict, session_id: str = None) -> Client | None:
@@ -91,13 +120,25 @@ class ICATClient:
                             raise ValueError(f"Value must be non-string iterable for IN operator: {value}")
                         result[field] = f"IN ({cls.__to_sql_in_clause(value)})"
                     case "gt":
-                        result[field] = f"> {value}"
+                        if isinstance(value, str):
+                            result[field] = f"> '{value}'"
+                        else:
+                            result[field] = f"> {value}"
                     case "gte":
-                        result[field] = f">= {value}"
+                        if isinstance(value, str):
+                            result[field] = f">= '{value}'"
+                        else:
+                            result[field] = f">= {value}"
                     case "lt":
-                        result[field] = f"< {value}"
+                        if isinstance(value, str):
+                            result[field] = f"< '{value}'"
+                        else:
+                            result[field] = f"< {value}"
                     case "lte":
-                        result[field] = f"<= {value}"
+                        if isinstance(value, str):
+                            result[field] = f"<= '{value}'"
+                        else:
+                            result[field] = f"<= {value}"
                     case "like" | "contains":
                         result[field] = f"LIKE '%{value}%'"
                     case "startswith":
@@ -112,21 +153,24 @@ class ICATClient:
     def search(self, entity: str, attributes=None, aggregate=None, order=None,
                conditions=None, includes=None, limit=None,
                join_specs=None, flatten_single=True) -> Entity | list[Entity] | None:
+        results: list
         if conditions:
             conditions = self.__parse_custom_conditions(conditions)
 
-        query: Query = Query(self.client, entity, attributes=attributes, aggregate=aggregate, order=order,
+        query: Query = Query(self, entity, attributes=attributes, aggregate=aggregate, order=order,
                              conditions=conditions, includes=includes, limit=limit,
                              join_specs=join_specs)
 
-        results: list = self.client.search(query)
+        try:
+            instances = self.service.search(self.sessionId, str(query))
+            results = [self.getEntity(i) for i in instances]
+        except suds.WebFault as e:
+            raise translateError(e)
 
         if results:
             return results[0] if len(results) == 1 and flatten_single else results
         return None
 
-    def new(self, *args, **kwargs) -> Entity:
-        return self.client.new(*args, **kwargs)
-
-    def delete(self, entity: Entity) -> None:
-        self.client.delete(entity)
+    def query_search(self, query: str | Query, flatten_single: bool = True) -> list:
+        results = super().search(query)
+        return results[0] if len(results) == 1 and flatten_single else results

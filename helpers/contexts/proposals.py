@@ -3,6 +3,7 @@ from datetime import datetime
 
 from dateutil.relativedelta import relativedelta
 
+import globals_var
 from helpers.dataclasses.investigation import InvestigationContext, InvestigationInstrumentContext, \
     InvestigationUserContext
 from helpers.static_settings import ICAT_USER_ROLE_PARTICIPANT
@@ -20,11 +21,13 @@ def simplify_redundant_user_roles(user_list: list) -> list:
             ret.extend(user_roles)
     return ret
 
-def create_investigation_context(investigation_data: str | dict, ingestion_settings: dict,
+
+def create_investigation_context(investigation_data: str | dict,
                                  name_prefix: str = '') -> InvestigationContext:
     inv_ctx: InvestigationContext
     investigation_dict: dict = json.loads(investigation_data) if isinstance(investigation_data,
                                                                             str) else investigation_data
+    ingestion_settings: dict = globals_var.ingestion_settings.get("investigation", {})
 
     investigation_name: str = f"{name_prefix}{investigation_dict.get('name')}"
     facility_name: str = investigation_dict.get('facility', ingestion_settings.get("defaultFacilityName", ""))

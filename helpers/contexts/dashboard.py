@@ -1,6 +1,5 @@
 import datetime
 import hashlib
-import time
 from functools import partial
 from typing import Callable
 
@@ -13,7 +12,6 @@ from producers.dashboard import DashboardProducer
 def create_message_context(message: Message, message_type: str, error_message: str = "",
                            obj_identifiers: dict | None = None) -> MessageContext:
     obj_identifiers = obj_identifiers or {}
-    processed_at: str = f"{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]} {time.strftime('%z')}"
     sha256_hash: str = hashlib.sha256(str(message.payload).encode()).hexdigest()
     message_type: str = message_type
     payload: str = message.payload or str(message.body)
@@ -21,7 +19,7 @@ def create_message_context(message: Message, message_type: str, error_message: s
     error_message: str = error_message or ""
     return MessageContext(
         object_identifiers=obj_identifiers,
-        processed_at=processed_at,
+        processed_at=message.headers.get("received_at", datetime.datetime.now().isoformat()),
         hash=sha256_hash,
         message_type=message_type,
         payload=payload,
