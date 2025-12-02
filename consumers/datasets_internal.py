@@ -46,8 +46,9 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
+        is_duplicated: bool = message.headers.get("is_duplicated", False)
 
-        self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id)
+        self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id, is_duplicated)
 
     def callback_func_create_dataset_parameters(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
@@ -55,8 +56,9 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
+        is_duplicated: bool = message.headers.get("is_duplicated", False)
 
-        self.tasks.create_dataset_parameters(self.icat_client, dataset_ctx, dataset_id)
+        self.tasks.create_dataset_parameters(self.icat_client, dataset_ctx, dataset_id, is_duplicated)
 
     def callback_func_dataset_linkage(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
@@ -64,6 +66,10 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
+        is_duplicated: bool = message.headers.get("is_duplicated", False)
+
+        if is_duplicated:
+            return
 
         if dataset_ctx.type == RAW_DATASET_TYPE_NAME:
             self.tasks.raw_dataset_linkage(self.icat_client, dataset_id)

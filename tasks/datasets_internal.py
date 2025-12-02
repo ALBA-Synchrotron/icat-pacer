@@ -11,8 +11,11 @@ import globals_var
 from helpers.dataclasses.dataset import DatasetContext, DatasetDatafileContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME, INPUT_DATASET_IDS_PARAMETER_NAME, \
-    OUTPUT_DATASET_IDS_PARAMETER_NAME, OUTPUT_DATASET_DATASETS_PARAMETER_NAME, OUTPUT_DATASET_NAMES_PARAMETER_NAME
-from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter, is_duplicated_dataset_investigation
+    OUTPUT_DATASET_IDS_PARAMETER_NAME, OUTPUT_DATASET_DATASETS_PARAMETER_NAME, OUTPUT_DATASET_NAMES_PARAMETER_NAME, \
+    DATASET_PROCESSING_VERSION_PARAMETER_NAME, DATASET_PARAMETER_START_DATE_PARAMETER_NAME, \
+    DATASET_PARAMETER_END_DATE_PARAMETER_NAME
+from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter, \
+    get_duplicated_processed_dataset_in_investigation
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 
 
@@ -21,8 +24,8 @@ class DatasetsInternalTasks:
     def __init__(self, logger: logging.Logger = None):
         self.logger = logger
 
-    def create_dataset_datafiles(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int, *_args,
-                                 **_kwargs) -> None:
+    def create_dataset_datafiles(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int,
+                                 is_duplicated: bool, *_args, **_kwargs) -> None:
 
         ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
@@ -34,6 +37,11 @@ class DatasetsInternalTasks:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
                     raise Exception("Dataset not found")
+
+                if is_duplicated:
+                    self.logger.info("Duplicated dataset found, removing existing files")
+                    for datafile in rb.dataset.datafiles:
+                        icat_client.delete(datafile)
 
                 if not dataset_ctx.datafiles and ingestion_settings.get("automaticDatasetLocationIndex", False):
                     dataset_file_limit: int = ingestion_settings.get("maxDatafilesPerDataset", 30000)
@@ -73,8 +81,68 @@ class DatasetsInternalTasks:
                 self.logger.error(error_msg)
                 raise Exception(error_msg)
 
-    def create_dataset_parameters(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int, *_args,
-                                  **_kwargs) -> None:
+    def __need_overwrite_dataset_metadata(self, icat_client: ICATClient, dataset: Entity,
+                                          dataset_ctx: DatasetContext) -> bool:
+        with ICATRollbackContext(icat_client, self.logger) as rb:
+            try:
+                rb.dataset = dataset
+                rb.existing_proc_version_param = get_dataset_parameter(icat_client,
+                                                                       DATASET_PROCESSING_VERSION_PARAMETER_NAME,
+                                                                       entity=rb.dataset, create_if_missing=False)
+                new_proc_version_param = next(
+                    x for x in dataset_ctx.parameters if x.name == DATASET_PROCESSING_VERSION_PARAMETER_NAME)
+
+                if rb.existing_proc_version_param and new_proc_version_param:
+                    # Overwrite dataset metadata with processing version
+                    dataset_ctx.parameters.remove(new_proc_version_param)
+
+                    new_processing_version = int(new_proc_version_param.value)
+                    current_processing_version = int(
+                        rb.existing_proc_version_param.numericValue if rb.existing_proc_version_param.type.valueType == "NUMERIC" else rb.existing_proc_version_param.stringValue)
+
+                    if new_processing_version > current_processing_version:
+                        self.logger.info(
+                            f"Update metadata processed dataset id={rb.dataset.id}, new_version={new_processing_version} current_version={current_processing_version}")
+                        rb.existing_proc_version_param = set_dataset_parameter(rb.existing_proc_version_param._obj,
+                                                                               new_processing_version)
+                        return True
+                    else:
+                        self.logger.info(
+                            f"Dataset {rb.dataset.id} already processed with version {current_processing_version}, no update to metadata")
+                        return False
+                else:
+                    # Overwrite dataset metadata dates
+                    self.logger.info(
+                        f"Update metadata processed dataset id={rb.dataset.id}, overwrite start and end dates")
+                    rb.start_date_param = get_dataset_parameter(icat_client,
+                                                                DATASET_PARAMETER_START_DATE_PARAMETER_NAME,
+                                                                entity=rb.dataset, create_if_missing=False)
+                    rb.end_date_param = get_dataset_parameter(icat_client,
+                                                              DATASET_PARAMETER_END_DATE_PARAMETER_NAME,
+                                                              entity=rb.dataset, create_if_missing=False)
+
+                    new_start_date_param = next(
+                        x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME)
+                    new_end_date_param = next(
+                        x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME)
+
+                    if rb.start_date_param:
+                        rb.start_date_param = set_dataset_parameter(rb.start_date_param._obj,
+                                                                    new_start_date_param.value)
+
+                    if rb.end_date_param:
+                        rb.end_date_param = set_dataset_parameter(rb.end_date_param._obj, new_end_date_param.value)
+                    return False
+
+            except Exception as e:
+                rb.rollback_all(force_delete=True)
+
+                error_msg: str = f"Error: {e}"
+                self.logger.error(error_msg)
+                raise Exception(error_msg)
+
+    def create_dataset_parameters(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int,
+                                  is_duplicated: bool, *_args, **_kwargs) -> None:
 
         if not dataset_id:
             raise Exception("Dataset ID not received")
@@ -84,6 +152,10 @@ class DatasetsInternalTasks:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
                     raise Exception("Dataset not found")
+
+                if is_duplicated:
+                    if not self.__need_overwrite_dataset_metadata(icat_client, rb.dataset._obj, dataset_ctx):
+                        return
 
                 for index, parameter in enumerate(dataset_ctx.parameters):
                     new_dataset_param: Entity = icat_client.new("DatasetParameter")

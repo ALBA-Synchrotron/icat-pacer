@@ -50,10 +50,13 @@ INPUT_DATASET_IDS_PARAMETER_NAME: str = "input_datasetIds"
 OUTPUT_DATASET_IDS_PARAMETER_NAME: str = "output_datasetIds"
 OUTPUT_DATASET_NAMES_PARAMETER_NAME: str = "output_datasetNames"
 OUTPUT_DATASET_DATASETS_PARAMETER_NAME: str = "output_datasets"
-FULL_INPUT_DATASET_IDS_PARAM: str = "__full_input_datasetIds"
-FULL_OUTPUT_DATASET_IDS_PARAM: str = "__full_output_datasetIds"
-FULL_INPUT_DATASET_NAMES_PARAM: str = "__full_input_datasetNames"
-FULL_OUTPUT_DATASET_NAMES_PARAM: str = "__full_output_datasetNames"
+FULL_INPUT_DATASET_IDS_PARAMETER_NAME: str = "__full_input_datasetIds"
+FULL_OUTPUT_DATASET_IDS_PARAMETER_NAME: str = "__full_output_datasetIds"
+FULL_INPUT_DATASET_NAMES_PARAMETER_NAME: str = "__full_input_datasetNames"
+FULL_OUTPUT_DATASET_NAMES_PARAMETER_NAME: str = "__full_output_datasetNames"
+DATASET_PROCESSING_VERSION_PARAMETER_NAME: str = "Process_sequence_index"
+DATASET_PARAMETER_START_DATE_PARAMETER_NAME: str = "startDate"
+DATASET_PARAMETER_END_DATE_PARAMETER_NAME: str = "endDate"
 
 PARAMETER_STRING_VALUE_MAX_LENGTH: int = 4000
 
