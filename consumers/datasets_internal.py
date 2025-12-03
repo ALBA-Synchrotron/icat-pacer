@@ -4,6 +4,7 @@ from kombu import Message
 
 from helpers.contexts.dataset import create_dataset_context
 from helpers.dataclasses.dataset import DatasetContext
+from helpers.static_settings import RAW_DATASET_TYPE_NAME, PROCESSED_DATASET_TYPE_NAME
 from helpers.utils.pacer_consumer import PACERConsumer
 from producers.generic import GenericProducer
 from tasks.datasets_internal import DatasetsInternalTasks
@@ -23,6 +24,7 @@ class InternalDatasetsConsumer(PACERConsumer):
         ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
         self.internal_dataset_exchange_name: str = ingestion_settings.get("internalDatasetExchangeName", "")
+        self.internal_datasets_links_routing_key: str = ingestion_settings.get("internalDatasetLinksRoutingKey", "")
         self.internal_statistics_routing_key: str = ingestion_settings.get("internalStatisticsRoutingKey", "")
 
     def get_message_object_identifiers(self, message: Message) -> dict:
@@ -33,6 +35,7 @@ class InternalDatasetsConsumer(PACERConsumer):
             investigation_id: int = message.headers.get("investigation_id", 0)
 
             return {
+                "instrument": dataset_ctx.instrument,
                 "investigation": dataset_ctx.investigation if dataset_ctx.investigation else f"id={investigation_id}",
                 "dataset": dataset_ctx.name, "dataset_id": dataset_id}
         except Exception as e:
@@ -45,8 +48,14 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
+        investigation_id: int = message.headers.get("investigation_id", 0)
+        is_duplicated: bool = message.headers.get("is_duplicated", False)
 
-        self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id)
+        self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id, is_duplicated)
+
+        GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
+                                     self.internal_datasets_links_routing_key, dataset_ctx,
+                                     {"dataset_id": dataset_id, "investigation_id": investigation_id})
 
     def callback_func_create_dataset_parameters(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
@@ -54,8 +63,25 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
+        is_duplicated: bool = message.headers.get("is_duplicated", False)
 
-        self.tasks.create_dataset_parameters(self.icat_client, dataset_ctx, dataset_id)
+        self.tasks.create_dataset_parameters(self.icat_client, dataset_ctx, dataset_id, is_duplicated)
+
+    def callback_func_dataset_linkage(self, _body, message: Message, *_args, **_kwargs) -> None:
+        self.logger.info(
+            f"callback_func_dataset_linkage > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+        dataset_str: str = message.payload or message.body
+        dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
+        dataset_id: int = message.headers.get("dataset_id", 0)
+        is_duplicated: bool = message.headers.get("is_duplicated", False)
+
+        if is_duplicated:
+            return
+
+        if dataset_ctx.type == RAW_DATASET_TYPE_NAME:
+            self.tasks.raw_dataset_linkage(self.icat_client, dataset_id)
+        elif dataset_ctx.type == PROCESSED_DATASET_TYPE_NAME:
+            self.tasks.processed_dataset_linkage(self.icat_client, dataset_id)
 
     # This callback must always be the last one. If you've got anything to add, add it before this function.
     def callback_func_forward_to_statistics_queue(self, _body, message: Message, *_args, **_kwargs) -> None:

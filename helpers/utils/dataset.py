@@ -4,6 +4,7 @@ from icat.entity import Entity
 
 from helpers.dataclasses.dataset import DatasetContext
 from helpers.integrations.icat.extended_client import ICATClient
+from helpers.static_settings import PROCESSED_DATASET_TYPE_NAME
 from helpers.utils.datetime import try_parse_datetime
 from helpers.utils.entity import get_entity_parameter, set_entity_parameter
 
@@ -20,6 +21,19 @@ def get_dataset_parameter(icat_client: ICATClient, parameter_name: str,
 def set_dataset_parameter(dataset_parameter: Entity,
                           parameter_value: str | int | float) -> Entity:
     return set_entity_parameter(dataset_parameter, parameter_value)
+
+
+def get_duplicated_processed_dataset_in_investigation(icat_client: ICATClient, dataset_name: str,
+                                                      investigation_id: str) -> Entity:
+    result = icat_client.search("Dataset", conditions={"name__like": dataset_name,
+                                                       "type.name__eq": PROCESSED_DATASET_TYPE_NAME,
+                                                       "investigation.id__eq": investigation_id},
+                                flatten_single=True)
+
+    if isinstance(result, list):
+        raise Exception(f"Multiple processed datasets found for {dataset_name} in investigation {investigation_id}")
+
+    return result
 
 
 def get_dataset_investigation(icat_client: ICATClient, logger: Logger, dataset_ctx: DatasetContext) -> Entity:
@@ -47,8 +61,8 @@ def get_dataset_investigation(icat_client: ICATClient, logger: Logger, dataset_c
                                                                             dataset_ctx.start_date)),
                                                                         "endDate__gte": str(try_parse_datetime(
                                                                             dataset_ctx.end_date))},
-        flatten_single = True
-        )
+                                           flatten_single=True
+                                           )
 
         if isinstance(investigation, list):
             error_msg: str = f"Multiple colliding sessions found for investigation {dataset_ctx.investigation}, aborting ingestion"
