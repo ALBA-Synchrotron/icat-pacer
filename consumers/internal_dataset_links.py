@@ -2,11 +2,9 @@ from __future__ import absolute_import, unicode_literals
 
 from kombu import Message
 
-import globals_var
 from helpers.contexts.dataset import create_dataset_context
 from helpers.dataclasses.dataset import DatasetContext
 from helpers.utils.pacer_consumer import PACERConsumer
-from tasks.datasets_internal import DatasetsInternalTasks
 from tasks.internal_dataset_links import InternalDatasetLinksTasks
 
 
@@ -37,13 +35,12 @@ class InternalDatasetsLinksConsumer(PACERConsumer):
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
-    def callback_func_build_dataset_links_map(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_build_dataset_full_links_information(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
-            f"callback_func_build_dataset_links_map > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+            f"callback_func_build_dataset_full_links_information > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_str: str = message.payload or message.body
-        dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
 
-        self.tasks.build_dataset_links_map(self.icat_client, dataset_ctx, dataset_id, is_duplicated)
+        self.tasks.build_dataset_links_map(self.icat_client, dataset_id)
 
 
