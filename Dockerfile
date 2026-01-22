@@ -5,11 +5,21 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV BROKER_TYPE=None
 ENV TZ=Europe/Madrid
 
+ARG NEW_UID=1000
+ARG PRIMARY_GID=1000
+ARG EXTRA_GIDS=1001,1002
+
 WORKDIR /icat-pacer/
 
-RUN groupadd -r -g 9000 pacer
-RUN useradd pacer -u 9017 -g pacer
+RUN addgroup --gid $PRIMARY_GID pacer
+RUN adduser --shell /bin/sh --no-create-home --uid $NEW_UID --gid $PRIMARY_GID --disabled-login --gecos "" pacer
 
+RUN set -eux; \
+    for gid in $(echo "$EXTRA_GIDS" | tr ',' ' '); do \
+        group="g${gid}"; \
+        addgroup --gid "$gid" "$group" || true; \
+        addgroup pacer "$group"; \
+    done
 
 RUN apt-get update && apt-get clean \
     && rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
