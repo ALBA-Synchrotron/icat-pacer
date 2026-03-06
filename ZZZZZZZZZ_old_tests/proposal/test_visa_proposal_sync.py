@@ -5,7 +5,7 @@ from psycopg_pool import ConnectionPool
 
 from helpers.contexts.proposals import create_investigation_context, InvestigationContext
 from tasks.investigations import ProposalTasks
-from tests.utils.generic_unit_test import GenericPACERUnitTest
+from ZZZZZZZZZ_old_tests.utils.generic_unit_test import GenericPACERUnitTest
 
 logger: logging.Logger = logging.getLogger(__name__)
 

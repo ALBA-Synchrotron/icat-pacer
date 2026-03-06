@@ -1,69 +1,80 @@
+import logging
 import os
-import random
-import string
-from typing import Generator, Any
-from unittest.mock import MagicMock, patch
+import time
 
 import pytest
+import requests
 
 from helpers.integrations.icat.extended_client import ICATClient
+
+PACER_TEST_BACKEND: str = os.getenv("PACER_TEST_BACKEND", "testbox")
+
+ICAT_TESTBOX_SERVER_PROTOCOL: str = os.getenv("ICAT_TESTBOX_SERVER_PROTOCOL", "http")
+ICAT_TESTBOX_SERVER_HOST: str = os.getenv("ICAT_TESTBOX_SERVER_HOST", "")
+ICAT_TESTBOX_SERVER_PORT: int = int(os.getenv("ICAT_TESTBOX_SERVER_PORT", 5000))
+ICAT_TESTBOX_AUTHN_DB_VERSION: str = os.getenv("ICAT_TESTBOX_AUTHN_DB_VERSION", "3.0.0")
+ICAT_TESTBOX_ICAT_SERVER_VERSION: str = os.getenv("ICAT_TESTBOX_ICAT_SERVER_VERSION", "6.2.0")
+ICAT_TESTBOX_DB_FIXTURE_LOAD: bool = bool(os.getenv("ICAT_TESTBOX_ICAT_SERVER_VERSION", True))
 
 ICAT_AUTH_PLUGIN: str = os.getenv("ICAT_AUTH_PLUGIN", "db")
 ICAT_SERVER_URL: str = os.getenv("ICAT_SERVER_URL", "")
 ICAT_AUTH_USERNAME: str = os.getenv("ICAT_AUTH_USERNAME", "")
 ICAT_AUTH_PASSWORD: str = os.getenv("ICAT_AUTH_PASSWORD", "")
 
-
-@pytest.fixture(scope="session")
-def ascii_prefix() -> str:
-    return "".join(random.choices(string.ascii_letters + string.digits, k=5))
+logger = logging.getLogger(__name__)
 
 
 @pytest.fixture(scope="session")
-def numeric_prefix() -> str:
-    return "".join(random.choices(string.digits, k=5))
+def icat_client():
+    icat_server_url, icat_auth_username, icat_auth_password, icat_auth_plugin = "", "", "", ""
 
+    match PACER_TEST_BACKEND:
+        case "testbox":
+            body: dict = {
+                "icat_version": ICAT_TESTBOX_ICAT_SERVER_VERSION,
+                "authn_db_version": ICAT_TESTBOX_AUTHN_DB_VERSION,
+                "init_database": ICAT_TESTBOX_DB_FIXTURE_LOAD
+            }
+            resp = requests.post(
+                f"{ICAT_TESTBOX_SERVER_PROTOCOL}://{ICAT_TESTBOX_SERVER_HOST}:{ICAT_TESTBOX_SERVER_PORT}/testbox",
+                json=body)
+            if resp.status_code != 200:
+                raise Exception(f"Testbox server returned {resp.status_code}")
+            testbox_identifier = resp.json()["identifier"]
+            testbox_port = resp.json()["host_port"]
+            icat_server_url = f"http://{ICAT_TESTBOX_SERVER_HOST}:{testbox_port}/ICATService/ICAT?wsdl"
 
-@pytest.fixture(scope="session")
-def icat_client() -> Generator[ICATClient, Any, None]:
-    client: ICATClient = ICATClient(url=ICAT_SERVER_URL, username=ICAT_AUTH_USERNAME, password=ICAT_AUTH_PASSWORD,
-                                    auth_plugin=ICAT_AUTH_PLUGIN)
+        case "server":
+            icat_server_url = ICAT_SERVER_URL
+        case _:
+            raise ValueError(f"Unknown PACER_TEST_BACKEND: {PACER_TEST_BACKEND}")
+
+    icat_auth_username = ICAT_AUTH_USERNAME
+    icat_auth_password = ICAT_AUTH_PASSWORD
+    icat_auth_plugin = ICAT_AUTH_PLUGIN
+
+    while True:
+        try:
+            resp = requests.get(icat_server_url)
+            if resp.status_code == 200:
+                break
+        except Exception as e:
+            logger.info(f"ICAT client failed connection to testbox, retrying in 2 seconds: {e}")
+            time.sleep(2)
+
+    client: ICATClient = ICATClient(url=icat_server_url, username=icat_auth_username,
+                                   password=icat_auth_password,
+                                   auth_plugin=icat_auth_plugin, ids=False)
+
     yield client
-    client.logout()
 
-
-@pytest.fixture(scope="session")
-def datacite_client_mock() -> Generator[MagicMock, Any, None]:
-    with patch("helpers.integrations.datacite.DataciteClient") as DataciteClientMock:
-        client_mock = DataciteClientMock.return_value
-        client_mock.create_doi.return_value = None
-        client_mock.__check_weight_recomputation_in_progress.return_value = False
-
-        yield client_mock
-
-
-@pytest.fixture(scope="session")
-def panosc_client_mock() -> Generator[MagicMock, Any, None]:
-    with patch("helpers.integrations.panosc.PaNOSCClient") as PaNOSCClientMock:
-        client_mock = PaNOSCClientMock.return_value
-        client_mock.item_exists.return_value = False
-
-        yield client_mock
-
-
-@pytest.fixture(scope="session")
-def mock_psycopg_pool() -> Generator[MagicMock, Any, None]:
-    with patch("psycopg_pool.ConnectionPool") as MockPool:
-        mock_pool = MockPool.return_value
-
-        mock_conn = MagicMock()
-        mock_pool.connection.return_value.__enter__.return_value = mock_conn
-
-        mock_cursor = MagicMock()
-        mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-
-        mock_cursor.execute.return_value = None
-        mock_cursor.fetchall.return_value = [(1,)]
-        mock_cursor.fetchone.return_value = [(1,)]
-
-        yield mock_pool
+    match PACER_TEST_BACKEND:
+        case "testbox":
+            resp = requests.delete(
+                f"http://{ICAT_TESTBOX_SERVER_HOST}:{ICAT_TESTBOX_SERVER_PORT}/testbox/{testbox_identifier}")
+            if resp.status_code != 200:
+                raise Exception(f"Testbox server returned {resp.status_code}")
+        case "server":
+            pass
+        case _:
+            raise ValueError(f"Unknown PACER_TEST_BACKEND: {PACER_TEST_BACKEND}")
