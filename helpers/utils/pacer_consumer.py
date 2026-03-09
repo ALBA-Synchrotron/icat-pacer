@@ -19,6 +19,7 @@ from helpers.integrations.datacite import get_datacite_client, DataciteClient
 from helpers.integrations.panosc import PaNOSCClient, get_panosc_client
 from helpers.integrations.visa_utils import get_pg_connection_pool
 from helpers.logging.general import configure_worker_logger
+from helpers.utils.utils import running_in_pytest
 from producers.forwarder import MessageForwarder
 
 
@@ -74,6 +75,8 @@ class PACERConsumer(ConsumerMixin):
                 func(body, message, errors=errors, headers={"received_at": processed_timestamp, **message.headers})
 
             except Exception as e:
+                if running_in_pytest():
+                    raise e
                 self.logger.error(f"Error processing callback router: {e!r}")
                 errors.append((func.__name__, e))
                 if self.reject_msg_at_first_callback_error:

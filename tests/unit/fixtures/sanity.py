@@ -1,6 +1,6 @@
 import pytest
 
-from tests.fixtures.session_fixtures import PACER_TEST_BACKEND, ICAT_TESTBOX_ICAT_SERVER_VERSION
+from tests.unit.fixtures.icat import PACER_TEST_BACKEND, ICAT_TESTBOX_ICAT_SERVER_VERSION
 
 
 @pytest.fixture(scope="session", autouse=True)
