@@ -60,6 +60,7 @@ def user_payload_empty_first_name():
         ]
     }
 
+
 @pytest.fixture()
 def user_payload_empty_last_name():
     return {
@@ -88,6 +89,7 @@ def user_payload_empty_last_name():
             }
         ]
     }
+
 
 @pytest.fixture()
 def user_payload_empty_email():
@@ -118,6 +120,7 @@ def user_payload_empty_email():
         ]
     }
 
+
 @pytest.fixture()
 def user_payload_missing_enabled():
     return {
@@ -145,6 +148,7 @@ def user_payload_missing_enabled():
             }
         ]
     }
+
 
 @pytest.fixture()
 def user_payload_missing_id():
@@ -197,6 +201,7 @@ def user_payload_missing_usernames():
         "user_list": [
         ]
     }
+
 
 @pytest.fixture()
 def user_payload_missing_affiliation():
