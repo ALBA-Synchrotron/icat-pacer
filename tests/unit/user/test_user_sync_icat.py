@@ -1,7 +1,7 @@
 from helpers.contexts.user import create_user_context
 
 
-class TestUserValidation:
+class TestICATUserSync:
 
     def test_create_user_icat(self, user_tasks, icat_client, valid_user):
         user_ctx = create_user_context(valid_user)
