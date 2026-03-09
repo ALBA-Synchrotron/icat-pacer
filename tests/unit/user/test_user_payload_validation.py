@@ -7,7 +7,7 @@ from helpers.contexts.user import create_user_context
 def invalid_user_payload(request):
     return request.getfixturevalue(request.param)
 
-class TestUserValidation:
+class TestUserPayloadValidation:
 
 
 
