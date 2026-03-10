@@ -115,3 +115,30 @@ def test_logger():
         logger.addHandler(handler)
 
     return logger
+
+@pytest.fixture(scope="session")
+def icat_facility(icat_client):
+    facility = icat_client.search("Facility", flatten_single=False)[0]
+    return facility
+
+@pytest.fixture(scope="session")
+def icat_unittest_investigation_type(icat_client, icat_facility):
+    investigation_type = icat_client.new("InvestigationType", name="unittest", facility=icat_facility)
+    investigation_type.create()
+    return investigation_type
+
+@pytest.fixture(scope="session")
+def dataset_type_raw(icat_client, icat_facility):
+    return icat_client.search("DatasetType", conditions={"name__eq": "acquisition"}, flatten_single=True)
+
+@pytest.fixture(scope="session")
+def random_user(icat_client, icat_facility):
+    manolo = icat_client.new("User", name="Manolín")
+    manolo.create()
+    return manolo
+
+@pytest.fixture(scope="session")
+def random_instrument(icat_client, icat_facility):
+    instrument = icat_client.new("Instrument", name="Random Instrument", facility=icat_facility)
+    instrument.create()
+    return instrument

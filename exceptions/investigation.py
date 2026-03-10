@@ -9,3 +9,6 @@ class InvestigationFacilityNotFound(InvestigationValidationError):
 
 class InvestigationTypeNotFound(InvestigationValidationError):
     pass
+
+class InvestigationNotFound(InvestigationValidationError):
+    pass

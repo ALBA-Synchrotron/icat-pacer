@@ -5,6 +5,9 @@ import logging
 
 from icat.entity import Entity
 from psycopg_pool import ConnectionPool
+
+from exceptions.investigation import InvestigationNotFound
+from exceptions.investigation_ops import InvestigationOpsValidationError
 from helpers.dataclasses.investigation import InvestigationOperationsContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.datacite import DataciteClient
@@ -35,53 +38,48 @@ class InvestigationOpsTasks:
         if check_doi and investigation.doi:
             error_msg: str = f"Investigation: Investigation {investigation.name} already has a DOI {investigation.doi}"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise InvestigationOpsValidationError(error_msg)
 
         if check_datasets and not investigation.datasets:
             error_msg: str = f"Investigation: Investigation {investigation.name} has no datasets, it will not be minted"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
-
-        if check_users and not investigation.investigationUsers:
-            error_msg: str = f"Investigation: Investigation {investigation.name} has no users, it will not be minted"
-            self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise InvestigationOpsValidationError(error_msg)
 
         if check_dates and not investigation.releaseDate or not investigation.startDate or not investigation.endDate:
             error_msg: str = f"Investigation: Investigation {investigation.name} has no releaseDate, endDate or startDate, it will not be minted"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise InvestigationOpsValidationError(error_msg)
+
+        if check_users and not investigation.investigationUsers:
+            error_msg: str = f"Investigation: Investigation {investigation.name} has no users, it will not be minted"
+            self.logger.error(error_msg)
+            raise InvestigationOpsValidationError(error_msg)
 
         if check_instruments and not investigation.investigationInstruments:
             error_msg: str = f"Investigation: Investigation {investigation.name} has no instruments, it will not be minted"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise InvestigationOpsValidationError(error_msg)
 
         if check_end_date_today and investigation.endDate and investigation.endDate.timestamp() > datetime.datetime.now().timestamp():
             error_msg: str = f"Investigation: Investigation {investigation.name} has an end date in the future, it will not be minted"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise InvestigationOpsValidationError(error_msg)
 
         if check_no_doi and not investigation.doi:
             error_msg: str = f"Investigation: Investigation {investigation.name} has no DOI"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise InvestigationOpsValidationError(error_msg)
 
     def create_panosc_item(self, icat_client: ICATClient, inv_ops_ctx: InvestigationOperationsContext,
                            panosc_client: PaNOSCClient, *_args,
                            **_kwargs) -> None:
         self.logger.info(f"PaNOSC item creation: Creating item for proposal {inv_ops_ctx.name}")
         investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": inv_ops_ctx.name},
-                                                   flatten_single=True,
-                                                   includes=["datasets", "investigationUsers",
-                                                             "investigationUsers.user", "type",
-                                                             "investigationInstruments",
-                                                             "investigationInstruments.instrument",
-                                                             "facility"])
+                                                   flatten_single=True)
         if not investigation:
             error_msg: str = f"PaNOSC item creation: Investigation {inv_ops_ctx.name} not found"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise InvestigationNotFound(error_msg)
 
         self.__general_investigation_check(investigation, check_doi=False, check_no_doi=True, check_datasets=False,
                                            check_users=False)
@@ -102,16 +100,11 @@ class InvestigationOpsTasks:
                       inv_ops_ctx: InvestigationOperationsContext, *_args, **_kwargs) -> None:
         self.logger.info(f"Investigation mint: Creating a DOI for proposal {inv_ops_ctx.name}")
         investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": inv_ops_ctx.name},
-                                                   flatten_single=True,
-                                                   includes=["datasets", "investigationUsers",
-                                                             "investigationUsers.user", "type",
-                                                             "investigationInstruments",
-                                                             "investigationInstruments.instrument",
-                                                             "facility"])
+                                                   flatten_single=True, includes=["facility"])
         if not investigation:
             error_msg: str = f"Investigation mint: Investigation {inv_ops_ctx.name} not found"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise InvestigationNotFound(error_msg)
 
         self.__general_investigation_check(investigation, check_end_date_today=True)
 
@@ -196,5 +189,6 @@ class InvestigationOpsTasks:
         investigation.update()
         self.logger.info(f"Investigation mint: Investigation {inv_ops_ctx.name} updated in ICAT with new DOI {doi}")
 
-        VISALoader.db_update_investigation_doi(pg_pool, investigation.name, doi, doi_landing_url, self.logger)
-        self.logger.info(f"Investigation mint: Investigation {inv_ops_ctx.name} updated in VISA with new DOI {doi}")
+        if pg_pool:
+            VISALoader.db_update_investigation_doi(pg_pool, investigation.name, doi, doi_landing_url, self.logger)
+            self.logger.info(f"Investigation mint: Investigation {inv_ops_ctx.name} updated in VISA with new DOI {doi}")
