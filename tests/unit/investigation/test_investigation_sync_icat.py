@@ -113,6 +113,7 @@ class TestICATInvestigationSync:
         inv_ctx.title = "title updated"
         prev_inv_ctx_users = inv_ctx.user_list.copy()
         inv_ctx.user_list = inv_ctx.user_list[1:]
+        inv_ctx.visit_count = 10
         assert len(prev_inv_ctx_users) != len(inv_ctx.user_list)
 
         investigation_tasks.sync_investigation_icat(icat_client, inv_ctx)
@@ -120,3 +121,5 @@ class TestICATInvestigationSync:
 
         assert investigation.title == inv_ctx.title
         assert len(investigation.investigationUsers) == len(inv_ctx.user_list)
+        assert ("reimbursedParcels", f"{inv_ctx.visit_count}") in [(i.type.name, i.stringValue) for i in
+                                                                   investigation.parameters]
