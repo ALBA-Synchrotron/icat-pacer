@@ -30,6 +30,34 @@ def valid_user():
         ]
     }
 
+@pytest.fixture()
+def valid_user_investigation():
+    return {
+        "first_name": "Test",
+        "last_name": "Test1",
+        "ORCID": None,
+        "email": "test112@cells.es",
+        "affiliation": {
+            "id": 999,
+            "name": "AAS",
+            "code": "LEL",
+            "department_name": "",
+            "department_code": "GTS",
+            "unit": "The GTS",
+            "city": "Cerdanyola del Vallès"
+        },
+        "is_staff": False,
+        "enabled": True,
+        "id": 1021,
+        "user_list": [
+            {
+                "username": "auo-test12"
+            },
+            {
+                "username": "auo-testTest1-ou12"
+            }
+        ]
+    }
 
 @pytest.fixture()
 def user_payload_empty_first_name():

@@ -3,8 +3,8 @@ class PACERError(Exception):
 
 
 class ConfigError(PACERError):
-    """Configuration related errors."""
+    pass
 
 
 class ValidationError(PACERError):
-    """Input validation errors."""
+    pass

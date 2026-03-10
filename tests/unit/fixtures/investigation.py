@@ -2,9 +2,9 @@ import pytest
 
 
 @pytest.fixture()
-def valid_investigation():
+def investigation_non_existent_user():
     return {
-        "name": "2025079999",
+        "name": "2025079976",
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
@@ -18,7 +18,6 @@ def valid_investigation():
         "type": "MX",
         "user_list": [
             {"username": "testuser", "email": "test_email@<<>>.com", "role": "Principal investigator"},
-            {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
         "is_reimbursed": True
@@ -343,17 +342,17 @@ def valid_investigation():
         },
         "type": "MX",
         "user_list": [
-            {"username": "testuser", "email": "test_email@<<>>.com", "role": "Principal investigator"},
-            {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
+            {"username": "auo-test12", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+            {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
         "is_reimbursed": True
     }
 
 @pytest.fixture()
-def valid_investigation():
+def valid_investigation_update():
     return {
-        "name": "2025079999",
+        "name": "2025079999UP",
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
@@ -366,9 +365,101 @@ def valid_investigation():
         },
         "type": "MX",
         "user_list": [
-            {"username": "testuser", "email": "test_email@<<>>.com", "role": "Principal investigator"},
-            {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
+            {"username": "auo-test12", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+            {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
+        "is_reimbursed": True
+    }
+
+@pytest.fixture()
+def investigation_non_existent_instrument():
+    return {
+        "name": "2025079900",
+        "facility": "ALBA",
+        "start_date": "2025-07-01T00:00:00Z",
+        "end_date": "2025-07-02T00:00:00Z",
+        "release_date": "2028-07-02T00:00:00Z",
+        "title": "test_title",
+        "summary": "test_summary",
+        "instrument": {
+            "name": "BL9123 - Gandalf",
+            "code": "BL9123"
+        },
+        "type": "MX",
+        "user_list": [
+            {"username": "testuser", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+            {"username": "testuser1", "email": "test_email1@<<>>.com", "role": "Local contact"}
+        ],
+        "visit_count": 1,
+        "is_reimbursed": True
+    }
+
+@pytest.fixture()
+def investigation_non_existent_facility():
+    return {
+        "name": "20250799GO",
+        "facility": "GOTERAS",
+        "start_date": "2025-07-01T00:00:00Z",
+        "end_date": "2025-07-02T00:00:00Z",
+        "release_date": "2028-07-02T00:00:00Z",
+        "title": "test_title",
+        "summary": "test_summary",
+        "instrument": {
+            "name": "BL13 - XALOC",
+            "code": "BL13"
+        },
+        "type": "MX",
+        "user_list": [
+            {"username": "auo-test12", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+            {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
+        ],
+        "visit_count": 1,
+        "is_reimbursed": True
+    }
+
+@pytest.fixture()
+def investigation_non_existent_investigation_type():
+    return {
+        "name": "20250799GO",
+        "facility": "ALBA",
+        "start_date": "2025-07-01T00:00:00Z",
+        "end_date": "2025-07-02T00:00:00Z",
+        "release_date": "2028-07-02T00:00:00Z",
+        "title": "test_title",
+        "summary": "test_summary",
+        "instrument": {
+            "name": "BL13 - XALOC",
+            "code": "BL13"
+        },
+        "type": "LEL",
+        "user_list": [
+            {"username": "auo-test12", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+            {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
+        ],
+        "visit_count": 1,
+        "is_reimbursed": True
+    }
+
+@pytest.fixture()
+def valid_investigation_reimbursed_parcels():
+    return {
+        "name": "20250799RE",
+        "facility": "ALBA",
+        "start_date": "2025-07-01T00:00:00Z",
+        "end_date": "2025-07-02T00:00:00Z",
+        "release_date": "2028-07-02T00:00:00Z",
+        "title": "test_title",
+        "summary": "test_summary",
+        "instrument": {
+            "name": "BL13 - XALOC",
+            "code": "BL13"
+        },
+        "type": "MX",
+        "user_list": [
+            {"username": "auo-test12", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+            {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
+        ],
+        "visit_count": 982,
         "is_reimbursed": True
     }

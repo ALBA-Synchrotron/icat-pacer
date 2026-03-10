@@ -53,7 +53,7 @@ def set_entity_parameter(entity_parameter: Entity, parameter_value: str | int | 
 
     store_value_also_as_text: bool = globals_var.ingestion_settings.get("parameters", {}).get(
         "storeParametersValuesAlsoAsString",
-        False)
+        True)
 
     match entity_parameter.type.valueType:
         case "DATE_AND_TIME":
