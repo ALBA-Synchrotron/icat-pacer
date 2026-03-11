@@ -15,9 +15,11 @@ def user_tasks(test_logger):
 def investigation_tasks(test_logger):
     return ProposalTasks(test_logger)
 
+
 @pytest.fixture(scope="module")
 def investigation_ops_tasks(test_logger):
     return InvestigationOpsTasks(test_logger)
+
 
 @pytest.fixture(scope="module")
 def dataset_tasks(test_logger):

@@ -116,10 +116,12 @@ def test_logger():
 
     return logger
 
+
 @pytest.fixture(scope="session")
 def icat_facility(icat_client):
     facility = icat_client.search("Facility", flatten_single=False)[0]
     return facility
+
 
 @pytest.fixture(scope="session")
 def icat_unittest_investigation_type(icat_client, icat_facility):
@@ -127,9 +129,11 @@ def icat_unittest_investigation_type(icat_client, icat_facility):
     investigation_type.create()
     return investigation_type
 
+
 @pytest.fixture(scope="session")
 def dataset_type_raw(icat_client, icat_facility):
     return icat_client.search("DatasetType", conditions={"name__eq": "acquisition"}, flatten_single=True)
+
 
 @pytest.fixture(scope="session")
 def random_user(icat_client, icat_facility):
@@ -137,8 +141,25 @@ def random_user(icat_client, icat_facility):
     manolo.create()
     return manolo
 
+
 @pytest.fixture(scope="session")
 def random_instrument(icat_client, icat_facility):
-    instrument = icat_client.new("Instrument", name="Random Instrument", facility=icat_facility)
+    instrument = icat_client.new("Instrument", name="bl1984", facility=icat_facility)
     instrument.create()
     return instrument
+
+@pytest.fixture(scope="session")
+def random_instrument_2(icat_client, icat_facility):
+    instrument = icat_client.new("Instrument", name="bl1986", facility=icat_facility)
+    instrument.create()
+    return instrument
+
+@pytest.fixture(scope="session")
+def test_investigation(icat_client, icat_facility, random_instrument, icat_unittest_investigation_type):
+    investigation = icat_client.new("Investigation", name="2026090911", facility=icat_facility,
+                                    visitId="2026090911-visitId", title="unittest",
+                                    type=icat_unittest_investigation_type)
+    investigation.create()
+    inv_instr = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=random_instrument)
+    inv_instr.create()
+    return investigation

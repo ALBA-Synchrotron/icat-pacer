@@ -12,3 +12,6 @@ class InvestigationTypeNotFound(InvestigationValidationError):
 
 class InvestigationNotFound(InvestigationValidationError):
     pass
+
+class InvestigationInstrumentMismatch(InvestigationValidationError):
+    pass

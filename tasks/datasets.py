@@ -5,6 +5,9 @@ import logging
 
 from icat.entity import Entity
 
+from exceptions.dataset import DatasetTypeNotFound
+from exceptions.investigation import InvestigationNotFound
+from exceptions.sample import SampleTypeNotFound
 from helpers.dataclasses.dataset import DatasetContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.utils.dataset import get_dataset_investigation, get_duplicated_processed_dataset_in_investigation
@@ -21,11 +24,6 @@ class DatasetsTasks:
             tuple[int, int, bool]:
 
         investigation: Entity = get_dataset_investigation(icat_client, self.logger, dataset_ctx)
-
-        if not investigation:
-            error_msg: str = f"Could not create dataset {dataset_ctx.name}, investigation not found"
-            self.logger.error(error_msg)
-            raise Exception(error_msg)
 
         duplicate_proc_dataset = get_duplicated_processed_dataset_in_investigation(icat_client, dataset_ctx.name,
                                                                                    investigation.id)
@@ -47,7 +45,7 @@ class DatasetsTasks:
                 if dataset_type is None:
                     error_msg = f"Dataset type {dataset_ctx.type} not found."
                     self.logger.error(error_msg)
-                    raise ValueError(error_msg)
+                    raise DatasetTypeNotFound(error_msg)
 
                 sample: Entity | None = icat_client.search("Sample",
                                                            conditions={"name__eq": dataset_ctx.sample.name,
@@ -60,7 +58,7 @@ class DatasetsTasks:
                         if not sample_type:
                             error_msg: str = f"Could not create dataset {dataset_ctx.name}, sample type not found"
                             self.logger.error(error_msg)
-                            raise Exception(error_msg)
+                            raise SampleTypeNotFound(error_msg)
 
                         rb.new_dataset_sample.type = sample_type
 
@@ -90,4 +88,4 @@ class DatasetsTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
