@@ -28,7 +28,7 @@ class DatasetParameterContext:
     value: str
 
     def __post_init__(self):
-        if self.name is None:
+        if self.name is None or not self.name:
             raise DatasetParameterValidationError("Dataset parameter name cannot be empty")
         if self.value is None:
             raise DatasetParameterValidationError("Dataset parameter value cannot be empty")

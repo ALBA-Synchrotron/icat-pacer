@@ -7,3 +7,5 @@ from tests.unit.fixtures.investigation import *
 from tests.unit.fixtures.investigation_ops import *
 from tests.unit.fixtures.ingestion_messages.valid_xml import *
 from tests.unit.fixtures.ingestion_messages.invalid_xml import *
+from tests.unit.fixtures.ingestion_messages.invalid_json import *
+from tests.unit.fixtures.ingestion_messages.valid_json import *

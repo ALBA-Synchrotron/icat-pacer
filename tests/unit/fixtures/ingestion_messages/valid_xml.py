@@ -26,6 +26,31 @@ def valid_xml_raw_dataset_payload():
         </dataset>
         """
 
+@pytest.fixture()
+def valid_xml_raw_dataset_payload_sample_type():
+    return """
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <dataset>
+            <investigation>2022097034</investigation>
+            <instrument>bl13</instrument>
+            <name>mxau_241222</name>
+            <parameter>
+                    <name>InstrumentXraylens09_lens_material</name>
+                    <value> value 1</value>
+            </parameter>
+            <location>/data/bl13/</location>
+            <startDate>2019-08-08T15:57:45.920+02:00</startDate>
+            <endDate>2021-05-30T15:19:08.422+02:00</endDate>
+            <sample>
+                <name>SAMPLE 1</name>
+                <type>Test Sample</type>
+            </sample>
+            <datafile>
+                <location>/data/bl13/2022097034/mxau_241222.nxs</location>
+                <size>942040</size>
+            </datafile>
+        </dataset>
+        """
 
 @pytest.fixture()
 def valid_xml_processed_dataset_payload():

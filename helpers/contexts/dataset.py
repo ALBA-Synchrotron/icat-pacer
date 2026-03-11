@@ -60,7 +60,7 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
         investigation_id=investigation_id,
         instrument=instrument,
         name=dataset_name,
-        parameters=[DatasetParameterContext(name=i.get("name", ""), value=i.get("value", "")) for i in parameters],
+        parameters=[DatasetParameterContext(name=i.get("name", None), value=i.get("value", None)) for i in parameters],
         location=location,
         start_date=start_date,
         end_date=end_date,

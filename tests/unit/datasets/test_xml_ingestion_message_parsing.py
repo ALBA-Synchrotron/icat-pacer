@@ -10,9 +10,9 @@ def invalid_xml_payload(request):
     return request.getfixturevalue(request.param)
 
 
-class TestIngestionMessageParsing:
+class TestXMLIngestionMessageParsing:
 
-    def test_valid__raw_dataset_xml_message(self, valid_xml_raw_dataset_payload):
+    def test_valid_raw_dataset_xml_message(self, valid_xml_raw_dataset_payload):
         dataset_ctx = create_dataset_context(valid_xml_raw_dataset_payload)
         assert dataset_ctx.type == RAW_DATASET_TYPE_NAME
 
@@ -42,7 +42,8 @@ class TestIngestionMessageParsing:
         with pytest.raises(DatasetValidationError):
             _ = create_dataset_context(invalid_xml_payload)
 
-    def test_enforce_sample_type_xml_message(self, valid_xml_raw_dataset_payload, monkeypatch):
+    def test_enforce_sample_type_xml_message(self, valid_xml_raw_dataset_payload, monkeypatch,
+                                             valid_xml_raw_dataset_payload_sample_type):
         import globals_var
 
         ingestion_settings = {"dataset": {"mandatorySampleType": True}}
@@ -50,6 +51,8 @@ class TestIngestionMessageParsing:
         monkeypatch.setattr(globals_var, "ingestion_settings", ingestion_settings)
         with pytest.raises(DatasetValidationError):
             _ = create_dataset_context(valid_xml_raw_dataset_payload)
+
+        _ = create_dataset_context(valid_xml_raw_dataset_payload_sample_type)
 
     def test_enforce_datafile_specification_xml_message(self, no_datafiles_xml_raw_dataset_payload, monkeypatch):
         import globals_var
