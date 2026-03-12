@@ -3,7 +3,7 @@ from logging import Logger
 from icat.entity import Entity
 
 from exceptions.instrument import InstrumentNotFound
-from exceptions.investigation import InvestigationNotFound, InvestigationInstrumentMismatch
+from exceptions.investigation import InvestigationNotFound, InvestigationInstrumentMismatch, MultipleInvestigationsFound
 from helpers.dataclasses.dataset import DatasetContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.static_settings import PROCESSED_DATASET_TYPE_NAME
@@ -69,7 +69,7 @@ def get_dataset_investigation(icat_client: ICATClient, logger: Logger, dataset_c
         if isinstance(investigation, list):
             error_msg: str = f"Multiple colliding sessions found for investigation {dataset_ctx.investigation}, aborting ingestion"
             logger.error(error_msg)
-            raise Exception(error_msg)
+            raise MultipleInvestigationsFound(error_msg)
 
     if not investigation:
         error_msg: str = f"Investigation {dataset_ctx.investigation if dataset_ctx.investigation else f'w/ id={dataset_ctx.investigation_id}'}not found"

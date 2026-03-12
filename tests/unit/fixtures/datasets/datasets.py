@@ -144,7 +144,7 @@ def json_raw_dataset(ingestion_files_for_testing, test_investigation):
     return {
         "investigation": test_investigation.name,
         "instrument": test_investigation.investigationInstruments[0].instrument.name,
-        "name": "mxau_241222",
+        "name": "mxau_241222_json",
         "parameters": [
             {
                 "name": "parameter_1",
@@ -152,8 +152,8 @@ def json_raw_dataset(ingestion_files_for_testing, test_investigation):
             }
         ],
         "location": str(dataset_location),
-        "start_date": "2019-08-08T15:57:45.920+02:00",
-        "end_date": "2021-05-30T15:19:08.422+02:00",
+        "start_date": "2025-09-23T10:00:45.920+02:00",
+        "end_date": "2025-09-23T10:19:08.422+02:00",
         "sample": {
             "name": "SAMPLE 1"
         },
@@ -182,14 +182,73 @@ def xml_raw_dataset(ingestion_files_for_testing, test_investigation):
         <dataset>
             <investigation>{test_investigation.name}</investigation>
             <instrument>{test_investigation.investigationInstruments[0].instrument.name}</instrument>
-            <name>mxau_241222</name>
+            <name>mxau_241222_xml</name>
             <parameter>
                     <name>InstrumentXraylens09_lens_material</name>
                     <value> value 1</value>
             </parameter>
             <location>{str(dataset_location)}</location>
-            <startDate>2019-08-08T15:57:45.920+02:00</startDate>
-            <endDate>2021-05-30T15:19:08.422+02:00</endDate>
+            <startDate>2025-09-23T10:00:45.920+02:00</startDate>
+            <endDate>2025-09-23T10:19:08.422+02:00</endDate>
+            <sample> 
+                <name>SAMPLE 1</name>
+            </sample>
+            {datafile_elements}
+        </dataset>
+        """
+
+@pytest.fixture
+def json_proc_dataset(ingestion_files_for_testing, test_investigation, raw_dataset):
+    dataset_location, created_files = ingestion_files_for_testing
+    return {
+        "investigation": test_investigation.name,
+        "instrument": test_investigation.investigationInstruments[0].instrument.name,
+        "name": "mxau_241222_json",
+        "parameters": [
+            {
+                "name": "input_datasets",
+                "value": f"{raw_dataset.id}"
+            }
+        ],
+        "location": str(dataset_location),
+        "start_date": "2025-09-23T10:00:45.920+02:00",
+        "end_date": "2025-09-23T10:19:08.422+02:00",
+        "sample": {
+            "name": "SAMPLE 1"
+        },
+        "datafiles": [
+            {
+                "location": str(i),
+                "size": created_files[i]
+            } for i in created_files
+        ]
+    }
+
+
+@pytest.fixture()
+def xml_proc_dataset(ingestion_files_for_testing, test_investigation, raw_dataset):
+    dataset_location, created_files = ingestion_files_for_testing
+    datafile_elements = "\n".join(
+        f"""
+        <datafile>
+            <location>{str(i)}</location>
+            <size>{created_files[i]}</size>
+        </datafile>
+        """ for i in created_files
+    )
+    return f"""
+        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+        <dataset>
+            <investigation>{test_investigation.name}</investigation>
+            <instrument>{test_investigation.investigationInstruments[0].instrument.name}</instrument>
+            <name>mxau_241222_xml</name>
+            <parameter>
+                    <name>input_datasets</name>
+                    <value>{raw_dataset.id}</value>
+            </parameter>
+            <location>{str(dataset_location)}</location>
+            <startDate>2025-09-23T10:00:45.920+02:00</startDate>
+            <endDate>2025-09-23T10:19:08.422+02:00</endDate>
             <sample> 
                 <name>SAMPLE 1</name>
             </sample>
@@ -207,6 +266,42 @@ def xml_raw_dataset_investigation_instrument_mismatch(xml_raw_dataset, test_inve
 @pytest.fixture()
 def json_raw_dataset_investigation_instrument_mismatch(json_raw_dataset, random_instrument_2):
     json_raw_dataset["instrument"] = random_instrument_2.name
+    return json_raw_dataset
+
+
+@pytest.fixture()
+def xml_raw_dataset_investigation_overlapping_sessions(xml_raw_dataset, test_investigation_overlapping_1,
+                                                       test_investigation_overlapping_2):
+    new_investigation = f"<investigation>{test_investigation_overlapping_1.name}</investigation>"
+    ret = re.sub(r"<investigation>.*?</investigation>", new_investigation, xml_raw_dataset, flags=re.DOTALL)
+    return ret
+
+
+@pytest.fixture()
+def json_raw_dataset_investigation_overlapping_sessions(json_raw_dataset, test_investigation_overlapping_1,
+                                                        test_investigation_overlapping_2):
+    json_raw_dataset["investigation"] = test_investigation_overlapping_1.name
+    return json_raw_dataset
+
+
+@pytest.fixture()
+def xml_raw_dataset_investigation_instrument_mismatch_investigation_id(xml_raw_dataset, test_investigation,
+                                                                       random_instrument_2):
+    ret = xml_raw_dataset.replace(test_investigation.investigationInstruments[0].instrument.name,
+                                  random_instrument_2.name)
+    new_investigation_id = f"<investigationId>{test_investigation.id}</investigationId><investigation>{test_investigation.name}</investigation>"
+    new_name = f"<name>xml_dataset_instr_mistmatch_but_investigation_id</name>"
+    ret = re.sub(r"<investigation>.*?</investigation>", new_investigation_id, ret, flags=re.DOTALL)
+    ret = re.sub(r"<name>.*?</name>", new_name, ret, flags=re.DOTALL)
+    return ret
+
+
+@pytest.fixture()
+def json_raw_dataset_investigation_instrument_mismatch_investigation_id(json_raw_dataset, random_instrument_2,
+                                                                        test_investigation):
+    json_raw_dataset["instrument"] = random_instrument_2.name
+    json_raw_dataset["investigation_id"] = test_investigation.id
+    json_raw_dataset["name"] = f"{json_raw_dataset["name"]}_with_investigation_id"
     return json_raw_dataset
 
 

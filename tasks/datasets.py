@@ -6,12 +6,10 @@ import logging
 from icat.entity import Entity
 
 from exceptions.dataset import DatasetTypeNotFound
-from exceptions.investigation import InvestigationNotFound
 from exceptions.sample import SampleTypeNotFound
 from helpers.dataclasses.dataset import DatasetContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.utils.dataset import get_dataset_investigation, get_duplicated_processed_dataset_in_investigation
-from helpers.utils.datetime import DATETIME_EU
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 
 
@@ -78,7 +76,7 @@ class DatasetsTasks:
                                                              conditions={"name__eq": dataset_ctx.name,
                                                                          "investigation.id__eq": investigation.id})
 
-                date: str = datetime.datetime.now().strftime(DATETIME_EU)
+                date: str = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
                 rb.new_dataset.name = dataset_ctx.name if not same_name_dataset else f"{dataset_ctx.name} [{date}]"
                 rb.new_dataset.create()
                 self.logger.info(f"Created dataset {rb.new_dataset.name} with id {rb.new_dataset.id}")

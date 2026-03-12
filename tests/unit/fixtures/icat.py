@@ -1,3 +1,4 @@
+import datetime
 import logging
 import os
 import tempfile
@@ -148,11 +149,13 @@ def random_instrument(icat_client, icat_facility):
     instrument.create()
     return instrument
 
+
 @pytest.fixture(scope="session")
 def random_instrument_2(icat_client, icat_facility):
     instrument = icat_client.new("Instrument", name="bl1986", facility=icat_facility)
     instrument.create()
     return instrument
+
 
 @pytest.fixture(scope="session")
 def test_investigation(icat_client, icat_facility, random_instrument, icat_unittest_investigation_type):
@@ -163,3 +166,39 @@ def test_investigation(icat_client, icat_facility, random_instrument, icat_unitt
     inv_instr = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=random_instrument)
     inv_instr.create()
     return investigation
+
+
+@pytest.fixture(scope="session")
+def test_investigation_overlapping_1(icat_client, icat_facility, random_instrument, icat_unittest_investigation_type):
+    investigation = icat_client.new("Investigation", name="2026090922", facility=icat_facility,
+                                    visitId="2026090922-visitId-1", title="unittest",
+                                    startDate=datetime.datetime(day=23, month=9, year=2025, hour=7, minute=0, second=0,
+                                                                microsecond=0, tzinfo=datetime.timezone.utc),
+                                    endDate=datetime.datetime(day=23, month=9, year=2025, hour=11, minute=0, second=0,
+                                                                microsecond=0, tzinfo=datetime.timezone.utc),
+    type = icat_unittest_investigation_type)
+    investigation.create()
+    inv_instr = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=random_instrument)
+    inv_instr.create()
+    return investigation
+
+
+@pytest.fixture(scope="session")
+def test_investigation_overlapping_2(icat_client, icat_facility, random_instrument, icat_unittest_investigation_type):
+    investigation = icat_client.new("Investigation", name="2026090922", facility=icat_facility,
+                                    visitId="2026090922-visitId-2", title="unittest",
+                                    startDate=datetime.datetime(day=23, month=9, year=2025, hour=10, minute=0, second=0,
+                                                                microsecond=0, tzinfo=datetime.timezone.utc),
+                                    endDate=datetime.datetime(day=23, month=9, year=2025, hour=23, minute=0, second=0,
+                                                              microsecond=0, tzinfo=datetime.timezone.utc),
+                                    type=icat_unittest_investigation_type)
+    investigation.create()
+    inv_instr = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=random_instrument)
+    inv_instr.create()
+    return investigation
+
+@pytest.fixture(scope="session")
+def raw_dataset(icat_client, test_investigation, dataset_type_raw):
+    dataset = icat_client.new("Dataset", name="test_dataset", type=dataset_type_raw, investigation=test_investigation)
+    dataset.create()
+    return dataset
