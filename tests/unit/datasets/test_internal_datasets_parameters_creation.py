@@ -58,3 +58,7 @@ class TestInternalDatasetConsumerDatasetParameterCreation:
         with pytest.raises(ParameterTypeNotFound):
             internal_dataset_tasks.create_dataset_parameters(icat_client, dataset_ctx, new_dataset_id, is_duplicated)
 
+    @pytest.mark.skip(reason="Not implemented yet")
+    def test_parameter_metadata_overwrite(self):
+        # TODO: tasks/datasets_internal.py -- line 158
+        pass
