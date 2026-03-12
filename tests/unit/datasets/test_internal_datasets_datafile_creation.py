@@ -4,7 +4,6 @@ import pytest
 
 from exceptions.dataset import DatasetValidationError, DatasetNotFound
 from helpers.contexts.dataset import create_dataset_context
-from helpers.dataclasses.dataset import DatasetDatafileContext
 
 
 @pytest.fixture
@@ -12,7 +11,7 @@ def dataset_msg(request):
     return request.getfixturevalue(request.param)
 
 
-class TestInternalDatasetConsumer:
+class TestInternalDatasetConsumerDatafileCreation:
 
     @pytest.mark.parametrize("dataset_msg", [
         "xml_raw_dataset",

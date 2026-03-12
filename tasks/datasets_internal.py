@@ -91,7 +91,7 @@ class DatasetsInternalTasks:
                                                                        DATASET_PROCESSING_VERSION_PARAMETER_NAME,
                                                                        entity=rb.dataset, create_if_missing=False)
                 new_proc_version_param = next(
-                    x for x in dataset_ctx.parameters if x.name == DATASET_PROCESSING_VERSION_PARAMETER_NAME)
+                    (x for x in dataset_ctx.parameters if x.name == DATASET_PROCESSING_VERSION_PARAMETER_NAME), None)
 
                 if rb.existing_proc_version_param and new_proc_version_param:
                     # Overwrite dataset metadata with processing version
@@ -123,9 +123,9 @@ class DatasetsInternalTasks:
                                                               entity=rb.dataset, create_if_missing=False)
 
                     new_start_date_param = next(
-                        x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME)
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME))
                     new_end_date_param = next(
-                        x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME)
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME))
 
                     if rb.start_date_param:
                         rb.start_date_param = set_dataset_parameter(rb.start_date_param._obj,
@@ -140,19 +140,19 @@ class DatasetsInternalTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def create_dataset_parameters(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int,
                                   is_duplicated: bool, *_args, **_kwargs) -> None:
 
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
-                    raise DatasetNotfound("Dataset not found")
+                    raise DatasetNotFound("Dataset not found")
 
                 if is_duplicated:
                     if not self.__need_overwrite_dataset_metadata(icat_client, rb.dataset._obj, dataset_ctx):
@@ -177,7 +177,7 @@ class DatasetsInternalTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def __link_output_dataset_to_input_dataset(self, icat_client: ICATClient, raw_dataset: Entity,
                                                processed_datasets: list[Entity]) -> None:

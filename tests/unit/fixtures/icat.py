@@ -209,7 +209,8 @@ def raw_dataset(icat_client, test_investigation, dataset_type_raw):
 def test_parameter_types(icat_client, icat_facility):
     params = []
     for i in range(5):
-        parameter_type = icat_client.new("ParameterType", name=f"parameter_type_{i}", facility=icat_facility, units="NA", valueType="STRING")
+        parameter_type = icat_client.new("ParameterType", name=f"parameter_type_{i}", facility=icat_facility,
+                                         units="NA", valueType="STRING", applicableToDataset=True)
         parameter_type.create()
         params.append(parameter_type)
     return params
