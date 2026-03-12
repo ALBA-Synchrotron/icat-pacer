@@ -27,3 +27,6 @@ class DatasetDatafileLimitExceeded(DatasetValidationError):
 
 class DatasetTypeNotFound(DatasetValidationError):
     pass
+
+class DatasetNotFound(DatasetValidationError):
+    pass

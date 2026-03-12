@@ -4,7 +4,7 @@ import re
 import shutil
 import tempfile
 from pathlib import Path
-
+import xml.etree.ElementTree as ET
 import pytest
 
 
@@ -128,6 +128,12 @@ def ingestion_files_for_testing():
             file.write_bytes(os.urandom(size))
             created_files[file] = size
 
+        for i in range(10):
+            size = random.randint(1024, 100 * 1024)
+            file = dataset_location / f"extra_file_{i}.dat"
+
+            file.write_bytes(os.urandom(size))
+
         gallery_folder = dataset_location / "gallery"
         gallery_folder.mkdir(exist_ok=True)
 
@@ -139,7 +145,7 @@ def ingestion_files_for_testing():
 
 
 @pytest.fixture
-def json_raw_dataset(ingestion_files_for_testing, test_investigation):
+def json_raw_dataset(ingestion_files_for_testing, test_investigation, test_parameter_types):
     dataset_location, created_files = ingestion_files_for_testing
     return {
         "investigation": test_investigation.name,
@@ -147,9 +153,9 @@ def json_raw_dataset(ingestion_files_for_testing, test_investigation):
         "name": "mxau_241222_json",
         "parameters": [
             {
-                "name": "parameter_1",
-                "value": "872,312"
-            }
+                "name": f"{v.name}",
+                "value": f"value_{i}"
+            } for i, v in enumerate(test_parameter_types)
         ],
         "location": str(dataset_location),
         "start_date": "2025-09-23T10:00:45.920+02:00",
@@ -167,7 +173,7 @@ def json_raw_dataset(ingestion_files_for_testing, test_investigation):
 
 
 @pytest.fixture()
-def xml_raw_dataset(ingestion_files_for_testing, test_investigation):
+def xml_raw_dataset(ingestion_files_for_testing, test_investigation, test_parameter_types):
     dataset_location, created_files = ingestion_files_for_testing
     datafile_elements = "\n".join(
         f"""
@@ -177,75 +183,18 @@ def xml_raw_dataset(ingestion_files_for_testing, test_investigation):
         </datafile>
         """ for i in created_files
     )
+    parameter_elements = "\n".join(f"""
+                <parameter>
+                    <name>{v.name}</name>
+                    <value>value_{i}</value>
+                </parameter>""" for i, v in enumerate(test_parameter_types))
     return f"""
         <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
         <dataset>
             <investigation>{test_investigation.name}</investigation>
             <instrument>{test_investigation.investigationInstruments[0].instrument.name}</instrument>
             <name>mxau_241222_xml</name>
-            <parameter>
-                    <name>InstrumentXraylens09_lens_material</name>
-                    <value> value 1</value>
-            </parameter>
-            <location>{str(dataset_location)}</location>
-            <startDate>2025-09-23T10:00:45.920+02:00</startDate>
-            <endDate>2025-09-23T10:19:08.422+02:00</endDate>
-            <sample> 
-                <name>SAMPLE 1</name>
-            </sample>
-            {datafile_elements}
-        </dataset>
-        """
-
-@pytest.fixture
-def json_proc_dataset(ingestion_files_for_testing, test_investigation, raw_dataset):
-    dataset_location, created_files = ingestion_files_for_testing
-    return {
-        "investigation": test_investigation.name,
-        "instrument": test_investigation.investigationInstruments[0].instrument.name,
-        "name": "mxau_241222_json",
-        "parameters": [
-            {
-                "name": "input_datasets",
-                "value": f"{raw_dataset.id}"
-            }
-        ],
-        "location": str(dataset_location),
-        "start_date": "2025-09-23T10:00:45.920+02:00",
-        "end_date": "2025-09-23T10:19:08.422+02:00",
-        "sample": {
-            "name": "SAMPLE 1"
-        },
-        "datafiles": [
-            {
-                "location": str(i),
-                "size": created_files[i]
-            } for i in created_files
-        ]
-    }
-
-
-@pytest.fixture()
-def xml_proc_dataset(ingestion_files_for_testing, test_investigation, raw_dataset):
-    dataset_location, created_files = ingestion_files_for_testing
-    datafile_elements = "\n".join(
-        f"""
-        <datafile>
-            <location>{str(i)}</location>
-            <size>{created_files[i]}</size>
-        </datafile>
-        """ for i in created_files
-    )
-    return f"""
-        <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-        <dataset>
-            <investigation>{test_investigation.name}</investigation>
-            <instrument>{test_investigation.investigationInstruments[0].instrument.name}</instrument>
-            <name>mxau_241222_xml</name>
-            <parameter>
-                    <name>input_datasets</name>
-                    <value>{raw_dataset.id}</value>
-            </parameter>
+            {parameter_elements}
             <location>{str(dataset_location)}</location>
             <startDate>2025-09-23T10:00:45.920+02:00</startDate>
             <endDate>2025-09-23T10:19:08.422+02:00</endDate>
@@ -290,10 +239,17 @@ def xml_raw_dataset_investigation_instrument_mismatch_investigation_id(xml_raw_d
     ret = xml_raw_dataset.replace(test_investigation.investigationInstruments[0].instrument.name,
                                   random_instrument_2.name)
     new_investigation_id = f"<investigationId>{test_investigation.id}</investigationId><investigation>{test_investigation.name}</investigation>"
-    new_name = f"<name>xml_dataset_instr_mistmatch_but_investigation_id</name>"
+    new_name = f"xml_dataset_instr_mistmatch_but_investigation_id"
     ret = re.sub(r"<investigation>.*?</investigation>", new_investigation_id, ret, flags=re.DOTALL)
-    ret = re.sub(r"<name>.*?</name>", new_name, ret, flags=re.DOTALL)
-    return ret
+
+    root = ET.fromstring(ret.strip())
+
+    for parent in root.iter():
+        if parent.tag != "parameter":
+            for name in parent.findall("name"):
+                name.text = new_name
+
+    return ET.tostring(root, encoding="unicode")
 
 
 @pytest.fixture()

@@ -9,4 +9,5 @@ from tests.unit.fixtures.datasets.message_validation.valid_xml import *
 from tests.unit.fixtures.datasets.message_validation.invalid_xml import *
 from tests.unit.fixtures.datasets.message_validation.invalid_json import *
 from tests.unit.fixtures.datasets.message_validation.valid_json import *
-from tests.unit.fixtures.datasets.datasets import *
+from tests.unit.fixtures.datasets.raw_datasets import *
+from tests.unit.fixtures.datasets.proc_datasets import *

@@ -8,6 +8,7 @@ from pathlib import Path
 from icat.entity import Entity
 
 import globals_var
+from exceptions.dataset import DatasetValidationError, DatasetNotFound
 from helpers.dataclasses.dataset import DatasetContext, DatasetDatafileContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME, INPUT_DATASET_IDS_PARAMETER_NAME, \
@@ -30,13 +31,13 @@ class DatasetsInternalTasks:
         ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
-                    raise Exception("Dataset not found")
+                    raise DatasetNotFound("Dataset not found")
 
                 if is_duplicated:
                     self.logger.info("Duplicated dataset found, removing existing files")
@@ -79,7 +80,7 @@ class DatasetsInternalTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def __need_overwrite_dataset_metadata(self, icat_client: ICATClient, dataset: Entity,
                                           dataset_ctx: DatasetContext) -> bool:
@@ -151,7 +152,7 @@ class DatasetsInternalTasks:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
-                    raise Exception("Dataset not found")
+                    raise DatasetNotfound("Dataset not found")
 
                 if is_duplicated:
                     if not self.__need_overwrite_dataset_metadata(icat_client, rb.dataset._obj, dataset_ctx):

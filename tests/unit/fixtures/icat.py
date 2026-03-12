@@ -3,7 +3,7 @@ import logging
 import os
 import tempfile
 import time
-import pathlib
+
 import pytest
 import requests
 
@@ -175,8 +175,8 @@ def test_investigation_overlapping_1(icat_client, icat_facility, random_instrume
                                     startDate=datetime.datetime(day=23, month=9, year=2025, hour=7, minute=0, second=0,
                                                                 microsecond=0, tzinfo=datetime.timezone.utc),
                                     endDate=datetime.datetime(day=23, month=9, year=2025, hour=11, minute=0, second=0,
-                                                                microsecond=0, tzinfo=datetime.timezone.utc),
-    type = icat_unittest_investigation_type)
+                                                              microsecond=0, tzinfo=datetime.timezone.utc),
+                                    type=icat_unittest_investigation_type)
     investigation.create()
     inv_instr = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=random_instrument)
     inv_instr.create()
@@ -197,8 +197,19 @@ def test_investigation_overlapping_2(icat_client, icat_facility, random_instrume
     inv_instr.create()
     return investigation
 
+
 @pytest.fixture(scope="session")
 def raw_dataset(icat_client, test_investigation, dataset_type_raw):
     dataset = icat_client.new("Dataset", name="test_dataset", type=dataset_type_raw, investigation=test_investigation)
     dataset.create()
     return dataset
+
+
+@pytest.fixture(scope="session")
+def test_parameter_types(icat_client, icat_facility):
+    params = []
+    for i in range(5):
+        parameter_type = icat_client.new("ParameterType", name=f"parameter_type_{i}", facility=icat_facility, units="NA", valueType="STRING")
+        parameter_type.create()
+        params.append(parameter_type)
+    return params
