@@ -1,3 +1,6 @@
+import random
+import string
+
 import pytest
 
 from tests.unit.fixtures.icat import PACER_TEST_BACKEND, ICAT_TESTBOX_ICAT_SERVER_VERSION
@@ -10,3 +13,7 @@ def tests_sanity_pre_check(icat_client):
     assert icat_client.apiversion is not None
     if PACER_TEST_BACKEND == "testbox":
         assert icat_client.apiversion == ICAT_TESTBOX_ICAT_SERVER_VERSION
+
+@pytest.fixture
+def random_str():
+    return "".join(random.choices(string.digits, k=5))

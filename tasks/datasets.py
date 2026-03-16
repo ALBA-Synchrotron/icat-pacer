@@ -23,7 +23,7 @@ class DatasetsTasks:
 
         investigation: Entity = get_dataset_investigation(icat_client, self.logger, dataset_ctx)
 
-        duplicate_proc_dataset = get_duplicated_processed_dataset_in_investigation(icat_client, dataset_ctx.name,
+        duplicate_proc_dataset = get_duplicated_processed_dataset_in_investigation(icat_client, dataset_ctx.name, dataset_ctx.type,
                                                                                    investigation.id)
         if duplicate_proc_dataset:
             self.logger.info(f"Duplicate processed dataset found (dataset id={duplicate_proc_dataset.id}), name={dataset_ctx.name}), skipping creation")

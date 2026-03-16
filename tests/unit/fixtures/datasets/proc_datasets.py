@@ -12,6 +12,14 @@ def json_proc_dataset(ingestion_files_for_testing, test_investigation, raw_datas
             {
                 "name": "input_datasets",
                 "value": f"{raw_dataset.id}"
+            },
+            {
+                "name": "Process_sequence_index",
+                "value": "1"
+            },
+            {
+                "name": "parameter_type_1",
+                "value": "yes"
             }
         ],
         "location": str(dataset_location),
@@ -49,6 +57,14 @@ def xml_proc_dataset(ingestion_files_for_testing, test_investigation, raw_datase
             <parameter>
                     <name>input_datasets</name>
                     <value>{raw_dataset.id}</value>
+            </parameter>
+            <parameter>
+                    <name>Process_sequence_index</name>
+                    <value>1</value>
+            </parameter>
+            <parameter>
+                    <name>parameter_type_1</name>
+                    <value>yes</value>
             </parameter>
             <location>{str(dataset_location)}</location>
             <startDate>2025-09-23T10:00:45.920+02:00</startDate>

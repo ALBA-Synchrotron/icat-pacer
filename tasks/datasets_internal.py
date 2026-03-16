@@ -123,9 +123,9 @@ class DatasetsInternalTasks:
                                                               entity=rb.dataset, create_if_missing=False)
 
                     new_start_date_param = next(
-                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME))
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME), None)
                     new_end_date_param = next(
-                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME))
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME), None)
 
                     if rb.start_date_param:
                         rb.start_date_param = set_dataset_parameter(rb.start_date_param._obj,

@@ -145,12 +145,12 @@ def ingestion_files_for_testing():
 
 
 @pytest.fixture
-def json_raw_dataset(ingestion_files_for_testing, test_investigation, test_parameter_types):
+def json_raw_dataset(ingestion_files_for_testing, test_investigation, test_parameter_types, random_str):
     dataset_location, created_files = ingestion_files_for_testing
     return {
         "investigation": test_investigation.name,
         "instrument": test_investigation.investigationInstruments[0].instrument.name,
-        "name": "mxau_241222_json",
+        "name": f"mxau_241222_json_{random_str}",
         "parameters": [
             {
                 "name": f"{v.name}",
@@ -173,7 +173,7 @@ def json_raw_dataset(ingestion_files_for_testing, test_investigation, test_param
 
 
 @pytest.fixture()
-def xml_raw_dataset(ingestion_files_for_testing, test_investigation, test_parameter_types):
+def xml_raw_dataset(ingestion_files_for_testing, test_investigation, test_parameter_types, random_str):
     dataset_location, created_files = ingestion_files_for_testing
     datafile_elements = "\n".join(
         f"""
@@ -193,7 +193,7 @@ def xml_raw_dataset(ingestion_files_for_testing, test_investigation, test_parame
         <dataset>
             <investigation>{test_investigation.name}</investigation>
             <instrument>{test_investigation.investigationInstruments[0].instrument.name}</instrument>
-            <name>mxau_241222_xml</name>
+            <name>mxau_241222_xml_{random_str}</name>
             {parameter_elements}
             <location>{str(dataset_location)}</location>
             <startDate>2025-09-23T10:00:45.920+02:00</startDate>
