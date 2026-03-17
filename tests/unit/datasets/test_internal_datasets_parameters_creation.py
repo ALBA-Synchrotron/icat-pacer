@@ -27,7 +27,7 @@ class TestInternalDatasetConsumerDatasetParameterCreation:
         "xml_raw_dataset",
         "json_raw_dataset",
     ], indirect=True)
-    def test_create_datafiles_non_existent_dataset(self, internal_dataset_tasks, icat_client, dataset_msg):
+    def test_create_parameters_non_existent_dataset(self, internal_dataset_tasks, icat_client, dataset_msg):
         dataset_ctx = create_dataset_context(dataset_msg)
         with pytest.raises(DatasetNotFound):
             internal_dataset_tasks.create_dataset_parameters(icat_client, dataset_ctx, 99827, False)
@@ -52,7 +52,8 @@ class TestInternalDatasetConsumerDatasetParameterCreation:
         "xml_raw_dataset",
         "json_raw_dataset",
     ], indirect=True)
-    def test_create_parameters_non_existent_parameter_type(self, dataset_tasks, internal_dataset_tasks, icat_client, dataset_msg):
+    def test_create_parameters_non_existent_parameter_type(self, dataset_tasks, internal_dataset_tasks, icat_client,
+                                                           dataset_msg):
         dataset_ctx = create_dataset_context(dataset_msg)
         new_dataset_id, investigation_id, is_duplicated = dataset_tasks.create_base_dataset_icat(
             icat_client=icat_client, dataset_ctx=dataset_ctx)
@@ -71,7 +72,7 @@ class TestInternalDatasetConsumerDatasetParameterCreation:
             icat_client=icat_client, dataset_ctx=dataset_ctx)
         internal_dataset_tasks.create_dataset_parameters(icat_client, dataset_ctx, new_dataset_id, is_duplicated)
 
-        dataset  = icat_client.search("Dataset", conditions={"id__eq": new_dataset_id}, flatten_single=True)
+        dataset = icat_client.search("Dataset", conditions={"id__eq": new_dataset_id}, flatten_single=True)
         assert len(dataset.parameters) == len(dataset_ctx.parameters)
 
         dataset_ctx.parameters.append(DatasetParameterContext("parameter_type_2", "no"))
@@ -84,7 +85,7 @@ class TestInternalDatasetConsumerDatasetParameterCreation:
         dataset_ctx.parameters.append(DatasetParameterContext(DATASET_PROCESSING_VERSION_PARAMETER_NAME, "2"))
 
         internal_dataset_tasks.create_dataset_parameters(icat_client, dataset_ctx, new_dataset_id, is_duplicated)
-        dataset  = icat_client.search("Dataset", conditions={"id__eq": new_dataset_id}, flatten_single=True)
+        dataset = icat_client.search("Dataset", conditions={"id__eq": new_dataset_id}, flatten_single=True)
         params = [(i.type.name, i.stringValue) for i in dataset.parameters]
         assert ("parameter_type_2", "no") in params
         assert (DATASET_PROCESSING_VERSION_PARAMETER_NAME, "2") in params
