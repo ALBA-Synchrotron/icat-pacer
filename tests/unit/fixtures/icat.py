@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import random
 import tempfile
 import time
 
@@ -8,6 +9,8 @@ import pytest
 import requests
 
 from helpers.integrations.icat.extended_client import ICATClient
+from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME
+from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter
 
 PACER_TEST_BACKEND: str = os.getenv("PACER_TEST_BACKEND", "testbox")
 
@@ -137,6 +140,11 @@ def dataset_type_raw(icat_client, icat_facility):
 
 
 @pytest.fixture(scope="session")
+def dataset_type_processed(icat_client, icat_facility):
+    return icat_client.search("DatasetType", conditions={"name__eq": "processed"}, flatten_single=True)
+
+
+@pytest.fixture(scope="session")
 def random_user(icat_client, icat_facility):
     manolo = icat_client.new("User", name="Manolín")
     manolo.create()
@@ -206,6 +214,14 @@ def raw_dataset(icat_client, test_investigation, dataset_type_raw):
 
 
 @pytest.fixture(scope="session")
+def proc_dataset(icat_client, test_investigation, dataset_type_processed):
+    dataset = icat_client.new("Dataset", name="test_dataset", type=dataset_type_processed,
+                              investigation=test_investigation)
+    dataset.create()
+    return dataset
+
+
+@pytest.fixture(scope="session")
 def test_parameter_types(icat_client, icat_facility):
     params = []
     for i in range(5):
@@ -214,3 +230,40 @@ def test_parameter_types(icat_client, icat_facility):
         parameter_type.create()
         params.append(parameter_type)
     return params
+
+
+@pytest.fixture()
+def generate_raw_proc_datasets(icat_client, test_investigation, random_str, dataset_type_raw, dataset_type_processed):
+    def create_datasets(amount_raw: int = 1, amount_proc: int = 1):
+        raw_datasets, proc_datasets = [], []
+        for i in range(amount_raw):
+            raw_dataset = icat_client.new("Dataset", name=f"raw_{random_str}_{i}", type=dataset_type_raw,
+                                          investigation=test_investigation, location=f"/tmp/raw_{random_str}/{i}/")
+            raw_dataset.create()
+            raw_datasets.append(raw_dataset)
+
+        for i in range(amount_proc):
+            proc_dataset = icat_client.new("Dataset", name=f"proc_{random_str}_{i}", type=dataset_type_processed,
+                                           investigation=test_investigation, location=f"/tmp/proc_{random_str}/{i}/")
+            proc_dataset.create()
+            proc_datasets.append(proc_dataset)
+
+        return raw_datasets[0] if len(raw_datasets) == 1 else raw_datasets, proc_datasets[0] if len(
+            proc_datasets) == 1 else proc_datasets
+
+    return create_datasets
+
+
+@pytest.fixture()
+def create_raw_proc_datasets_relation(icat_client):
+    def create_raw_proc_datasets_relation(origin_datasets, destination_dataset):
+        if type(origin_datasets) != list:
+            datasets = [origin_datasets]
+        else:
+            datasets = origin_datasets.copy()
+
+        proc_input_dataset_param = get_dataset_parameter(icat_client, INPUT_DATASET_PARAMETER_NAME,
+                                                         dataset_id=destination_dataset.id)
+        set_dataset_parameter(proc_input_dataset_param, ",".join(i.location for i in datasets))
+
+    return create_raw_proc_datasets_relation
