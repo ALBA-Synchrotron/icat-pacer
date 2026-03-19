@@ -114,7 +114,7 @@ def xml_dataset_non_existent_investigation():
         """
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture()
 def ingestion_files_for_testing():
     created_files: dict = {}
 

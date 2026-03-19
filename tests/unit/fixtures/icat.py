@@ -165,10 +165,10 @@ def random_instrument_2(icat_client, icat_facility):
     return instrument
 
 
-@pytest.fixture(scope="session")
-def test_investigation(icat_client, icat_facility, random_instrument, icat_unittest_investigation_type):
-    investigation = icat_client.new("Investigation", name="2026090911", facility=icat_facility,
-                                    visitId="2026090911-visitId", title="unittest",
+@pytest.fixture
+def test_investigation(icat_client, icat_facility, random_instrument, icat_unittest_investigation_type, random_str):
+    investigation = icat_client.new("Investigation", name=f"2026090911-{random_str}", facility=icat_facility,
+                                    visitId=f"2026090911-visitId_{random_str}", title="unittest",
                                     type=icat_unittest_investigation_type)
     investigation.create()
     inv_instr = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=random_instrument)
@@ -205,17 +205,15 @@ def test_investigation_overlapping_2(icat_client, icat_facility, random_instrume
     inv_instr.create()
     return investigation
 
-
-@pytest.fixture(scope="session")
-def raw_dataset(icat_client, test_investigation, dataset_type_raw):
-    dataset = icat_client.new("Dataset", name="test_dataset", type=dataset_type_raw, investigation=test_investigation)
+@pytest.fixture()
+def raw_dataset(icat_client, test_investigation, dataset_type_raw, random_str):
+    dataset = icat_client.new("Dataset", name=f"test_dataset_{random_str}", type=dataset_type_raw, investigation=test_investigation)
     dataset.create()
     return dataset
 
-
-@pytest.fixture(scope="session")
-def proc_dataset(icat_client, test_investigation, dataset_type_processed):
-    dataset = icat_client.new("Dataset", name="test_dataset", type=dataset_type_processed,
+@pytest.fixture()
+def proc_dataset(icat_client, test_investigation, dataset_type_processed, random_str):
+    dataset = icat_client.new("Dataset", name=f"test_dataset_{random_str}", type=dataset_type_processed,
                               investigation=test_investigation)
     dataset.create()
     return dataset
@@ -234,19 +232,31 @@ def test_parameter_types(icat_client, icat_facility):
 
 @pytest.fixture()
 def generate_raw_proc_datasets(icat_client, test_investigation, random_str, dataset_type_raw, dataset_type_processed):
-    def create_datasets(amount_raw: int = 1, amount_proc: int = 1):
+
+    def create_datasets(amount_raw: int = 1, amount_proc: int = 1, datafile_amount: int = 0):
         raw_datasets, proc_datasets = [], []
+        start_date = datetime.datetime(day=23, month=9, year=2025, hour=7, minute=0, second=0, microsecond=0)
+        end_date = datetime.datetime(day=23, month=9, year=2025, hour=11, minute=0, second=0, microsecond=0)
         for i in range(amount_raw):
             raw_dataset = icat_client.new("Dataset", name=f"raw_{random_str}_{i}", type=dataset_type_raw,
-                                          investigation=test_investigation, location=f"/tmp/raw_{random_str}/{i}/")
+                                          investigation=test_investigation, location=f"/tmp/raw_{random_str}/{i}/",
+                                          startDate=start_date, endDate=end_date)
             raw_dataset.create()
             raw_datasets.append(raw_dataset)
 
         for i in range(amount_proc):
             proc_dataset = icat_client.new("Dataset", name=f"proc_{random_str}_{i}", type=dataset_type_processed,
-                                           investigation=test_investigation, location=f"/tmp/proc_{random_str}/{i}/")
+                                           investigation=test_investigation, location=f"/tmp/proc_{random_str}/{i}/",
+                                           startDate=start_date, endDate=end_date)
             proc_dataset.create()
             proc_datasets.append(proc_dataset)
+
+        if datafile_amount:
+            for i in raw_datasets + proc_datasets:
+                for j in range(datafile_amount):
+                    datafile = icat_client.new("Datafile", name=f"datafile_{random_str}_{j}", dataset=i,
+                                               fileSize=random.randint(1000, 1000000))
+                    datafile.create()
 
         return raw_datasets[0] if len(raw_datasets) == 1 else raw_datasets, proc_datasets[0] if len(
             proc_datasets) == 1 else proc_datasets

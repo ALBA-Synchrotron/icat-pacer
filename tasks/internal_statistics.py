@@ -1,11 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-from pathlib import Path
 
 from icat.entity import Entity
 
-from helpers.dataclasses.dataset import DatasetContext
+from exceptions.dataset import DatasetValidationError, DatasetNotFound
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.static_settings import DATASET_NAME_PARAMETER, DATASET_FILE_COUNT_PARAMETER, DATASET_VOLUME_PARAMETER, \
     DATASET_ELAPSE_TIME_PARAMETER, INVESTIGATION_DATASET_COUNT_PARAMETER, \
@@ -34,13 +33,13 @@ class InternalStatisticsTasks:
     def update_dataset_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **_kwargs) -> None:
 
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
-                    raise Exception("Dataset not found")
+                    raise DatasetNotFound("Dataset not found")
 
                 # Dataset name
                 rb.dataset_name_param = get_dataset_parameter(icat_client, DATASET_NAME_PARAMETER,
@@ -75,18 +74,20 @@ class InternalStatisticsTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def update_investigation_statistics(self, icat_client: ICATClient, dataset_id: int, *_args,
                                         **_kwargs) -> None:
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
-            investigation: Entity = rb.dataset.investigation
+
             if not rb.dataset:
-                raise Exception("Dataset not found")
+                raise DatasetNotFound("Dataset not found")
+
+            investigation: Entity = rb.dataset.investigation
 
             try:
                 # Total number of datasets
@@ -237,7 +238,7 @@ class InternalStatisticsTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def update_sample_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **_kwargs) -> None:
         if not dataset_id:

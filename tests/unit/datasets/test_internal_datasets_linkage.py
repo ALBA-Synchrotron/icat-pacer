@@ -39,11 +39,13 @@ class TestInternalDatasetConsumerDatasetLinkage:
 
         input_dataset_param = get_dataset_parameter(icat_client, INPUT_DATASET_PARAMETER_NAME, dataset_id=proc_dataset.id)
         assert input_dataset_param.stringValue == raw_dataset.location
+
         input_dataset_ids_param = get_dataset_parameter(icat_client, INPUT_DATASET_IDS_PARAMETER_NAME, dataset_id=proc_dataset.id)
         assert input_dataset_ids_param.stringValue == str(raw_dataset.id)
 
         output_dataset_ids_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_IDS_PARAMETER_NAME, dataset_id=raw_dataset.id)
         assert output_dataset_ids_param.stringValue == str(proc_dataset.id)
+
         output_dataset_names_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_NAMES_PARAMETER_NAME, dataset_id=raw_dataset.id)
         assert output_dataset_names_param.stringValue == str(proc_dataset.name)
 
@@ -59,11 +61,13 @@ class TestInternalDatasetConsumerDatasetLinkage:
         for proc_dataset in proc_datasets:
             input_dataset_param = get_dataset_parameter(icat_client, INPUT_DATASET_PARAMETER_NAME, dataset_id=proc_dataset.id)
             assert input_dataset_param.stringValue == raw_dataset.location
+
             input_dataset_ids_param = get_dataset_parameter(icat_client, INPUT_DATASET_IDS_PARAMETER_NAME, dataset_id=proc_dataset.id)
             assert input_dataset_ids_param.stringValue == str(raw_dataset.id)
 
         output_dataset_ids_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_IDS_PARAMETER_NAME, dataset_id=raw_dataset.id)
         assert output_dataset_ids_param.stringValue == " ".join(str(i.id) for i in proc_datasets)
+
         output_dataset_names_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_NAMES_PARAMETER_NAME, dataset_id=raw_dataset.id)
         assert output_dataset_names_param.stringValue == " ".join(i.name for i in proc_datasets)
 
@@ -76,8 +80,10 @@ class TestInternalDatasetConsumerDatasetLinkage:
 
         input_dataset_param = get_dataset_parameter(icat_client, INPUT_DATASET_PARAMETER_NAME, dataset_id=proc_dataset.id)
         assert input_dataset_param.stringValue == raw_dataset.location
+
         output_dataset_ids_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_IDS_PARAMETER_NAME, dataset_id=raw_dataset.id)
         assert output_dataset_ids_param.stringValue == str(proc_dataset.id)
+
         output_dataset_names_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_NAMES_PARAMETER_NAME, dataset_id=raw_dataset.id)
         assert output_dataset_names_param.stringValue == str(proc_dataset.name)
 
@@ -90,8 +96,10 @@ class TestInternalDatasetConsumerDatasetLinkage:
 
         input_dataset_param = get_dataset_parameter(icat_client, INPUT_DATASET_PARAMETER_NAME, dataset_id=proc_dataset.id)
         assert input_dataset_param.stringValue == ",".join(i.location for i in raw_datasets)
+
         for raw_dataset in raw_datasets:
             output_dataset_ids_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_IDS_PARAMETER_NAME, dataset_id=raw_dataset.id)
             assert output_dataset_ids_param.stringValue == str(proc_dataset.id)
+
             output_dataset_names_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_NAMES_PARAMETER_NAME, dataset_id=raw_dataset.id)
             assert output_dataset_names_param.stringValue == proc_dataset.name

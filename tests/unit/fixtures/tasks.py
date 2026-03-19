@@ -2,6 +2,7 @@ import pytest
 
 from tasks.datasets import DatasetsTasks
 from tasks.datasets_internal import DatasetsInternalTasks
+from tasks.internal_statistics import InternalStatisticsTasks
 from tasks.investigation_ops import InvestigationOpsTasks
 from tasks.investigations import ProposalTasks
 from tasks.users import UserTasks
@@ -29,3 +30,7 @@ def dataset_tasks(test_logger):
 @pytest.fixture(scope="module")
 def internal_dataset_tasks(test_logger):
     return DatasetsInternalTasks(test_logger)
+
+@pytest.fixture(scope="module")
+def internal_statistics_tasks(test_logger):
+    return InternalStatisticsTasks(test_logger)
