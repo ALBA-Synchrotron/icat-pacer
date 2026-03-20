@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from exceptions.user import UserValidationError
+
 
 @dataclass
 class Affiliation:
@@ -11,6 +13,10 @@ class Affiliation:
     unit: str
     city: str
     country_code: str
+
+    def __post_init__(self):
+        if not self.id:
+            raise UserValidationError("Affiliation ID is required")
 
     def get_affiliation_name(self, limit: int = -1) -> str:
         ret: str = f"{', '.join(i for i in [self.name, self.unit, self.department_name] if i != '')}"
@@ -32,22 +38,22 @@ class UserContext:
 
     def __post_init__(self):
         if not self.first_name:
-            raise ValueError("First name is required")
+            raise UserValidationError("First name is required")
 
         if not self.last_name:
-            raise ValueError("Last name is required")
+            raise UserValidationError("Last name is required")
 
         if not self.email:
-            raise ValueError("Email is required")
+            raise UserValidationError("Email is required")
 
-        if not hasattr(self, "enabled"):
-            raise ValueError("Enabled is required")
+        if not hasattr(self, "enabled") or self.enabled is None:
+            raise UserValidationError("Enabled is required")
 
         if not self.uos_id:
-            raise ValueError("UOS ID is required")
+            raise UserValidationError("UOS ID is required")
 
         if not self.usernames:
-            raise ValueError("Usernames is required")
+            raise UserValidationError("Usernames is required")
 
         if not self.affiliation:
-            raise ValueError("Affiliation is required")
+            raise UserValidationError("Affiliation is required")

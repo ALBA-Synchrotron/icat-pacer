@@ -16,7 +16,7 @@ from helpers.logging.general import configure_pacer_logger
 from helpers.utils.pacer_consumer import PACERConsumer
 from helpers.utils.serializers import register_custom_serializers
 from helpers.utils.strings import mask_amqp_password
-from helpers.utils.utils import Singleton
+from helpers.utils.utils import Singleton, running_in_pytest
 
 MAIN_LOOP_WAIT_TIME: int = 15 * 60
 
@@ -35,9 +35,13 @@ class PACER:
     recipient_fw_rules: dict = {}
     __metaclass__ = Singleton
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
         config_location: str or None = os.environ.get("PACER_CONFIG_LOCATION", "config.yaml")
         self.config = ConfigParser.load_config(config_location)
+
+        if "broker_connection" in kwargs and running_in_pytest():
+            self.broker_connection = kwargs["broker_connection"]
+
         self.__initial_setup()
 
     def get_config_value(self, key: str, fallback_value: any = None, config: dict = None) -> any:
@@ -135,15 +139,16 @@ class PACER:
                 self.recipient_fw_rules[(from_exchange, with_routing_key)].append(to_broker)
 
     def __open_broker_connections(self) -> None:
-        if not isinstance(self.broker_connection, Connection):
-            self.__open_main_broker_connection()
-        else:
-            self.logger.error("Main broker connection not opened: A connection is already open")
+        if not running_in_pytest():
+            if not isinstance(self.broker_connection, Connection):
+                self.__open_main_broker_connection()
+            else:
+                self.logger.error("Main broker connection not opened: A connection is already open")
 
-        if not any(isinstance(value, Connection) for value in self.recipient_connections.values()):
-            self.__open_recipient_broker_connections()
-        else:
-            self.logger.error("Recipient broker connections not opened: Connections are already open")
+            if not any(isinstance(value, Connection) for value in self.recipient_connections.values()):
+                self.__open_recipient_broker_connections()
+            else:
+                self.logger.error("Recipient broker connections not opened: Connections are already open")
 
     def __create_exchanges(self) -> None:
         self.logger.info("Creating broker exchanges...")
@@ -193,7 +198,7 @@ class PACER:
 
         self.__open_icat_session()
 
-    def __get_queues_by_name(self, names: str or list) -> list:
+    def get_queues_by_name(self, names: str or list) -> list:
         if isinstance(names, str):
             names = [names]
         return list(filter(lambda q: q.name in names, self.queues))
@@ -207,7 +212,7 @@ class PACER:
             enabled: bool = consumer.get("enabled")
             worker_module_name: str = consumer.get("module")
             worker_class_name: str = consumer.get("className")
-            consumer_queues: list = self.__get_queues_by_name(consumer.get("queues"))
+            consumer_queues: list = self.get_queues_by_name(consumer.get("queues"))
             integrations: list = consumer.get("integrations", [])
 
             worker_module = importlib.import_module(worker_module_name)

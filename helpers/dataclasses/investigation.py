@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from exceptions.investigation import InvestigationValidationError
+
 
 @dataclass
 class InvestigationOperationsContext:
@@ -13,10 +15,10 @@ class InvestigationInstrumentContext:
 
     def __post_init__(self):
         if not self.name:
-            raise ValueError("Investigation's instrument name must be provided")
+            raise InvestigationValidationError("Investigation's instrument name must be provided")
 
         if not self.code:
-            raise ValueError("Investigation's instrument code must be provided")
+            raise InvestigationValidationError("Investigation's instrument code must be provided")
 
 @dataclass
 class InvestigationUserContext:
@@ -26,13 +28,13 @@ class InvestigationUserContext:
 
     def __post_init__(self):
         if not self.username:
-            raise ValueError("InvestigationUser's username must be provided")
+            raise InvestigationValidationError("InvestigationUser's username must be provided")
 
         if not self.email:
-            raise ValueError("InvestigationUser's email must be provided")
+            raise InvestigationValidationError("InvestigationUser's email must be provided")
 
         if not self.role:
-            raise ValueError("InvestigationUser's role must be provided")
+            raise InvestigationValidationError("InvestigationUser's role must be provided")
 
 @dataclass
 class InvestigationContext:
@@ -53,28 +55,28 @@ class InvestigationContext:
 
     def __post_init__(self):
         if not self.name:
-            raise ValueError("Investigation name must be provider")
+            raise InvestigationValidationError("Investigation name must be provided")
 
         if not self.facility:
-            raise ValueError("Investigation facility must be provided")
+            raise InvestigationValidationError("Investigation facility must be provided")
 
-        if not self.start_date:
-            raise ValueError("Investigation start date must be provided")
+        if self.start_date is None or self.start_date == "":
+            raise InvestigationValidationError("Investigation start date must be provided")
 
         if not self.end_date:
-            raise ValueError("Investigation end date must be provided")
+            raise InvestigationValidationError("Investigation end date must be provided")
 
         if not self.title:
-            raise ValueError("Investigation title must be provided")
+            raise InvestigationValidationError("Investigation title must be provided")
 
         if not self.summary:
-            raise ValueError("Investigation summary must be provided")
+            raise InvestigationValidationError("Investigation summary must be provided")
 
         if not self.instrument:
-            raise ValueError("Investigation instrument must be provided")
+            raise InvestigationValidationError("Investigation instrument must be provided")
 
         if not self.type:
-            raise ValueError("Investigation type must be provided")
+            raise InvestigationValidationError("Investigation type must be provided")
 
 
 

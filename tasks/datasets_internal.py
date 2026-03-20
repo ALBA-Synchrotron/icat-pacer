@@ -8,6 +8,7 @@ from pathlib import Path
 from icat.entity import Entity
 
 import globals_var
+from exceptions.dataset import DatasetValidationError, DatasetNotFound
 from helpers.dataclasses.dataset import DatasetContext, DatasetDatafileContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME, INPUT_DATASET_IDS_PARAMETER_NAME, \
@@ -30,13 +31,13 @@ class DatasetsInternalTasks:
         ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
-                    raise Exception("Dataset not found")
+                    raise DatasetNotFound("Dataset not found")
 
                 if is_duplicated:
                     self.logger.info("Duplicated dataset found, removing existing files")
@@ -79,7 +80,7 @@ class DatasetsInternalTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def __need_overwrite_dataset_metadata(self, icat_client: ICATClient, dataset: Entity,
                                           dataset_ctx: DatasetContext) -> bool:
@@ -90,7 +91,7 @@ class DatasetsInternalTasks:
                                                                        DATASET_PROCESSING_VERSION_PARAMETER_NAME,
                                                                        entity=rb.dataset, create_if_missing=False)
                 new_proc_version_param = next(
-                    x for x in dataset_ctx.parameters if x.name == DATASET_PROCESSING_VERSION_PARAMETER_NAME)
+                    (x for x in dataset_ctx.parameters if x.name == DATASET_PROCESSING_VERSION_PARAMETER_NAME), None)
 
                 if rb.existing_proc_version_param and new_proc_version_param:
                     # Overwrite dataset metadata with processing version
@@ -122,9 +123,9 @@ class DatasetsInternalTasks:
                                                               entity=rb.dataset, create_if_missing=False)
 
                     new_start_date_param = next(
-                        x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME)
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME), None)
                     new_end_date_param = next(
-                        x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME)
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME), None)
 
                     if rb.start_date_param:
                         rb.start_date_param = set_dataset_parameter(rb.start_date_param._obj,
@@ -139,19 +140,19 @@ class DatasetsInternalTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def create_dataset_parameters(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int,
                                   is_duplicated: bool, *_args, **_kwargs) -> None:
 
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
-                    raise Exception("Dataset not found")
+                    raise DatasetNotFound("Dataset not found")
 
                 if is_duplicated:
                     if not self.__need_overwrite_dataset_metadata(icat_client, rb.dataset._obj, dataset_ctx):
@@ -176,7 +177,7 @@ class DatasetsInternalTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def __link_output_dataset_to_input_dataset(self, icat_client: ICATClient, raw_dataset: Entity,
                                                processed_datasets: list[Entity]) -> None:
@@ -186,7 +187,7 @@ class DatasetsInternalTasks:
                                                                     entity=raw_dataset)
 
                 rb.output_dataset_ids_param = set_dataset_parameter(rb.output_dataset_ids_param._obj,
-                                                                    " ".join(i.id for i in processed_datasets))
+                                                                    " ".join(str(i.id) for i in processed_datasets))
 
                 rb.output_dataset_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_DATASETS_PARAMETER_NAME,
                                                                 entity=raw_dataset)
@@ -205,7 +206,7 @@ class DatasetsInternalTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def raw_dataset_linkage(self, icat_client: ICATClient, dataset_id: int, *_args,
                             **_kwargs) -> None:
@@ -213,29 +214,33 @@ class DatasetsInternalTasks:
         Link a raw dataset to its input_datasets
         """
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
+                if not rb.dataset:
+                    raise DatasetNotFound("Dataset not found")
+
                 investigation = rb.dataset.investigation
 
-                processed_datasets = icat_client.search("DatasetParameter", flatten_single=False, conditions={
+                processed_datasets_params = icat_client.search("DatasetParameter", flatten_single=False, conditions={
                     "dataset.investigation.id__eq": investigation.id,
                     "type.name__eq": INPUT_DATASET_PARAMETER_NAME,
                     "stringValue__eq": rb.dataset.location
                 })
-
-                if not processed_datasets:
+                if not processed_datasets_params:
                     return
+
+                processed_datasets = [i.dataset for i in processed_datasets_params]
 
                 self.logger.info(
                     f"Found {len(processed_datasets)} datasets for which input dataset parameter is location of dataset={dataset_id}")
 
-                for index, processed_dataset in enumerate(processed_datasets):
+                for index, dataset in enumerate(processed_datasets):
                     processed_dataset_input_ids_param = get_dataset_parameter(icat_client,
                                                                               INPUT_DATASET_IDS_PARAMETER_NAME,
-                                                                              entity=processed_dataset)
+                                                                              entity=dataset)
                     setattr(rb, f"processed_dataset_input_ids_param_{index}", processed_dataset_input_ids_param)
 
                     processed_dataset_input_ids_param = set_dataset_parameter(processed_dataset_input_ids_param,
@@ -250,7 +255,7 @@ class DatasetsInternalTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def processed_dataset_linkage(self, icat_client: ICATClient, dataset_id: int, *_args,
                                   **_kwargs) -> None:
@@ -258,11 +263,13 @@ class DatasetsInternalTasks:
         Link a processed dataset to its input_datasets
         """
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
+                if not rb.dataset:
+                    raise DatasetNotFound("Dataset not found")
 
                 input_dataset_param = get_dataset_parameter(icat_client, INPUT_DATASET_PARAMETER_NAME,
                                                             create_if_missing=False,
@@ -284,15 +291,16 @@ class DatasetsInternalTasks:
 
                 rb.input_dataset_ids_param = get_dataset_parameter(icat_client, INPUT_DATASET_IDS_PARAMETER_NAME,
                                                                    entity=rb.dataset._obj)
-                raw_datasets_ids = " ".join(i.id for i in raw_datasets)
-                rb.input_dataset_ids_param = set_dataset_parameter(rb.dataset._obj, raw_datasets_ids)
+                raw_datasets_ids = " ".join(str(i.id) for i in raw_datasets)
+                rb.input_dataset_ids_param = set_dataset_parameter(rb.input_dataset_ids_param._obj, raw_datasets_ids)
                 self.logger.info(f"Linked following raw datasets to dataset {dataset_id}: {raw_datasets_ids}")
 
-                self.__link_output_dataset_to_input_dataset(icat_client, raw_datasets, [rb.dataset._obj])
+                for raw_dataset in raw_datasets:
+                    self.__link_output_dataset_to_input_dataset(icat_client, raw_dataset, [rb.dataset._obj])
 
             except Exception as e:
                 rb.rollback_all(force_delete=True)
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e

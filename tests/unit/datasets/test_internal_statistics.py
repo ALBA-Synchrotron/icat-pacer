@@ -1,0 +1,182 @@
+import pytest
+
+from exceptions.dataset import DatasetNotFound, DatasetValidationError
+from helpers.static_settings import DATASET_NAME_PARAMETER, DATASET_FILE_COUNT_PARAMETER, DATASET_VOLUME_PARAMETER, \
+    DATASET_ELAPSE_TIME_PARAMETER, INVESTIGATION_DATASET_COUNT_PARAMETER, \
+    INVESTIGATION_ACQUISITION_DATASET_COUNT_PARAMETER, RAW_DATASET_TYPE_NAME, \
+    INVESTIGATION_PROCESSED_DATASET_COUNT_PARAMETER, INVESTIGATION_SAMPLE_COUNT_PARAMETER, \
+    INVESTIGATION_VOLUME_PARAMETER, INVESTIGATION_ACQUISITION_VOLUME_PARAMETER, \
+    INVESTIGATION_PROCESSED_VOLUME_PARAMETER, INVESTIGATION_ELAPSE_TIME_PARAMETER, INVESTIGATION_FILE_COUNT_PARAMETER, \
+    INVESTIGATION_ACQUISITION_FILE_COUNT_PARAMETER, INVESTIGATION_PROCESSED_FILE_COUNT_PARAMETER, \
+    SAMPLE_DATASET_COUNT_PARAMETER, SAMPLE_ACQUISITION_DATASET_COUNT_PARAMETER, \
+    SAMPLE_PROCESSED_DATASET_COUNT_PARAMETER, SAMPLE_FILE_COUNT_PARAMETER, SAMPLE_ACQUISITION_FILE_COUNT_PARAMETER, \
+    SAMPLE_PROCESSED_FILE_COUNT_PARAMETER, SAMPLE_VOLUME_PARAMETER, SAMPLE_ACQUISITION_VOLUME_PARAMETER, \
+    SAMPLE_PROCESSED_VOLUME_PARAMETER
+from helpers.utils.dataset import get_dataset_parameter
+from helpers.utils.investigation import get_investigation_parameter
+from helpers.utils.sample import get_sample_parameter
+
+
+@pytest.fixture
+def dataset_msg(request):
+    return request.getfixturevalue(request.param)
+
+
+class TestInternalStatisticsConsumer:
+
+    def test_update_dataset_statistics_missing_dataset_id(self, internal_statistics_tasks, icat_client):
+        with pytest.raises(DatasetValidationError):
+            internal_statistics_tasks.update_dataset_statistics(icat_client, None)
+
+    def test_update_dataset_statistics_non_existing_dataset(self, internal_statistics_tasks, icat_client):
+        with pytest.raises(DatasetNotFound):
+            internal_statistics_tasks.update_dataset_statistics(icat_client, 9999999)
+
+    def test_update_dataset_statistics(self, internal_statistics_tasks, icat_client, generate_raw_proc_datasets):
+        raw_datasets, _ = generate_raw_proc_datasets(7, 0, 4)
+        for raw_dataset in raw_datasets:
+            internal_statistics_tasks.update_dataset_statistics(icat_client, raw_dataset.id)
+
+            dataset_name_param = get_dataset_parameter(icat_client, DATASET_NAME_PARAMETER, entity=raw_dataset)
+            assert dataset_name_param.stringValue == raw_dataset.name
+            filecount_param = get_dataset_parameter(icat_client, DATASET_FILE_COUNT_PARAMETER, entity=raw_dataset)
+
+            assert filecount_param.stringValue == str(len(raw_dataset.datafiles))
+            volume_param = get_dataset_parameter(icat_client, DATASET_VOLUME_PARAMETER, entity=raw_dataset)
+
+            assert volume_param.stringValue == str(sum(i.fileSize for i in raw_dataset.datafiles))
+            elapsed_time_param = get_dataset_parameter(icat_client, DATASET_ELAPSE_TIME_PARAMETER, entity=raw_dataset)
+            assert elapsed_time_param.stringValue == str(
+                int((raw_dataset.endDate - raw_dataset.startDate).total_seconds()))
+
+    def test_update_investigation_statistics_missing_dataset_id(self, internal_statistics_tasks, icat_client):
+        with pytest.raises(DatasetValidationError):
+            internal_statistics_tasks.update_investigation_statistics(icat_client, None)
+
+    def test_update_investigation_statistics_non_existing_dataset(self, internal_statistics_tasks, icat_client):
+        with pytest.raises(DatasetNotFound):
+            internal_statistics_tasks.update_investigation_statistics(icat_client, 9999999)
+
+    def test_update_investigation_statistics(self, internal_statistics_tasks, icat_client, test_investigation_statistics):
+        raw_datasets, proc_datasets, expected_results = test_investigation_statistics
+        investigation = raw_datasets[0].investigation
+
+        for raw_dataset in raw_datasets + proc_datasets:
+            internal_statistics_tasks.update_dataset_statistics(icat_client, raw_dataset.id)
+        internal_statistics_tasks.update_investigation_statistics(icat_client, raw_datasets[0].id)
+
+        dataset_count_param = get_investigation_parameter(icat_client, INVESTIGATION_DATASET_COUNT_PARAMETER,
+                                                          entity=investigation)
+        assert dataset_count_param.stringValue == expected_results["total_datasets"]
+
+        acq_dataset_count_param = get_investigation_parameter(icat_client,
+                                                              INVESTIGATION_ACQUISITION_DATASET_COUNT_PARAMETER,
+                                                              entity=investigation)
+        assert acq_dataset_count_param.stringValue == expected_results["total_raw_datasets"]
+
+        proc_dataset_count_param = get_investigation_parameter(icat_client,
+                                                               INVESTIGATION_PROCESSED_DATASET_COUNT_PARAMETER,
+                                                               entity=investigation)
+        assert proc_dataset_count_param.stringValue == expected_results["total_proc_datasets"]
+
+        sample_count_param = get_investigation_parameter(icat_client,
+                                                         INVESTIGATION_SAMPLE_COUNT_PARAMETER,
+                                                         entity=investigation)
+        assert sample_count_param.stringValue == expected_results["total_samples"]
+
+        inv_vol_param = get_investigation_parameter(icat_client,
+                                                    INVESTIGATION_VOLUME_PARAMETER,
+                                                    entity=investigation)
+        assert inv_vol_param.stringValue == expected_results["total_volume"]
+
+        acq_vol_param = get_investigation_parameter(icat_client,
+                                                    INVESTIGATION_ACQUISITION_VOLUME_PARAMETER,
+                                                    entity=investigation)
+        assert acq_vol_param.stringValue == expected_results["total_raw_volume"]
+
+        proc_vol_param = get_investigation_parameter(icat_client,
+                                                     INVESTIGATION_PROCESSED_VOLUME_PARAMETER,
+                                                     entity=investigation)
+        assert proc_vol_param.stringValue == expected_results["total_proc_volume"]
+
+        inv_elapsed_time_param = get_investigation_parameter(icat_client,
+                                                             INVESTIGATION_ELAPSE_TIME_PARAMETER,
+                                                             entity=investigation)
+        assert inv_elapsed_time_param.stringValue == expected_results["total_elapsed_time"]
+
+        file_count_param = get_investigation_parameter(icat_client,
+                                                       INVESTIGATION_FILE_COUNT_PARAMETER,
+                                                       entity=investigation)
+        assert file_count_param.stringValue == expected_results["total_file_count"]
+
+        acq_file_count_param = get_investigation_parameter(icat_client,
+                                                           INVESTIGATION_ACQUISITION_FILE_COUNT_PARAMETER,
+                                                           entity=investigation)
+        assert acq_file_count_param.stringValue == expected_results["total_raw_file_count"]
+
+        proc_file_count_param = get_investigation_parameter(icat_client,
+                                                            INVESTIGATION_PROCESSED_FILE_COUNT_PARAMETER,
+                                                            entity=investigation)
+        assert proc_file_count_param.stringValue == expected_results["total_proc_file_count"]
+
+    def test_update_sample_statistics_missing_dataset_id(self, internal_statistics_tasks, icat_client):
+        with pytest.raises(DatasetValidationError):
+            internal_statistics_tasks.update_sample_statistics(icat_client, None)
+
+    def test_update_sample_statistics_non_existing_dataset(self, internal_statistics_tasks, icat_client):
+        with pytest.raises(DatasetNotFound):
+            internal_statistics_tasks.update_sample_statistics(icat_client, 9999999)
+
+    def test_update_sample_statistics(self, internal_statistics_tasks, icat_client, test_investigation_statistics):
+        raw_datasets, proc_datasets, expected_results = test_investigation_statistics
+        investigation = raw_datasets[0].investigation
+        sample = investigation.samples[0] # According to fixture definition, only one sample here
+
+        for dataset in raw_datasets + proc_datasets:
+            internal_statistics_tasks.update_dataset_statistics(icat_client, dataset.id)
+            internal_statistics_tasks.update_sample_statistics(icat_client, dataset.id)
+
+        sample_dataset_count_param = get_sample_parameter(icat_client,
+                                                          SAMPLE_DATASET_COUNT_PARAMETER,
+                                                          entity=sample)
+        assert sample_dataset_count_param.stringValue == expected_results["sample_dataset_count"]
+
+        sample_acq_dataset_count_param = get_sample_parameter(icat_client,
+                                                              SAMPLE_ACQUISITION_DATASET_COUNT_PARAMETER,
+                                                              entity=sample)
+        assert sample_acq_dataset_count_param.stringValue == expected_results["sample_raw_dataset_count"]
+
+        sample_proc_dataset_count_param = get_sample_parameter(icat_client,
+                                                               SAMPLE_PROCESSED_DATASET_COUNT_PARAMETER,
+                                                               entity=sample)
+        assert sample_proc_dataset_count_param.stringValue == expected_results["sample_proc_dataset_count"]
+
+        sample_file_count_param = get_sample_parameter(icat_client,
+                                                       SAMPLE_FILE_COUNT_PARAMETER,
+                                                       entity=sample)
+        assert sample_file_count_param.stringValue == expected_results["sample_total_file_count"]
+
+        sample_acq_file_count_param = get_sample_parameter(icat_client,
+                                                           SAMPLE_ACQUISITION_FILE_COUNT_PARAMETER,
+                                                           entity=sample)
+        assert sample_acq_file_count_param.stringValue == expected_results["sample_total_raw_file_count"]
+
+        sample_proc_file_count_param = get_sample_parameter(icat_client,
+                                                            SAMPLE_PROCESSED_FILE_COUNT_PARAMETER,
+                                                            entity=sample)
+        assert sample_proc_file_count_param.stringValue == expected_results["sample_total_proc_file_count"]
+
+        sample_vol_param = get_sample_parameter(icat_client,
+                                                SAMPLE_VOLUME_PARAMETER,
+                                                entity=sample)
+        assert sample_vol_param.stringValue == expected_results["sample_total_volume"]
+
+        sample_acq_vol_param = get_sample_parameter(icat_client,
+                                                    SAMPLE_ACQUISITION_VOLUME_PARAMETER,
+                                                    entity=sample)
+        assert sample_acq_vol_param.stringValue == expected_results["sample_total_raw_volume"]
+
+        sample_proc_vol_param = get_sample_parameter(icat_client,
+                                                    SAMPLE_PROCESSED_VOLUME_PARAMETER,
+                                                    entity=sample)
+        assert sample_proc_vol_param.stringValue == expected_results["sample_total_proc_volume"]

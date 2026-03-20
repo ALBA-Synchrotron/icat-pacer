@@ -4,6 +4,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 
 import globals_var
+from exceptions.investigation import InvestigationValidationError
 from helpers.dataclasses.investigation import InvestigationContext, InvestigationInstrumentContext, \
     InvestigationUserContext
 from helpers.static_settings import ICAT_USER_ROLE_PARTICIPANT
@@ -31,11 +32,11 @@ def create_investigation_context(investigation_data: str | dict,
 
     investigation_name: str = f"{name_prefix}{investigation_dict.get('name')}"
     facility_name: str = investigation_dict.get('facility', ingestion_settings.get("defaultFacilityName", ""))
-    start_date_str: str = investigation_dict.get("start_date", "")
-    end_date_str: str = investigation_dict.get("end_date", "")
+    start_date_str: str = investigation_dict.get("start_date")
+    end_date_str: str = investigation_dict.get("end_date")
     investigation_title: str = investigation_dict.get("title", "")
     investigation_summary: str = investigation_dict.get("summary", "")
-    instrument: dict = investigation_dict.get("instrument", {})
+    instrument: dict = investigation_dict.get("instrument")
     investigation_type: str = investigation_dict.get("type", "")
     investigation_user_list: list = investigation_dict.get("user_list", [])
     investigation_visit_count: int = investigation_dict.get("visit_count", 0)
@@ -47,6 +48,9 @@ def create_investigation_context(investigation_data: str | dict,
         InvestigationUserContext(username=i.get("username", ""), email=i.get("email", ""), role=i.get("role", ""))
         for i in investigation_user_list]
 
+    if not start_date_str or not end_date_str:
+        raise InvestigationValidationError("Start and end dates must be provided")
+
     start_date: datetime = try_parse_datetime(start_date_str)
     end_date: datetime = try_parse_datetime(end_date_str)
 
@@ -55,6 +59,9 @@ def create_investigation_context(investigation_data: str | dict,
         release_date: datetime = try_parse_datetime(release_date_str)
     else:
         release_date: datetime = end_date + relativedelta(years=ingestion_settings.get("defaultEmbargoYears", 9999))
+
+    if not instrument:
+        raise InvestigationValidationError("Instrument must be provided")
 
     inv_ctx = InvestigationContext(
         name=investigation_name,

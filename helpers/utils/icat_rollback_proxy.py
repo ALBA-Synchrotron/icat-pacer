@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, suppress
 from logging import Logger
 from typing import TypeVar
 
@@ -63,7 +63,7 @@ class ICATRollbackContext(AbstractContextManager):
         if key in self.__annotations__:
             object.__setattr__(self, key, value)
         else:
-            if value.__module__ != "icat.entities":
+            if value is not None and value.__module__ != "icat.entities":
                 raise ValueError(f"Object with {key} is not an ICAT entity")
 
             if key not in self._rollbackable_objects:
@@ -81,7 +81,9 @@ class ICATRollbackContext(AbstractContextManager):
             object.__getattribute__(self, key)
         else:
             if key in self._rollbackable_objects:
-                return _TrackedObjectProxy(self._rollbackable_objects[key][-1].copy(), self, key)
+                with suppress(AttributeError):
+                    return _TrackedObjectProxy(self._rollbackable_objects[key][-1].copy(), self, key)
+                return self._rollbackable_objects[key][-1]
         raise AttributeError(f"Object with {key} doesn't exist")
 
     def __icat_entity_rollback(self, previous_entity: Entity, latest_entity: Entity, force_delete: bool) -> None:
