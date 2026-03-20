@@ -205,11 +205,14 @@ def test_investigation_overlapping_2(icat_client, icat_facility, random_instrume
     inv_instr.create()
     return investigation
 
+
 @pytest.fixture()
 def raw_dataset(icat_client, test_investigation, dataset_type_raw, random_str):
-    dataset = icat_client.new("Dataset", name=f"test_dataset_{random_str}", type=dataset_type_raw, investigation=test_investigation)
+    dataset = icat_client.new("Dataset", name=f"test_dataset_{random_str}", type=dataset_type_raw,
+                              investigation=test_investigation)
     dataset.create()
     return dataset
+
 
 @pytest.fixture()
 def proc_dataset(icat_client, test_investigation, dataset_type_processed, random_str):
@@ -232,22 +235,43 @@ def test_parameter_types(icat_client, icat_facility):
 
 @pytest.fixture()
 def generate_raw_proc_datasets(icat_client, test_investigation, random_str, dataset_type_raw, dataset_type_processed):
-
-    def create_datasets(amount_raw: int = 1, amount_proc: int = 1, datafile_amount: int = 0):
+    def create_datasets(amount_raw: int = 1, amount_proc: int = 1, datafile_amount: int = 0, investigation=None,
+                        file_size: int = 1000, amount_raw_samples: int = 1, amount_proc_samples: int = 1,
+                        start_date=None, end_date=None):
         raw_datasets, proc_datasets = [], []
-        start_date = datetime.datetime(day=23, month=9, year=2025, hour=7, minute=0, second=0, microsecond=0)
-        end_date = datetime.datetime(day=23, month=9, year=2025, hour=11, minute=0, second=0, microsecond=0)
+        raw_samples, proc_samples = [], []
+
+        if not start_date:
+            start_date = datetime.datetime(day=23, month=9, year=2025, hour=7, minute=0, second=0, microsecond=0)
+        if not end_date:
+            end_date = datetime.datetime(day=23, month=9, year=2025, hour=11, minute=0, second=0, microsecond=0)
+
+        if not investigation:
+            investigation = test_investigation
+
+        for i in range(amount_raw_samples):
+            raw_sample = icat_client.new("Sample", name=f"raw_sample_{random_str}_{i}", investigation=investigation)
+            raw_sample.create()
+            raw_samples.append(raw_sample)
+
+        for i in range(amount_proc_samples):
+            proc_sample = icat_client.new("Sample", name=f"proc_sample_{random_str}_{i}", investigation=investigation)
+            proc_sample.create()
+            proc_samples.append(proc_sample)
+
         for i in range(amount_raw):
             raw_dataset = icat_client.new("Dataset", name=f"raw_{random_str}_{i}", type=dataset_type_raw,
-                                          investigation=test_investigation, location=f"/tmp/raw_{random_str}/{i}/",
-                                          startDate=start_date, endDate=end_date)
+                                          investigation=investigation, location=f"/tmp/raw_{random_str}/{i}/",
+                                          startDate=start_date, endDate=end_date,
+                                          sample=raw_samples[i % len(raw_samples)])
             raw_dataset.create()
             raw_datasets.append(raw_dataset)
 
         for i in range(amount_proc):
             proc_dataset = icat_client.new("Dataset", name=f"proc_{random_str}_{i}", type=dataset_type_processed,
-                                           investigation=test_investigation, location=f"/tmp/proc_{random_str}/{i}/",
-                                           startDate=start_date, endDate=end_date)
+                                           investigation=investigation, location=f"/tmp/proc_{random_str}/{i}/",
+                                           startDate=start_date, endDate=end_date,
+                                           sample=proc_samples[i % len(proc_samples)])
             proc_dataset.create()
             proc_datasets.append(proc_dataset)
 
@@ -255,7 +279,7 @@ def generate_raw_proc_datasets(icat_client, test_investigation, random_str, data
             for i in raw_datasets + proc_datasets:
                 for j in range(datafile_amount):
                     datafile = icat_client.new("Datafile", name=f"datafile_{random_str}_{j}", dataset=i,
-                                               fileSize=random.randint(1000, 1000000))
+                                               fileSize=file_size)
                     datafile.create()
 
         return raw_datasets[0] if len(raw_datasets) == 1 else raw_datasets, proc_datasets[0] if len(
@@ -277,3 +301,44 @@ def create_raw_proc_datasets_relation(icat_client):
         set_dataset_parameter(proc_input_dataset_param, ",".join(i.location for i in datasets))
 
     return create_raw_proc_datasets_relation
+
+
+@pytest.fixture()
+def test_investigation_statistics(icat_client, test_parameter_types, random_str, generate_raw_proc_datasets,
+                                  icat_facility, icat_unittest_investigation_type):
+    amount_raw = 3
+    amount_proc = 3
+    file_size = 26
+    samples_raw = 1
+    samples_proc = 2
+    datafile_amount = 3
+    start_date = datetime.datetime(day=23, month=9, year=2025, hour=7, minute=0, second=0, microsecond=0)
+    end_date = datetime.datetime(day=23, month=9, year=2025, hour=11, minute=0, second=0, microsecond=0)
+
+    expected_statistics = {}
+
+    inv = icat_client.new("Investigation", name=f"inv-statistics-{random_str}", title="unittest",
+                          visitId=f"inv-statistics-{random_str}",
+                          facility=icat_facility, type=icat_unittest_investigation_type)
+    inv.create()
+
+    raw_datasets, proc_datasets = generate_raw_proc_datasets(amount_raw=amount_raw, amount_proc=amount_proc,
+                                                             datafile_amount=datafile_amount,
+                                                             investigation=inv, file_size=file_size,
+                                                             amount_raw_samples=samples_raw,
+                                                             amount_proc_samples=samples_proc, start_date=start_date,
+                                                             end_date=end_date)
+
+    expected_statistics["total_datasets"] = str(amount_raw + amount_proc)
+    expected_statistics["total_raw_datasets"] = str(amount_raw)
+    expected_statistics["total_proc_datasets"] = str(amount_proc)
+    expected_statistics["total_samples"] = str(samples_raw + samples_proc)
+    expected_statistics["total_volume"] = str(datafile_amount * file_size * (amount_raw + amount_proc))
+    expected_statistics["total_raw_volume"] = str(datafile_amount * file_size * amount_raw)
+    expected_statistics["total_proc_volume"] = str(datafile_amount * file_size * amount_proc)
+    expected_statistics["total_elapsed_time"] = str(int((end_date - start_date).total_seconds()) * (amount_raw + amount_proc))
+    expected_statistics["total_file_count"] = str(datafile_amount * (amount_raw + amount_proc))
+    expected_statistics["total_raw_file_count"] = str(datafile_amount * amount_raw)
+    expected_statistics["total_proc_file_count"] = str(datafile_amount * amount_proc)
+
+    return raw_datasets, proc_datasets, expected_statistics
