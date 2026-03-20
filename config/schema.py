@@ -276,6 +276,20 @@ config_yaml_schema: dict = {
                     "searchApiUrl": {"type": "string", "required": False},
                 }
             },
+            "icatPlus": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "server": {
+                        "type": "dict",
+                        "required": False,
+                        "schema": {
+                            "url": {"type": "string", "required": True},
+                            "apiKey": {"type": "string", "required": True},
+                        }
+                    }
+                }
+            }
         }
     }
 }

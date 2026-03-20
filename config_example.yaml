@@ -107,6 +107,7 @@ consumers:
     integrations:
       - "dashboard"
       - "icat"
+      - "icatPlus"
   - className: "InternalStatisticsConsumer"
     module: "consumers.internal_statistics"
     enabled: true
