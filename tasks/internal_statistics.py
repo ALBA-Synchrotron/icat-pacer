@@ -242,13 +242,15 @@ class InternalStatisticsTasks:
 
     def update_sample_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **_kwargs) -> None:
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
-            dataset_sample = rb.dataset.sample
+
             if not rb.dataset:
-                raise Exception("Dataset not found")
+                raise DatasetNotFound("Dataset not found")
+
+            dataset_sample = rb.dataset.sample
 
             try:
                 # Total number of datasets referencing sample
@@ -381,7 +383,7 @@ class InternalStatisticsTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     """
     def update_per_dataset_parameter_statistics(self, icat_client: ICATClient, investigation_name: str, dataset_id: int,
