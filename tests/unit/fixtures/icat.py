@@ -327,7 +327,7 @@ def test_investigation_statistics(icat_client, test_parameter_types, random_str,
     expected_statistics["total_raw_volume"] = str(datafile_amount * file_size * amount_raw)
     expected_statistics["total_proc_volume"] = str(datafile_amount * file_size * amount_proc)
     expected_statistics["total_elapsed_time"] = str(
-        int((end_date - start_date).total_seconds()) * (amount_raw + amount_proc))
+        int((end_date - start_date).total_seconds()) * (amount_raw + amount_proc) * 1000)
     expected_statistics["total_file_count"] = str(datafile_amount * (amount_raw + amount_proc))
     expected_statistics["total_raw_file_count"] = str(datafile_amount * amount_raw)
     expected_statistics["total_proc_file_count"] = str(datafile_amount * amount_proc)

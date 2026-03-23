@@ -47,7 +47,7 @@ class TestInternalStatisticsConsumer:
             assert volume_param.stringValue == str(sum(i.fileSize for i in raw_dataset.datafiles))
             elapsed_time_param = get_dataset_parameter(icat_client, DATASET_ELAPSE_TIME_PARAMETER, entity=raw_dataset)
             assert elapsed_time_param.stringValue == str(
-                int((raw_dataset.endDate - raw_dataset.startDate).total_seconds()))
+                int((raw_dataset.endDate - raw_dataset.startDate).total_seconds()) * 1000)
 
     def test_update_investigation_statistics_missing_dataset_id(self, internal_statistics_tasks, icat_client):
         with pytest.raises(DatasetValidationError):

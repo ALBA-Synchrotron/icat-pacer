@@ -7,7 +7,7 @@ class TestICATUserSync:
         user_ctx = create_user_context(valid_user)
 
         users = icat_client.search("User", conditions={"email__eq": user_ctx.email}, flatten_single=False)
-        assert users is None
+        assert len(users) == 0
 
         user_tasks.sync_user_icat(icat_client, user_ctx)
 
