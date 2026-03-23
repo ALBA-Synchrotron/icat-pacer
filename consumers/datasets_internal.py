@@ -67,6 +67,15 @@ class InternalDatasetsConsumer(PACERConsumer):
 
         self.tasks.create_dataset_parameters(self.icat_client, dataset_ctx, dataset_id, is_duplicated)
 
+    def callback_func_create_dataset_gallery(self, _body, message: Message, *_args, **_kwargs) -> None:
+        self.logger.info(
+            f"callback_func_create_dataset_gallery > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+        dataset_str: str = message.payload or message.body
+        dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
+        dataset_id: int = message.headers.get("dataset_id", 0)
+        self.tasks.create_dataset_gallery(self.icat_plus_client, self.icat_client, dataset_ctx, dataset_id)
+
+
     def callback_func_dataset_linkage(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
             f"callback_func_dataset_linkage > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")

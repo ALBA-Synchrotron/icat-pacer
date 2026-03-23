@@ -21,7 +21,7 @@ class ICATPlusClient:
         self.logger = logger
 
     def upload_gallery_files(self, file_paths: list[str], dataset_ctx: DatasetContext,
-                             direct_link: bool = False) -> str | None:
+                             direct_link: bool = True) -> str | None:
         base_url: str = f"{self.url}/dataacquisition/{self.api_key}/base64"
 
         params: dict = {

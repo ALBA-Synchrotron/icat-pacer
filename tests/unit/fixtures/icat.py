@@ -4,6 +4,7 @@ import os
 import random
 import tempfile
 import time
+from unittest.mock import patch
 
 import pytest
 import requests
@@ -335,10 +336,20 @@ def test_investigation_statistics(icat_client, test_parameter_types, random_str,
     expected_statistics["sample_raw_dataset_count"] = str(amount_raw)
     expected_statistics["sample_proc_dataset_count"] = str(amount_proc)
     expected_statistics["sample_total_file_count"] = str(datafile_amount * (amount_raw + amount_proc))
-    expected_statistics["sample_total_raw_file_count"] = str(datafile_amount * amount_raw )
+    expected_statistics["sample_total_raw_file_count"] = str(datafile_amount * amount_raw)
     expected_statistics["sample_total_proc_file_count"] = str(datafile_amount * amount_proc)
     expected_statistics["sample_total_volume"] = str(datafile_amount * file_size * (amount_raw + amount_proc))
     expected_statistics["sample_total_raw_volume"] = str(datafile_amount * file_size * amount_raw)
     expected_statistics["sample_total_proc_volume"] = str(datafile_amount * file_size * amount_proc)
 
     return raw_datasets, proc_datasets, expected_statistics
+
+
+@pytest.fixture()
+def mock_icat_plus_client():
+    with patch("helpers.integrations.icat.icat_plus.ICATPlusClient") as MockICATPlusClient:
+        mock_client = MockICATPlusClient.return_value
+
+        mock_client.upload_gallery_files.return_value = "0x18A"
+
+        yield mock_client

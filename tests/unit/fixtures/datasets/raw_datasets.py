@@ -138,7 +138,7 @@ def ingestion_files_for_testing():
         gallery_folder.mkdir(exist_ok=True)
 
         assets_folder = Path(__file__).resolve().parents[1] / "assets"
-        for img in ["image1.png", "image2.png"]:
+        for img in ["image1.png", "image2.png", "image3.png"]:
             shutil.copy(assets_folder / img, gallery_folder / img)
 
         yield dataset_location, created_files

@@ -168,7 +168,20 @@ config_yaml_schema: dict = {
                     "internalStatisticsRoutingKey": {"type": "string", "required": True},
                     "internalDatasetLinksRoutingKey": {"type": "string", "required": True},
                     "automaticDatasetLocationIndex": {"type": "boolean", "required": True},
-                    "maxDatafilesPerDataset": {"type": "integer", "required": True}
+                    "maxDatafilesPerDataset": {"type": "integer", "required": True},
+                    "galleryFolderName": {"type": "string", "required": True, "default": "gallery"},
+                    "galleryAcceptedUploadTypes": {
+                        "type": "list",
+                        "default": [
+                            ".jpg", ".jpeg", ".png", ".gif", ".bmp",
+                            ".tiff", ".tif", ".webp", ".svg", ".ico",
+                            ".heic", ".heif",
+                            ".cr2", ".nef", ".arw", ".dng"
+                        ],
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                 }
             },
             "investigation": {

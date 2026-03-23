@@ -1,6 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import glob
 import logging
 import os
 from pathlib import Path
@@ -11,12 +10,13 @@ import globals_var
 from exceptions.dataset import DatasetValidationError, DatasetNotFound
 from helpers.dataclasses.dataset import DatasetContext, DatasetDatafileContext
 from helpers.integrations.icat.extended_client import ICATClient
+from helpers.integrations.icat.icat_plus import ICATPlusClient
 from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME, INPUT_DATASET_IDS_PARAMETER_NAME, \
     OUTPUT_DATASET_IDS_PARAMETER_NAME, OUTPUT_DATASET_DATASETS_PARAMETER_NAME, OUTPUT_DATASET_NAMES_PARAMETER_NAME, \
     DATASET_PROCESSING_VERSION_PARAMETER_NAME, DATASET_PARAMETER_START_DATE_PARAMETER_NAME, \
-    DATASET_PARAMETER_END_DATE_PARAMETER_NAME
-from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter, \
-    get_duplicated_processed_dataset_in_investigation
+    DATASET_PARAMETER_END_DATE_PARAMETER_NAME, DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS, \
+    DATASET_PARAMETER_RESOURCE_GALLERY
+from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 
 
@@ -76,7 +76,7 @@ class DatasetsInternalTasks:
                     self.logger.info(f"Created datafile {dataset_ctx.location} with id {new_datafile.id}")
 
             except Exception as e:
-                rb.rollback_all(force_delete=True)
+                rb.rollback_all(force_delete=(not is_duplicated))
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
@@ -123,20 +123,23 @@ class DatasetsInternalTasks:
                                                               entity=rb.dataset, create_if_missing=False)
 
                     new_start_date_param = next(
-                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME), None)
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME),
+                        None)
                     new_end_date_param = next(
-                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME), None)
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME),
+                        None)
 
                     if rb.start_date_param:
                         rb.start_date_param = set_dataset_parameter(rb.start_date_param._obj,
-                                                                    new_start_date_param.value)
+                                                                    new_start_date_param.stringValue)
 
                     if rb.end_date_param:
-                        rb.end_date_param = set_dataset_parameter(rb.end_date_param._obj, new_end_date_param.value)
+                        rb.end_date_param = set_dataset_parameter(rb.end_date_param._obj,
+                                                                  new_end_date_param.stringValue)
                     return False
 
             except Exception as e:
-                rb.rollback_all(force_delete=True)
+                rb.rollback_all()
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
@@ -173,7 +176,7 @@ class DatasetsInternalTasks:
                 self.logger.info(f"Created following parameters for dataset {dataset_ctx.parameters}")
 
             except Exception as e:
-                rb.rollback_all(force_delete=True)
+                rb.rollback_all(force_delete=(not is_duplicated))
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
@@ -301,6 +304,82 @@ class DatasetsInternalTasks:
             except Exception as e:
                 rb.rollback_all(force_delete=True)
 
+                error_msg: str = f"Error: {e}"
+                self.logger.error(error_msg)
+                raise e
+
+    def create_dataset_gallery(self, client: ICATPlusClient, icat_client: ICATClient, dataset_ctx: DatasetContext,
+                               dataset_id: int,
+                               *_args, **_kwargs) -> None:
+        ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
+
+        if not dataset_id:
+            raise DatasetValidationError("Dataset ID not received")
+
+        with ICATRollbackContext(icat_client, self.logger) as rb:
+            try:
+                rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
+                if not rb.dataset:
+                    raise DatasetNotFound("Dataset not found")
+
+                dataset_resources_gallery_file_paths_param = get_dataset_parameter(icat_client,
+                                                                                   DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS,
+                                                                                   create_if_missing=False,
+                                                                                   entity=rb.dataset._obj)
+                file_paths: list = []
+                if dataset_resources_gallery_file_paths_param and dataset_resources_gallery_file_paths_param.stringValue:
+                    file_paths: list[str] = dataset_resources_gallery_file_paths_param.stringValue.split(",")
+
+                    self.logger.info(
+                        f"Processing gallery for dataset {dataset_ctx.name}, given {len(file_paths)} files")
+
+                else:
+                    self.logger.info(
+                        f"No ResourcesGalleryFilePaths parameter found for dataset {dataset_ctx.name}, checking default location")
+
+                    location: Path = Path(dataset_ctx.location)
+
+                    if location.exists() and location.is_dir():
+                        location = location / ingestion_settings.get("galleryFolderName", "gallery")
+                        if location.exists() and location.is_dir():
+
+                            allowed_extensions: list = ingestion_settings.get("galleryAcceptedUploadTypes", [])
+                            file_paths = [
+                                f for f in location.rglob("*")
+                                if f.is_file() and f.suffix in allowed_extensions
+                            ]
+
+                            if not file_paths:
+                                self.logger.info(f"No files found in gallery folder for dataset {dataset_ctx.name}")
+                                return
+                        else:
+                            self.logger.info("No gallery folder found in dataset location, skipping gallery upload")
+                            return
+
+                self.logger.info(
+                    f"Processing gallery for dataset {dataset_ctx.name}, found {len(file_paths)} files.")
+                if file_paths:
+                    resource_ids: str = client.upload_gallery_files(file_paths, dataset_ctx)
+
+                    if resource_ids:
+                        rb.resources_gallery_file_paths_param = get_dataset_parameter(icat_client,
+                                                                                      DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS,
+                                                                                      entity=rb.dataset._obj)
+                        rb.resources_gallery_file_paths_param = set_dataset_parameter(
+                            rb.resources_gallery_file_paths_param._obj, ",".join(str(i) for i in file_paths))
+                        self.logger.info(
+                            f"Set dataset parameter {DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS} with resource IDs: {resource_ids}")
+
+                        rb.resources_gallery_param = get_dataset_parameter(icat_client,
+                                                                           DATASET_PARAMETER_RESOURCE_GALLERY,
+                                                                           entity=rb.dataset._obj)
+                        rb.resources_gallery_param = set_dataset_parameter(
+                            rb.resources_gallery_param._obj, resource_ids)
+                        self.logger.info(
+                            f"Set dataset parameter {DATASET_PARAMETER_RESOURCE_GALLERY} with resource IDs: {resource_ids}")
+
+            except Exception as e:
+                rb.rollback_all(force_delete=True)
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
                 raise e
