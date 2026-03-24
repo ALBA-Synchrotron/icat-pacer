@@ -63,7 +63,6 @@ class InternalDatasetLinksTasks:
         updated_dataset_map = {**dataset_map}
 
         current_dataset_data = updated_dataset_map.get(dataset_id, {}).copy()
-        current_dataset_data[link_param_name] = dataset_link_ids
         current_dataset_data[DATASET_NAME_PARAMETER] = dataset_name
 
         for link_id in {int(i) for i in dataset_link_ids}:
@@ -82,9 +81,6 @@ class InternalDatasetLinksTasks:
         return dataset_link_ids, updated_dataset_map
 
     def __build_dataset_links_map(self, icat_client: ICATClient, dataset_id: int) -> dict:
-        if not dataset_id:
-            raise DatasetValidationError("Dataset ID not received")
-
         dataset_map = {}
 
         parameters = [
@@ -164,6 +160,8 @@ class InternalDatasetLinksTasks:
                     dataset_info: dict = datasets_map[map_dataset_id]
 
                     for param in parameters:
+                        if param not in dataset_info:
+                            dataset_info[param] = []
                         param_value: str = " ".join(str(i) for i in dataset_info[param])
 
                         if param_value:

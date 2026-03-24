@@ -188,21 +188,21 @@ class DatasetsInternalTasks:
             try:
                 rb.output_dataset_ids_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_IDS_PARAMETER_NAME,
                                                                     entity=raw_dataset)
-
+                output_dataset_ids_value = f"{rb.output_dataset_ids_param._obj.stringValue or ''} {' '.join(str(i.id) for i in processed_datasets)}"
                 rb.output_dataset_ids_param = set_dataset_parameter(rb.output_dataset_ids_param._obj,
-                                                                    " ".join(str(i.id) for i in processed_datasets))
+                                                                    output_dataset_ids_value.strip())
 
                 rb.output_dataset_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_DATASETS_PARAMETER_NAME,
                                                                 entity=raw_dataset)
-
+                output_dataset_value = f"{rb.output_dataset_param._obj.stringValue or ''} {' '.join(i.location for i in processed_datasets)}"
                 rb.output_dataset_param = set_dataset_parameter(rb.output_dataset_param._obj,
-                                                                " ".join(i.location for i in processed_datasets))
+                                                                output_dataset_value.strip())
 
                 rb.output_dataset_names_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_NAMES_PARAMETER_NAME,
                                                                       entity=raw_dataset)
-
+                output_dataset_names_value = f"{rb.output_dataset_names_param._obj.stringValue or ''} {' '.join(i.name for i in processed_datasets)}"
                 rb.output_dataset_names_param = set_dataset_parameter(rb.output_dataset_names_param._obj,
-                                                                      " ".join(i.name for i in processed_datasets))
+                                                                      output_dataset_names_value.strip())
 
             except Exception as e:
                 rb.rollback_all(force_delete=True)
