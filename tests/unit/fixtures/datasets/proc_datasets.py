@@ -7,7 +7,7 @@ def json_proc_dataset(ingestion_files_for_testing, test_investigation, raw_datas
     return {
         "investigation": test_investigation.name,
         "instrument": test_investigation.investigationInstruments[0].instrument.name,
-        "name": f"mxau_241222_json_{random_str}",
+        "name": f"mxau_241222_json_{random_str()}",
         "parameters": [
             {
                 "name": "input_datasets",
@@ -53,7 +53,7 @@ def xml_proc_dataset(ingestion_files_for_testing, test_investigation, raw_datase
         <dataset>
             <investigation>{test_investigation.name}</investigation>
             <instrument>{test_investigation.investigationInstruments[0].instrument.name}</instrument>
-            <name>mxau_241222_xml_{random_str}</name>
+            <name>mxau_241222_xml_{random_str()}</name>
             <parameter>
                     <name>input_datasets</name>
                     <value>{raw_dataset.id}</value>
