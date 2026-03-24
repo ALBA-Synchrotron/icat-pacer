@@ -5,6 +5,8 @@ from itertools import chain
 import requests
 from requests import Response
 
+from exceptions.integrations import DataciteClientError
+
 
 class DataciteClient:
     data_catalogue_doi_base_url: str
@@ -107,7 +109,7 @@ class DataciteClient:
         if resp.status_code != 201:
             error_msg: str = f"Error creating DOI {doi}, error: {resp.text}"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise DataciteClientError(error_msg)
 
 
 def get_datacite_client(config: dict, logger: logging.Logger) -> DataciteClient | None:

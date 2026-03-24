@@ -138,7 +138,7 @@ def ingestion_files_for_testing():
         gallery_folder.mkdir(exist_ok=True)
 
         assets_folder = Path(__file__).resolve().parents[1] / "assets"
-        for img in ["image1.png", "image2.png"]:
+        for img in ["image1.png", "image2.png", "image3.png"]:
             shutil.copy(assets_folder / img, gallery_folder / img)
 
         yield dataset_location, created_files
@@ -150,7 +150,7 @@ def json_raw_dataset(ingestion_files_for_testing, test_investigation, test_param
     return {
         "investigation": test_investigation.name,
         "instrument": test_investigation.investigationInstruments[0].instrument.name,
-        "name": f"mxau_241222_json_{random_str}",
+        "name": f"mxau_241222_json_{random_str()}",
         "parameters": [
             {
                 "name": f"{v.name}",
@@ -193,7 +193,7 @@ def xml_raw_dataset(ingestion_files_for_testing, test_investigation, test_parame
         <dataset>
             <investigation>{test_investigation.name}</investigation>
             <instrument>{test_investigation.investigationInstruments[0].instrument.name}</instrument>
-            <name>mxau_241222_xml_{random_str}</name>
+            <name>mxau_241222_xml_{random_str()}</name>
             {parameter_elements}
             <location>{str(dataset_location)}</location>
             <startDate>2025-09-23T10:00:45.920+02:00</startDate>

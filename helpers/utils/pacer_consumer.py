@@ -16,6 +16,7 @@ from psycopg_pool import ConnectionPool
 from helpers.contexts.dashboard import get_configured_dashboard_callback, create_message_context
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.datacite import get_datacite_client, DataciteClient
+from helpers.integrations.icat.icat_plus import ICATPlusClient, get_icat_plus_client
 from helpers.integrations.panosc import PaNOSCClient, get_panosc_client
 from helpers.integrations.visa_utils import get_pg_connection_pool
 from helpers.logging.general import configure_worker_logger
@@ -42,6 +43,7 @@ class PACERConsumer(ConsumerMixin):
     dashboard_message_type: str = "unknown"
     datacite_client: DataciteClient = None
     panosc_client: PaNOSCClient = None
+    icat_plus_client: ICATPlusClient = None
     reject_msg_at_first_callback_error: bool = False
 
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
@@ -181,6 +183,8 @@ class PACERConsumer(ConsumerMixin):
             self.datacite_client = get_datacite_client(self.pacer_config, self.logger)
         if "panosc" in self.integrations:
             self.panosc_client = get_panosc_client(self.pacer_config, self.logger)
+        if "icatPlus" in self.integrations:
+            self.icat_plus_client = get_icat_plus_client(self.pacer_config, self.logger)
 
         self.tasks.logger = self.logger
         self.logger.info(f"Consumer {self.module} started in own process with pid={os.getpid()}")

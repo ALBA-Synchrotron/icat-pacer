@@ -67,6 +67,14 @@ class InternalDatasetsConsumer(PACERConsumer):
 
         self.tasks.create_dataset_parameters(self.icat_client, dataset_ctx, dataset_id, is_duplicated)
 
+    def callback_func_create_dataset_gallery(self, _body, message: Message, *_args, **_kwargs) -> None:
+        self.logger.info(
+            f"callback_func_create_dataset_gallery > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+        dataset_str: str = message.payload or message.body
+        dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
+        dataset_id: int = message.headers.get("dataset_id", 0)
+        self.tasks.create_dataset_gallery(self.icat_plus_client, self.icat_client, dataset_ctx, dataset_id)
+
     def callback_func_dataset_linkage(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
             f"callback_func_dataset_linkage > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
@@ -84,14 +92,17 @@ class InternalDatasetsConsumer(PACERConsumer):
             self.tasks.processed_dataset_linkage(self.icat_client, dataset_id)
 
     # This callback must always be the last one. If you've got anything to add, add it before this function.
-    def callback_func_forward_to_statistics_queue(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_forward_to_following_queues(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
-            f"callback_func_forward_to_statistics_queue > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+            f"callback_func_forward_to_following_queues > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
         investigation_id: int = message.headers.get("investigation_id", 0)
 
-        GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
-                                     self.internal_statistics_routing_key, dataset_ctx,
-                                     {"dataset_id": dataset_id, "investigation_id": investigation_id})
+        following_queues: list = [self.internal_statistics_routing_key, self.internal_datasets_links_routing_key]
+
+        for queue in following_queues:
+            GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
+                                         queue, dataset_ctx,
+                                         {"dataset_id": dataset_id, "investigation_id": investigation_id})

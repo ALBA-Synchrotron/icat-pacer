@@ -13,4 +13,4 @@ def get_parameter_type(icat_client: ICATClient, parameter_name: str) -> Entity:
                                             flatten_single=True)
     if not ret:
         raise ParameterTypeNotFound(f"Parameter type {parameter_name} not found in ICAT.")
-    return ret
+    return ret if not isinstance(ret, list) else ret[-1]

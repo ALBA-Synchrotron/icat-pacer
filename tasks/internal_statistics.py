@@ -61,7 +61,7 @@ class InternalStatisticsTasks:
 
                 if rb.dataset.startDate is not None:
                     if rb.dataset.endDate is not None:
-                        elapsed_time: float = int((rb.dataset.endDate - rb.dataset.startDate).total_seconds())
+                        elapsed_time: float = int((rb.dataset.endDate - rb.dataset.startDate).total_seconds()) * 1000
 
                         rb.elapsed_time_param = get_dataset_parameter(icat_client,
                                                                       DATASET_ELAPSE_TIME_PARAMETER,

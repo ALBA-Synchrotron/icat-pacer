@@ -107,6 +107,7 @@ consumers:
     integrations:
       - "dashboard"
       - "icat"
+      - "icatPlus"
   - className: "InternalStatisticsConsumer"
     module: "consumers.internal_statistics"
     enabled: true
@@ -158,6 +159,9 @@ ingestionSettings:
     internalDatasetLinksRoutingKey: "dataset.internal_links"
     automaticDatasetLocationIndex: true
     maxDatafilesPerDataset: 30000
+    galleryFolderName: "gallery"
+    #galleryAcceptedUploadTypes:
+    #  - ".lel"
   investigation:
     defaultEmbargoYears: 3
     defaultFacilityName: "ALBA"
@@ -194,7 +198,7 @@ integrations:
     password: "<<REDACTED>>"
     apiUrl: "https://api.test.datacite.org"
     language: "en"
-    rightsName: "Creative Commons Attribution 4.0 International"
+    rightsName: "Creative Commons Attribºution 4.0 International"
     rightsSchemeUri: "https://spdx.org/licenses/"
     rightsUri: "https://creativecommons.org/licenses/by/4.0/"
     rightsIdentifierScheme: "SPDX"
@@ -208,3 +212,8 @@ integrations:
     username: "<<REDACTED>>"
     password: "<<REDACTED>>"
     searchApiUrl: "https://data.cells.es/iws/datagateway/search-api"
+  icatPlus:
+    enabled: true
+    server:
+      url: "https://icattest.cells.es/iws/icat_plus/"
+      apiKey: "<<REDACTED>>"

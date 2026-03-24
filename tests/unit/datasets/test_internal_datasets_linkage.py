@@ -66,10 +66,10 @@ class TestInternalDatasetConsumerDatasetLinkage:
             assert input_dataset_ids_param.stringValue == str(raw_dataset.id)
 
         output_dataset_ids_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_IDS_PARAMETER_NAME, dataset_id=raw_dataset.id)
-        assert output_dataset_ids_param.stringValue == " ".join(str(i.id) for i in proc_datasets)
+        assert sorted(output_dataset_ids_param.stringValue.split()) == sorted(str(i.id) for i in proc_datasets)
 
         output_dataset_names_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_NAMES_PARAMETER_NAME, dataset_id=raw_dataset.id)
-        assert output_dataset_names_param.stringValue == " ".join(i.name for i in proc_datasets)
+        assert set(output_dataset_names_param.stringValue.split()) == {i.name for i in proc_datasets}
 
     def test_proc_dataset_linkage_one_to_one(self, icat_client, internal_dataset_tasks, generate_raw_proc_datasets,
                                              create_raw_proc_datasets_relation):

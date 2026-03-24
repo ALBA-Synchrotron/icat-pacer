@@ -5,6 +5,8 @@ import time
 import requests
 from requests import Response
 
+from exceptions.integrations import PaNOSCClientError
+
 MAX_RECOMPUTATION_TRIGGER_ATTEMPTS: int = 10
 RECOMPUTATION_TRIGGER_WAIT_TIME: int = 15
 
@@ -53,7 +55,7 @@ class PaNOSCClient:
         if resp.status_code != 200:
             error_msg: str = f"Error checking if recomputation of weights is in progress"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise PaNOSCClientError(error_msg)
 
         resp_json: dict = resp.json()
         return resp_json["inProgress"] == True
@@ -77,11 +79,11 @@ class PaNOSCClient:
             if resp.status_code != 200:
                 error_msg: str = f"Error triggering weights recomputation"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise PaNOSCClientError(error_msg)
         else:
             error_msg: str = f"Previous weight recomputation took too long (more than {RECOMPUTATION_TRIGGER_WAIT_TIME * MAX_RECOMPUTATION_TRIGGER_ATTEMPTS} seconds), recomputation aborted"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise PaNOSCClientError(error_msg)
         self.logger.info("Weights recomputation finished")
 
     def create_item(self, investigation_name: str, investigation_info: dict) -> None:
@@ -93,7 +95,7 @@ class PaNOSCClient:
         if resp.status_code != 201:
             error_msg: str = f"Error creating investigation item {investigation_name} item in PSS database"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise PaNOSCClientError(error_msg)
 
     def update_item(self, investigation_name: str, investigation_info: dict) -> None:
         self.logger.info(f"Updating investigation {investigation_name} item in PSS database")
@@ -121,12 +123,12 @@ class PaNOSCClient:
         if type(resp_json) != list or len(resp_json) == 0:
             error_msg: str = f"No public investigation info found in search api for {investigation_name}"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise PaNOSCClientError(error_msg)
 
         if len(resp_json) > 1:
             error_msg: str = f"Multiple investigations returned in search-api for filter {params}"
             self.logger.error(error_msg)
-            raise Exception(error_msg)
+            raise PaNOSCClientError(error_msg)
 
         return resp_json[0]
 

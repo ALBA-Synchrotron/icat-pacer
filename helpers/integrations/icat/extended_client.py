@@ -86,6 +86,10 @@ class ICATClient(Client):
     @classmethod
     def __to_sql_in_clause(cls, values: Iterable) -> str:
         formatted = []
+
+        if not values:
+            return "NULL"
+
         for v in values:
             if isinstance(v, str):
                 escaped = v.replace("'", "''")
@@ -169,6 +173,9 @@ class ICATClient(Client):
 
         if results:
             return results[0] if len(results) == 1 and flatten_single else results
+
+        if not flatten_single:
+            return results if results else []
         return None
 
     def query_search(self, query: str | Query, flatten_single: bool = True) -> list:

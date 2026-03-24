@@ -4,6 +4,7 @@ import os
 import random
 import tempfile
 import time
+from unittest.mock import patch
 
 import pytest
 import requests
@@ -167,8 +168,8 @@ def random_instrument_2(icat_client, icat_facility):
 
 @pytest.fixture
 def test_investigation(icat_client, icat_facility, random_instrument, icat_unittest_investigation_type, random_str):
-    investigation = icat_client.new("Investigation", name=f"2026090911-{random_str}", facility=icat_facility,
-                                    visitId=f"2026090911-visitId_{random_str}", title="unittest",
+    investigation = icat_client.new("Investigation", name=f"2026090911-{random_str()}", facility=icat_facility,
+                                    visitId=f"2026090911-visitId_{random_str()}", title="unittest",
                                     type=icat_unittest_investigation_type)
     investigation.create()
     inv_instr = icat_client.new("InvestigationInstrument", investigation=investigation, instrument=random_instrument)
@@ -208,7 +209,7 @@ def test_investigation_overlapping_2(icat_client, icat_facility, random_instrume
 
 @pytest.fixture()
 def raw_dataset(icat_client, test_investigation, dataset_type_raw, random_str):
-    dataset = icat_client.new("Dataset", name=f"test_dataset_{random_str}", type=dataset_type_raw,
+    dataset = icat_client.new("Dataset", name=f"test_dataset_{random_str()}", type=dataset_type_raw,
                               investigation=test_investigation)
     dataset.create()
     return dataset
@@ -216,7 +217,7 @@ def raw_dataset(icat_client, test_investigation, dataset_type_raw, random_str):
 
 @pytest.fixture()
 def proc_dataset(icat_client, test_investigation, dataset_type_processed, random_str):
-    dataset = icat_client.new("Dataset", name=f"test_dataset_{random_str}", type=dataset_type_processed,
+    dataset = icat_client.new("Dataset", name=f"test_dataset_{random_str()}", type=dataset_type_processed,
                               investigation=test_investigation)
     dataset.create()
     return dataset
@@ -248,20 +249,21 @@ def generate_raw_proc_datasets(icat_client, test_investigation, random_str, data
         if not investigation:
             investigation = test_investigation
 
-        sample = icat_client.new("Sample", name=f"sample_{random_str}", investigation=investigation)
+        sample = icat_client.new("Sample", name=f"sample_{random_str()}",
+                                 investigation=investigation)
         sample.create()
 
         for i in range(amount_raw):
-            raw_dataset = icat_client.new("Dataset", name=f"raw_{random_str}_{i}", type=dataset_type_raw,
-                                          investigation=investigation, location=f"/tmp/raw_{random_str}/{i}/",
+            raw_dataset = icat_client.new("Dataset", name=f"raw_{random_str()}_{i}", type=dataset_type_raw,
+                                          investigation=investigation, location=f"/tmp/raw_{random_str()}/{i}/",
                                           startDate=start_date, endDate=end_date,
                                           sample=sample)
             raw_dataset.create()
             raw_datasets.append(raw_dataset)
 
         for i in range(amount_proc):
-            proc_dataset = icat_client.new("Dataset", name=f"proc_{random_str}_{i}", type=dataset_type_processed,
-                                           investigation=investigation, location=f"/tmp/proc_{random_str}/{i}/",
+            proc_dataset = icat_client.new("Dataset", name=f"proc_{random_str()}_{i}", type=dataset_type_processed,
+                                           investigation=investigation, location=f"/tmp/proc_{random_str()}/{i}/",
                                            startDate=start_date, endDate=end_date,
                                            sample=sample)
             proc_dataset.create()
@@ -270,7 +272,7 @@ def generate_raw_proc_datasets(icat_client, test_investigation, random_str, data
         if datafile_amount:
             for i in raw_datasets + proc_datasets:
                 for j in range(datafile_amount):
-                    datafile = icat_client.new("Datafile", name=f"datafile_{random_str}_{j}", dataset=i,
+                    datafile = icat_client.new("Datafile", name=f"datafile_{random_str()}_{j}", dataset=i,
                                                fileSize=file_size)
                     datafile.create()
 
@@ -307,8 +309,8 @@ def test_investigation_statistics(icat_client, test_parameter_types, random_str,
 
     expected_statistics = {}
 
-    inv = icat_client.new("Investigation", name=f"inv-statistics-{random_str}", title="unittest",
-                          visitId=f"inv-statistics-{random_str}",
+    inv = icat_client.new("Investigation", name=f"inv-statistics-{random_str()}", title="unittest",
+                          visitId=f"inv-statistics-{random_str()}",
                           facility=icat_facility, type=icat_unittest_investigation_type)
     inv.create()
 
@@ -326,7 +328,7 @@ def test_investigation_statistics(icat_client, test_parameter_types, random_str,
     expected_statistics["total_raw_volume"] = str(datafile_amount * file_size * amount_raw)
     expected_statistics["total_proc_volume"] = str(datafile_amount * file_size * amount_proc)
     expected_statistics["total_elapsed_time"] = str(
-        int((end_date - start_date).total_seconds()) * (amount_raw + amount_proc))
+        int((end_date - start_date).total_seconds()) * (amount_raw + amount_proc) * 1000)
     expected_statistics["total_file_count"] = str(datafile_amount * (amount_raw + amount_proc))
     expected_statistics["total_raw_file_count"] = str(datafile_amount * amount_raw)
     expected_statistics["total_proc_file_count"] = str(datafile_amount * amount_proc)
@@ -335,10 +337,20 @@ def test_investigation_statistics(icat_client, test_parameter_types, random_str,
     expected_statistics["sample_raw_dataset_count"] = str(amount_raw)
     expected_statistics["sample_proc_dataset_count"] = str(amount_proc)
     expected_statistics["sample_total_file_count"] = str(datafile_amount * (amount_raw + amount_proc))
-    expected_statistics["sample_total_raw_file_count"] = str(datafile_amount * amount_raw )
+    expected_statistics["sample_total_raw_file_count"] = str(datafile_amount * amount_raw)
     expected_statistics["sample_total_proc_file_count"] = str(datafile_amount * amount_proc)
     expected_statistics["sample_total_volume"] = str(datafile_amount * file_size * (amount_raw + amount_proc))
     expected_statistics["sample_total_raw_volume"] = str(datafile_amount * file_size * amount_raw)
     expected_statistics["sample_total_proc_volume"] = str(datafile_amount * file_size * amount_proc)
 
     return raw_datasets, proc_datasets, expected_statistics
+
+
+@pytest.fixture()
+def mock_icat_plus_client():
+    with patch("helpers.integrations.icat.icat_plus.ICATPlusClient") as MockICATPlusClient:
+        mock_client = MockICATPlusClient.return_value
+
+        mock_client.upload_gallery_files.return_value = "0x18A"
+
+        yield mock_client

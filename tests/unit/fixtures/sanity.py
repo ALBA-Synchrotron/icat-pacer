@@ -14,6 +14,10 @@ def tests_sanity_pre_check(icat_client):
     if PACER_TEST_BACKEND == "testbox":
         assert icat_client.apiversion == ICAT_TESTBOX_ICAT_SERVER_VERSION
 
+
 @pytest.fixture
 def random_str():
-    return "".join(random.choices(string.digits, k=5))
+    def _make():
+        return "".join(random.choices(string.digits, k=5))
+
+    return _make
