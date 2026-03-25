@@ -39,11 +39,11 @@ class ICATClient(Client):
         if self._session_id:
             if type(self._session_id) in [Text, str]:
                 return self._session_id
-            return self._session_id.value.decode()
+            return self._session_id.value
         return None
 
     @sessionId.setter
-    def sessionId(self, value: multiprocessing.Value) -> None:
+    def sessionId(self, value) -> None:
         self._session_id = value
 
     def auto_refresh_session(self) -> None:

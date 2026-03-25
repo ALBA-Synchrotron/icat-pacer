@@ -20,7 +20,7 @@ from helpers.utils.serializers import register_custom_serializers
 from helpers.utils.strings import mask_amqp_password
 from helpers.utils.utils import Singleton, running_in_pytest
 
-MAIN_LOOP_WAIT_TIME: int = 30
+MAIN_LOOP_WAIT_TIME: int = 60
 
 
 class PACER:
@@ -35,6 +35,8 @@ class PACER:
     icat_client: ICATClient = None
     recipient_connections: dict = {}
     recipient_fw_rules: dict = {}
+    manager: multiprocessing.Manager = None
+    shared_session_id: multiprocessing.Value = None
     __metaclass__ = Singleton
 
     def __init__(self, **kwargs) -> None:
@@ -43,6 +45,7 @@ class PACER:
 
         if "broker_connection" in kwargs and running_in_pytest():
             self.broker_connection = kwargs["broker_connection"]
+
 
         self.__initial_setup()
 
@@ -182,13 +185,17 @@ class PACER:
         self.icat_client = ICATClient.open_icat_session(self.config)
         if self.icat_client:
             self.logger.info("ICAT session opened")
-            self.shared_session_id = multiprocessing.Value(c_char_p, self.icat_client.sessionId.encode("utf-8"))
+            if self.shared_session_id:
+                self.shared_session_id.value = self.icat_client.sessionId
+            else:
+                self.shared_session_id = self.manager.Value(str, self.icat_client.sessionId)
         else:
             self.logger.error("ICAT session not opened: Could not open ICAT session")
 
     def __initial_setup(self) -> None:
         method: str = self.get_config_value("multiprocessStartMethod", "spawn")
         multiprocessing.set_start_method(method)
+        self.manager = multiprocessing.Manager()
 
         globals_var.ingestion_settings = self.config.get("ingestionSettings", {})
 
@@ -231,8 +238,7 @@ class PACER:
             pacer_consumer: PACERConsumer = worker_class(module, workers, enabled, self.broker_connection,
                                                          self.recipient_connections,
                                                          consumer_queues, self.recipient_fw_rules, self.log_queue,
-                                                         self.config, integrations,
-                                                         self.shared_session_id)
+                                                         self.config, integrations, self.shared_session_id)
             self.consumers.append(pacer_consumer)
 
     def main_background_loop(self) -> None:

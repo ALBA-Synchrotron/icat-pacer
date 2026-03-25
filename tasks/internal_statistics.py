@@ -18,6 +18,7 @@ from helpers.static_settings import DATASET_NAME_PARAMETER, DATASET_FILE_COUNT_P
     SAMPLE_PROCESSED_DATASET_COUNT_PARAMETER, SAMPLE_FILE_COUNT_PARAMETER, SAMPLE_ACQUISITION_FILE_COUNT_PARAMETER, \
     SAMPLE_PROCESSED_FILE_COUNT_PARAMETER, INVESTIGATION_PROCESSED_VOLUME_PARAMETER, SAMPLE_VOLUME_PARAMETER, \
     SAMPLE_ACQUISITION_VOLUME_PARAMETER, SAMPLE_PROCESSED_VOLUME_PARAMETER
+from helpers.utils.base_tasks import BaseTasks
 from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 from helpers.utils.investigation import set_investigation_parameter, get_investigation_parameter
@@ -25,10 +26,10 @@ from helpers.utils.parameters import get_parameter_type
 from helpers.utils.sample import get_sample_parameter, set_sample_parameter
 
 
-class InternalStatisticsTasks:
+class InternalStatisticsTasks(BaseTasks):
 
     def __init__(self, logger: logging.Logger = None):
-        self.logger = logger
+        super().__init__(logger)
 
     def update_dataset_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **_kwargs) -> None:
 

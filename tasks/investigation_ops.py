@@ -16,12 +16,13 @@ from helpers.static_settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_
     DATACITE_CONTRIBUTOR_DATA_COLLECTOR, ICAT_USER_ROLE_LOCAL_CONTACT, DATACITE_CONTRIBUTOR_PROJECT_MANAGER, \
     DATACITE_CONTRIBUTOR_PROJECT_MEMBER, ICAT_USER_ROLE_PROPOSER
 from helpers.integrations.visa_utils import VISALoader
+from helpers.utils.base_tasks import BaseTasks
 
 
-class InvestigationOpsTasks:
+class InvestigationOpsTasks(BaseTasks):
 
     def __init__(self, logger: logging.Logger = None):
-        self.logger = logger
+        super().__init__(logger)
 
     @classmethod
     def __get_investigation_users_by_role(cls, inv_users: list) -> dict:

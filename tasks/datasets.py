@@ -9,14 +9,15 @@ from exceptions.dataset import DatasetTypeNotFound
 from exceptions.sample import SampleTypeNotFound
 from helpers.dataclasses.dataset import DatasetContext
 from helpers.integrations.icat.extended_client import ICATClient
+from helpers.utils.base_tasks import BaseTasks
 from helpers.utils.dataset import get_dataset_investigation, get_duplicated_processed_dataset_in_investigation
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 
 
-class DatasetsTasks:
+class DatasetsTasks(BaseTasks):
 
     def __init__(self, logger: logging.Logger = None):
-        self.logger = logger
+        super().__init__(logger)
 
     def create_base_dataset_icat(self, icat_client: ICATClient, dataset_ctx: DatasetContext, *_args, **_kwargs) -> \
             tuple[int, int, bool]:

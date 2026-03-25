@@ -2,6 +2,10 @@ from __future__ import absolute_import, unicode_literals
 
 import datetime
 import logging
+from contextlib import suppress
+
+from icat import ICATSessionError
+
 import globals_var
 import multiprocessing
 from logging.handlers import QueueHandler
@@ -20,8 +24,9 @@ from helpers.integrations.icat.icat_plus import ICATPlusClient, get_icat_plus_cl
 from helpers.integrations.panosc import PaNOSCClient, get_panosc_client
 from helpers.integrations.visa_utils import get_pg_connection_pool
 from helpers.logging.general import configure_worker_logger
-from helpers.utils.utils import running_in_pytest
+from helpers.utils.utils import running_in_pytest, camel_case_to_snake_case
 from producers.forwarder import MessageForwarder
+from producers.generic import GenericProducer
 
 
 class PACERConsumer(ConsumerMixin):
@@ -45,11 +50,13 @@ class PACERConsumer(ConsumerMixin):
     panosc_client: PaNOSCClient = None
     icat_plus_client: ICATPlusClient = None
     reject_msg_at_first_callback_error: bool = False
+    max_msg_retries: int
 
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
                  queues: list,
                  fw_rules: dict, log_queue: multiprocessing.Queue, config: dict, integrations: list,
-                 icat_session_id: multiprocessing.Value, dashboard_message_type: str) -> None:
+                 icat_session_id: multiprocessing.Value,
+                 dashboard_message_type: str) -> None:
         self.module = module
         self.workers = workers
         self.enabled = enabled
@@ -60,8 +67,10 @@ class PACERConsumer(ConsumerMixin):
         self.log_queue = log_queue
         self.pacer_config = config
         self.integrations = integrations
-        self.icat_session_id = icat_session_id
         self.dashboard_message_type = dashboard_message_type
+        self.icat_session_id = icat_session_id
+
+        self.max_msg_retries = self.pacer_config.get("ingestionSettings", {}).get("messageProcessingRetries", 10)
 
         handler: QueueHandler = QueueHandler(log_queue)
         self.logger = logging.getLogger(__name__)
@@ -71,7 +80,10 @@ class PACERConsumer(ConsumerMixin):
     def __callback_router(self, body, message: Message) -> None:
         errors: list = []
         processed_timestamp: str = datetime.datetime.now().isoformat()
-        for func in self.__get_callback_functions():
+        retries: int = message.headers.get("x-retries", 0)
+        log_dashboard_retries: bool = (retries == 0 or retries == self.max_msg_retries)
+
+        for func in self.__get_callback_functions(log_dashboard_retries):
             try:
                 self.logger.info(f"Calling callback function: {func.__name__}")
                 func(body, message, errors=errors, headers={"received_at": processed_timestamp, **message.headers})
@@ -84,8 +96,17 @@ class PACERConsumer(ConsumerMixin):
                 if self.reject_msg_at_first_callback_error:
                     break
         if errors:
-            self.logger.error(f"Message rejected due to errors: {errors}")
-            message.reject(requeue=False)
+            requeue: bool = any(isinstance(i, ICATSessionError) for _, i in errors) and retries <= self.max_msg_retries
+            self.logger.error(f"Message rejected ({'not ' if not requeue else ''}requeued) due to errors: {errors}")
+
+            if requeue:
+                GenericProducer.send_message(self.connection, exchange_name="dead-letters-exchange",
+                                             routing_key="dead.letters",
+                                             headers={"x-retries": retries + 1, "x-delay": 60,
+                                                      "original-routing-key": message.delivery_info["routing_key"],
+                                                      "original-exchange": message.delivery_info["exchange"],
+                                                      "x-processing-ts": datetime.datetime.now().isoformat()}, ctx=body)
+            message.reject()
         else:
             message.ack()
 
@@ -130,7 +151,7 @@ class PACERConsumer(ConsumerMixin):
             self.logger.error(f"Error setting up consumers: {e!r}")
             raise e
 
-    def __get_callback_functions(self) -> list:
+    def __get_callback_functions(self, exclude_dashboard_logging: bool = False) -> list:
         callback_functions = [
             getattr(self, attr) for attr in dir(self)
             if callable(getattr(self, attr)) and attr.startswith('callback_func_')
@@ -141,6 +162,9 @@ class PACERConsumer(ConsumerMixin):
                 f.__name__
             )
         )
+        if exclude_dashboard_logging:
+            with suppress(ValueError):
+                callback_functions.remove(self.__dashboard_message_logging_callback)
         return callback_functions
 
     def start(self) -> None:
@@ -165,7 +189,7 @@ class PACERConsumer(ConsumerMixin):
     def _consumer_main(self, log_queue: multiprocessing.Queue, shared_session_id) -> None:
         import os
         handler: QueueHandler = QueueHandler(log_queue)
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(camel_case_to_snake_case(self.__class__.__name__))
         configure_worker_logger(handler, self.pacer_config, self.logger)
 
         globals_var.ingestion_settings = self.pacer_config.get("ingestionSettings", {})
@@ -177,7 +201,7 @@ class PACERConsumer(ConsumerMixin):
             self.callback_func_dashboard_message_logging = self.__dashboard_message_logging_callback
         if "icat" in self.integrations:
             self.icat_client = ICATClient.open_icat_session(self.pacer_config)
-            self.icat_client.session_id = shared_session_id
+            self.icat_client.sessionId = shared_session_id
         if "visa" in self.integrations:
             self.visa_pg_pool = get_pg_connection_pool(self.pacer_config)
         if "datacite" in self.integrations:
@@ -187,7 +211,8 @@ class PACERConsumer(ConsumerMixin):
         if "icatPlus" in self.integrations:
             self.icat_plus_client = get_icat_plus_client(self.pacer_config, self.logger)
 
-        self.tasks.logger = self.logger
+        if hasattr(self, "tasks"):
+            self.tasks.logger = self.logger
         self.logger.info(f"Consumer {self.module} started in own process with pid={os.getpid()}")
         self.run()
 
