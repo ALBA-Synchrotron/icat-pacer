@@ -3,11 +3,13 @@ import logging
 import multiprocessing
 import os
 import sys
+from ctypes import c_char_p
 from logging.handlers import QueueListener
 from time import sleep
 from urllib.parse import quote
 
 from amqp import Channel
+from icat import ICATSessionError
 from kombu import Connection, Exchange, Queue
 import globals_var
 from config.config import ConfigParser
@@ -18,7 +20,7 @@ from helpers.utils.serializers import register_custom_serializers
 from helpers.utils.strings import mask_amqp_password
 from helpers.utils.utils import Singleton, running_in_pytest
 
-MAIN_LOOP_WAIT_TIME: int = 15 * 60
+MAIN_LOOP_WAIT_TIME: int = 30
 
 
 class PACER:
@@ -169,10 +171,18 @@ class PACER:
             self.queues.append(Queue(name=queue_name, exchange=exchange_name, routing_key=routing_key))
         self.logger.debug(f"Created {len(self.queues)} queues")
 
+    def session_check(self):
+        try:
+            _ = self.icat_client.search("Investigation", conditions={"name__eq": "session-check"}, flatten_single=True)
+        except ICATSessionError:
+            self.logger.error("Connection to ICAT lost, sessionId does no longer exist in ICAT. Reopening session...")
+            self.__open_icat_session()
+
     def __open_icat_session(self) -> None:
         self.icat_client = ICATClient.open_icat_session(self.config)
         if self.icat_client:
             self.logger.info("ICAT session opened")
+            self.shared_session_id = multiprocessing.Value(c_char_p, self.icat_client.sessionId.encode("utf-8"))
         else:
             self.logger.error("ICAT session not opened: Could not open ICAT session")
 
@@ -222,13 +232,14 @@ class PACER:
                                                          self.recipient_connections,
                                                          consumer_queues, self.recipient_fw_rules, self.log_queue,
                                                          self.config, integrations,
-                                                         self.icat_client.sessionId)
+                                                         self.shared_session_id)
             self.consumers.append(pacer_consumer)
 
     def main_background_loop(self) -> None:
         try:
             while True:
                 sleep(MAIN_LOOP_WAIT_TIME)
+                self.session_check()
                 self.icat_client.auto_refresh_session()
         except KeyboardInterrupt:
             self.stop_consumers()

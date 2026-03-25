@@ -35,7 +35,7 @@ class PACERConsumer(ConsumerMixin):
     log_queue: multiprocessing.Queue = None
     pacer_config: dict = None
     icat_client: ICATClient = None
-    icat_session_id: str = None
+    icat_session_id: multiprocessing.Value = None
     visa_pg_pool: ConnectionPool = None
     integrations: list = []
     recipients_connections: dict = {}
@@ -49,7 +49,7 @@ class PACERConsumer(ConsumerMixin):
     def __init__(self, module: str, workers: int, enabled: bool, connection: Connection, recipient_connections: dict,
                  queues: list,
                  fw_rules: dict, log_queue: multiprocessing.Queue, config: dict, integrations: list,
-                 icat_session_id: str, dashboard_message_type: str) -> None:
+                 icat_session_id: multiprocessing.Value, dashboard_message_type: str) -> None:
         self.module = module
         self.workers = workers
         self.enabled = enabled
@@ -147,7 +147,7 @@ class PACERConsumer(ConsumerMixin):
         if self.enabled:
             self.logger.info("Starting worker processes")
             for _ in range(self.workers):
-                process: Process = Process(target=self._consumer_main, args=(self.log_queue,))
+                process: Process = Process(target=self._consumer_main, args=(self.log_queue, self.icat_session_id))
                 process.start()
                 self.logger.debug(
                     f"Spawned {self.module} process: pid={process.pid}")
@@ -162,7 +162,7 @@ class PACERConsumer(ConsumerMixin):
                 process.join()
                 self.logger.debug(f"Process terminated: pid={process.pid}")
 
-    def _consumer_main(self, log_queue: multiprocessing.Queue) -> None:
+    def _consumer_main(self, log_queue: multiprocessing.Queue, shared_session_id) -> None:
         import os
         handler: QueueHandler = QueueHandler(log_queue)
         self.logger = logging.getLogger(__name__)
@@ -176,7 +176,8 @@ class PACERConsumer(ConsumerMixin):
             self.__configured_dashboard_logging_call = get_configured_dashboard_callback(self)
             self.callback_func_dashboard_message_logging = self.__dashboard_message_logging_callback
         if "icat" in self.integrations:
-            self.icat_client = ICATClient.open_icat_session(self.pacer_config, session_id=self.icat_session_id)
+            self.icat_client = ICATClient.open_icat_session(self.pacer_config)
+            self.icat_client.session_id = shared_session_id
         if "visa" in self.integrations:
             self.visa_pg_pool = get_pg_connection_pool(self.pacer_config)
         if "datacite" in self.integrations:
