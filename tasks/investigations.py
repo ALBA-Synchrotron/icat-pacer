@@ -14,13 +14,14 @@ from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.visa_utils import VISALoader
 from helpers.static_settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PROPOSER, \
     ICAT_USER_ROLE_LOCAL_CONTACT, ICAT_USER_ROLE_PARTICIPANT
+from helpers.utils.base_tasks import BaseTasks
 from helpers.utils.investigation import get_investigation_parameter, set_investigation_parameter
 
 
-class ProposalTasks:
+class ProposalTasks(BaseTasks):
 
     def __init__(self, logger: logging.Logger = None):
-        self.logger = logger
+        super().__init__(logger)
 
     def sync_investigation_visa(self, pg_pool: ConnectionPool, investigation_context: InvestigationContext, *_args,
                                 **_kwargs) -> None:

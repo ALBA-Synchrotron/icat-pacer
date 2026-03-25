@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import re
 
 
 class Singleton(type):
@@ -15,3 +16,7 @@ class Singleton(type):
 
 def running_in_pytest() -> bool:
     return "PYTEST_CURRENT_TEST" in os.environ
+
+
+def camel_case_to_snake_case(string: str) -> str:
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()

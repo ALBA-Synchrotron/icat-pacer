@@ -8,3 +8,6 @@ class ConfigError(PACERError):
 
 class ValidationError(PACERError):
     pass
+
+class TooEarlyForRetry(PACERError):
+    pass

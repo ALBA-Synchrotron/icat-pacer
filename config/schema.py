@@ -151,6 +151,7 @@ config_yaml_schema: dict = {
         "required": True,
         "check_allowed_root_location_paths": True,
         "schema": {
+            "messageProcessingRetries": {"type": "integer", "required": True},
             "dataset": {
                 "type": "dict",
                 "required": True,

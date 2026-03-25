@@ -21,6 +21,8 @@ customSerializers:
 exchanges:
   - name: "dashboard-logging-exchange"
     type: "direct"
+  - name: "dead-letters-exchange"
+    type: "direct"
   - name: "uos-sync-exchange"
     type: "direct"
   - name: "investigation-ops-exchange"
@@ -33,6 +35,9 @@ queues:
   - name: "dashboard-logging"
     exchange: "dashboard-logging-exchange"
     routingKey: "message.logging"
+  - name: "dead-letters"
+    exchange: "dead-letters-exchange"
+    routingKey: "dead.letters"
   - name: "uos-sync-users"
     exchange: "uos-sync-exchange"
     routingKey: "uos_user.sync"
@@ -55,6 +60,13 @@ queues:
     exchange: "dataset-internal-ingest-exchange"
     routingKey: "dataset.internal_links"
 consumers:
+  - className: "DeadLettersConsumer"
+    module: "consumers.dead_letters"
+    enabled: true
+    queues:
+      - "dead-letters"
+    workers: 1
+    integrations: []
   - className: "UsersConsumer"
     module: "consumers.users"
     enabled: true
@@ -146,6 +158,7 @@ brokers:
   #      - fromExchange: "uos-sync-exchange"
   #        toBroker: "pacer-prod"
 ingestionSettings:
+  messageProcessingRetries: 15
   dataset:
     acceptXMLPayloads: true
     mandatoryPathsExistence: false

@@ -7,13 +7,14 @@ from psycopg_pool import ConnectionPool
 from helpers.dataclasses.user import UserContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.visa_utils import VISALoader
+from helpers.utils.base_tasks import BaseTasks
 
 
-class UserTasks:
+class UserTasks(BaseTasks):
     USER_DISABLED_SUFFIX: str = "__user_disabled"
 
     def __init__(self, logger: logging.Logger = None):
-        self.logger = logger
+        super().__init__(logger)
 
     def sync_user_visa(self, pg_pool: ConnectionPool, user_context: UserContext, *_args, **_kwargs) -> None:
         self.logger.info(f"VISA sync: Synchronizing user {','.join(user_context.usernames)}")

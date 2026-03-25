@@ -16,14 +16,15 @@ from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME, INPUT_DATASET_
     DATASET_PROCESSING_VERSION_PARAMETER_NAME, DATASET_PARAMETER_START_DATE_PARAMETER_NAME, \
     DATASET_PARAMETER_END_DATE_PARAMETER_NAME, DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS, \
     DATASET_PARAMETER_RESOURCE_GALLERY
+from helpers.utils.base_tasks import BaseTasks
 from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 
 
-class DatasetsInternalTasks:
+class DatasetsInternalTasks(BaseTasks):
 
     def __init__(self, logger: logging.Logger = None):
-        self.logger = logger
+        super().__init__(logger)
 
     def create_dataset_datafiles(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int,
                                  is_duplicated: bool, *_args, **_kwargs) -> None:

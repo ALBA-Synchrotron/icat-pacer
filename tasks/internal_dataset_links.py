@@ -9,14 +9,15 @@ from helpers.integrations.icat.extended_client import ICATClient
 from helpers.static_settings import INPUT_DATASET_IDS_PARAMETER_NAME, FULL_INPUT_DATASET_IDS_PARAMETER_NAME, \
     OUTPUT_DATASET_IDS_PARAMETER_NAME, FULL_OUTPUT_DATASET_IDS_PARAMETER_NAME, DATASET_NAME_PARAMETER, \
     FULL_INPUT_DATASET_NAMES_PARAMETER_NAME, FULL_OUTPUT_DATASET_NAMES_PARAMETER_NAME
+from helpers.utils.base_tasks import BaseTasks
 from helpers.utils.dataset import get_dataset_parameter, set_dataset_parameter
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 
 
-class InternalDatasetLinksTasks:
+class InternalDatasetLinksTasks(BaseTasks):
 
     def __init__(self, logger: logging.Logger = None):
-        self.logger = logger
+        super().__init__(logger)
 
     @classmethod
     def __get_dataset_name(cls, dataset: Entity, dataset_map: dict) -> str:
