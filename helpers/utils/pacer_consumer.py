@@ -151,7 +151,7 @@ class PACERConsumer(ConsumerMixin):
             self.logger.error(f"Error setting up consumers: {e!r}")
             raise e
 
-    def __get_callback_functions(self, exclude_dashboard_logging: bool = False) -> list:
+    def __get_callback_functions(self, log_dashboard: bool = False) -> list:
         callback_functions = [
             getattr(self, attr) for attr in dir(self)
             if callable(getattr(self, attr)) and attr.startswith('callback_func_')
@@ -162,7 +162,7 @@ class PACERConsumer(ConsumerMixin):
                 f.__name__
             )
         )
-        if exclude_dashboard_logging:
+        if not log_dashboard:
             with suppress(ValueError):
                 callback_functions.remove(self.__dashboard_message_logging_callback)
         return callback_functions
