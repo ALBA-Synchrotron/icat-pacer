@@ -19,7 +19,8 @@ def create_message_context(message: Message, message_type: str, error_message: s
     error_message: str = error_message or ""
     return MessageContext(
         object_identifiers=obj_identifiers,
-        processed_at=message.headers.get("received_at", datetime.datetime.now().isoformat()),
+        processing_start=message.headers.get("received_at", datetime.datetime.now().isoformat()),
+        processing_end=datetime.datetime.now().isoformat(),
         hash=sha256_hash,
         message_type=message_type,
         payload=payload,
