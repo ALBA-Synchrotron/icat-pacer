@@ -26,6 +26,8 @@ def create_message_context(message: Message, message_type: str, error_message: s
         payload=payload,
         errored=errored,
         error_message=error_message,
+        exchange_name=message.delivery_info["exchange"],
+        routing_key=message.delivery_info["routing_key"],
     )
 
 

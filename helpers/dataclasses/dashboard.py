@@ -12,6 +12,8 @@ class MessageContext:
     payload: str = ""
     errored: bool = False
     error_message: str = ""
+    exchange_name: str = ""
+    routing_key: str = ""
 
 
 @dataclass
