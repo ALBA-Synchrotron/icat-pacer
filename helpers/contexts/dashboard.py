@@ -9,14 +9,14 @@ from helpers.dataclasses.dashboard import MessageContext
 from producers.dashboard import DashboardProducer
 
 
-def create_message_context(message: Message, message_type: str, error_message: str = "",
+def create_message_context(message: Message, message_type: str, error_message: dict = {},
                            obj_identifiers: dict | None = None) -> MessageContext:
     obj_identifiers = obj_identifiers or {}
     hash_str: str = hashlib.blake2b(str(message.payload).encode(), digest_size=8).hexdigest()
     message_type: str = message_type
     payload: str = message.payload or str(message.body)
     errored: bool = True if error_message else False
-    error_message: str = error_message or ""
+    error_message: str = error_message or {}
     return MessageContext(
         object_identifiers=obj_identifiers,
         processing_start=message.headers.get("received_at", datetime.datetime.now().isoformat()),
