@@ -51,6 +51,6 @@ class DatasetsConsumer(PACERConsumer):
             self.logger.info(
                 f"callback_func_main_dataset_ingestion > Forwarding message to internal ingest queue")
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
-                                         self.internal_dataset_routing_key, dataset_ctx,
+                                         self.internal_dataset_routing_key, message,
                                          {"dataset_id": new_dataset_id, "investigation_id": investigation_id,
                                           "is_duplicated": is_duplicated})

@@ -89,7 +89,7 @@ class PACERConsumer(ConsumerMixin):
                 continue
             try:
                 self.logger.info(f"Calling callback function: {func.__name__}")
-                func(body, message, errors=errors, headers={"received_at": processed_timestamp, **message.headers})
+                func(body, message, errors=errors, received_at=processed_timestamp)
 
             except Exception as e:
                 if running_in_pytest():
@@ -112,14 +112,14 @@ class PACERConsumer(ConsumerMixin):
         else:
             message.ack()
 
-    def __dashboard_message_logging_handler(self, message: Message, errors: dict = {}) -> None:
+    def __dashboard_message_logging_handler(self, message: Message, errors: dict = {}, received_at: str = "") -> None:
         obj_identifiers: dict = self.get_message_object_identifiers(message)
         msg_context = create_message_context(message, self.dashboard_message_type, error_message=errors,
-                                             obj_identifiers=obj_identifiers)
+                                             obj_identifiers=obj_identifiers, received_at=received_at)
         self.__configured_dashboard_logging_call(msg_context)
 
     def __dashboard_message_logging_callback(self, _body, message: Message, *_args, **kwargs) -> None:
-        self.__dashboard_message_logging_handler(message, kwargs.get("errors", {}))
+        self.__dashboard_message_logging_handler(message, kwargs.get("errors", {}), kwargs.get("received_at", ''))
 
     def __broker_forwarder_callback(self, _body, message: Message, *_args, **_kwargs) -> None:
         msg_exchange_name: str = message.delivery_info.get("exchange", "")

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 @dataclass
 class MessageContext:
     object_identifiers: dict
+    error_message: dict
     processing_start: str = ""
     processing_end: str = ""
     hash: str = ""
@@ -11,7 +12,6 @@ class MessageContext:
     payload_format: str = ""
     payload: str = ""
     errored: bool = False
-    error_message: str = ""
     exchange_name: str = ""
     routing_key: str = ""
 
