@@ -171,6 +171,9 @@ config_yaml_schema: dict = {
                     "automaticDatasetLocationIndex": {"type": "boolean", "required": True},
                     "maxDatafilesPerDataset": {"type": "integer", "required": True},
                     "galleryFolderName": {"type": "string", "required": True, "default": "gallery"},
+                    "xmlNamespacesTransform": {"type": "list", "schema": {"type": "dict", "schema": {
+                        "schema": {"type": "string", "required": True}, "to": {"type": "string", "nullable": True}}},
+                                               "default": []},
                     "galleryAcceptedUploadTypes": {
                         "type": "list",
                         "default": [

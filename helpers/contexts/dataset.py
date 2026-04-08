@@ -18,14 +18,18 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
 
     ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
+
+    transform_namespaces: dict = {i["schema"]: i["to"] for i in ingestion_settings.get("xmlNamespacesTransform", [])}
+
     if ingestion_settings.get("acceptXMLPayloads", True) and isinstance(dataset_data,
                                                                         str) and dataset_data.strip().endswith(">"):
         try:
             xml_payload = dataset_data.strip()
-            dataset_dict = xmltodict.parse(xml_payload)["dataset"]
+            dataset_dict = xmltodict.parse(xml_payload, process_namespaces=True, namespaces=transform_namespaces)["dataset"]
             if "datafile" in dataset_dict:
                 dataset_dict["datafiles"] = dataset_dict["datafile"]
-            dataset_dict["parameters"] = dataset_dict["parameter"]
+            if "parameter" in dataset_dict:
+                dataset_dict["parameters"] = dataset_dict["parameter"]
             dataset_dict["start_date"] = dataset_dict["startDate"]
             dataset_dict["end_date"] = dataset_dict["endDate"]
             if "investigationId" in dataset_dict:
@@ -60,7 +64,7 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
         investigation_id=investigation_id,
         instrument=instrument,
         name=dataset_name,
-        parameters=[DatasetParameterContext(name=i.get("name", None), value=i.get("value", None)) for i in parameters],
+        parameters=[DatasetParameterContext(name=i.get("name", None), value=i.get("value", None)) for i in parameters if i],
         location=location,
         start_date=start_date,
         end_date=end_date,
