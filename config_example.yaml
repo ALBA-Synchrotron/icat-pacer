@@ -173,6 +173,9 @@ ingestionSettings:
     automaticDatasetLocationIndex: true
     maxDatafilesPerDataset: 30000
     galleryFolderName: "gallery"
+    #xmlNamespacesTransform:
+    #  - schema: "http://www.esrf.fr/icat"
+    #    to: null
     #galleryAcceptedUploadTypes:
     #  - ".lel"
   investigation:
