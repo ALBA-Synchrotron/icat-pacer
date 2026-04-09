@@ -19,10 +19,12 @@ class DatasetsTasks(BaseTasks):
     def __init__(self, logger: logging.Logger = None):
         super().__init__(logger)
 
-    def create_base_dataset_icat(self, icat_client: ICATClient, dataset_ctx: DatasetContext, *_args, **_kwargs) -> \
+    def create_base_dataset_icat(self, icat_client: ICATClient, dataset_ctx: DatasetContext, *_args, **kwargs) -> \
             tuple[int, int, bool]:
 
         investigation: Entity = get_dataset_investigation(icat_client, self.logger, dataset_ctx)
+        if not "visit_id" in kwargs["shared_obj_identifiers"]:
+            kwargs["shared_obj_identifiers"]["visit_id"] = investigation.visitId
 
         duplicate_proc_dataset = get_duplicated_processed_dataset_in_investigation(icat_client, dataset_ctx.name, dataset_ctx.type,
                                                                                    investigation.id)

@@ -27,7 +27,7 @@ class DatasetsInternalTasks(BaseTasks):
         super().__init__(logger)
 
     def create_dataset_datafiles(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int,
-                                 is_duplicated: bool, *_args, **_kwargs) -> None:
+                                 is_duplicated: bool, *_args, **kwargs) -> None:
 
         ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
@@ -39,6 +39,9 @@ class DatasetsInternalTasks(BaseTasks):
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs["shared_obj_identifiers"]:
+                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
 
                 if is_duplicated:
                     self.logger.info("Duplicated dataset found, removing existing files")
@@ -147,7 +150,7 @@ class DatasetsInternalTasks(BaseTasks):
                 raise e
 
     def create_dataset_parameters(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int,
-                                  is_duplicated: bool, *_args, **_kwargs) -> None:
+                                  is_duplicated: bool, *_args, **kwargs) -> None:
 
         if not dataset_id:
             raise DatasetValidationError("Dataset ID not received")
@@ -157,6 +160,9 @@ class DatasetsInternalTasks(BaseTasks):
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs["shared_obj_identifiers"]:
+                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
 
                 if is_duplicated:
                     if not self.__need_overwrite_dataset_metadata(icat_client, rb.dataset._obj, dataset_ctx):
@@ -213,7 +219,7 @@ class DatasetsInternalTasks(BaseTasks):
                 raise e
 
     def raw_dataset_linkage(self, icat_client: ICATClient, dataset_id: int, *_args,
-                            **_kwargs) -> None:
+                            **kwargs) -> None:
         """
         Link a raw dataset to its input_datasets
         """
@@ -225,6 +231,9 @@ class DatasetsInternalTasks(BaseTasks):
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs["shared_obj_identifiers"]:
+                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
 
                 investigation = rb.dataset.investigation
 
@@ -262,7 +271,7 @@ class DatasetsInternalTasks(BaseTasks):
                 raise e
 
     def processed_dataset_linkage(self, icat_client: ICATClient, dataset_id: int, *_args,
-                                  **_kwargs) -> None:
+                                  **kwargs) -> None:
         """
         Link a processed dataset to its input_datasets
         """
@@ -274,6 +283,9 @@ class DatasetsInternalTasks(BaseTasks):
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs["shared_obj_identifiers"]:
+                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
 
                 input_dataset_param = get_dataset_parameter(icat_client, INPUT_DATASET_PARAMETER_NAME,
                                                             create_if_missing=False,
@@ -322,6 +334,9 @@ class DatasetsInternalTasks(BaseTasks):
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs["shared_obj_identifiers"]:
+                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
 
                 dataset_resources_gallery_file_paths_param = get_dataset_parameter(icat_client,
                                                                                    DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS,

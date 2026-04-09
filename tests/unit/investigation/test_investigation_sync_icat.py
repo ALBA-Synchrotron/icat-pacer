@@ -5,6 +5,7 @@ from exceptions.investigation import InvestigationValidationError, Investigation
 from exceptions.user import UserNotFound
 from helpers.contexts.proposals import create_investigation_context
 from helpers.contexts.user import create_user_context
+from helpers.static_settings import SAMPLE_ACRONYMS_PARAMETER_NAME
 
 
 class TestICATInvestigationSync:
@@ -31,11 +32,13 @@ class TestICATInvestigationSync:
         investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name}, flatten_single=True)
         assert investigation is not None
         assert investigation.investigationInstruments is not None
+        assert investigation.visitId == inv_ctx.icat_visit_id
         inv_params = [(i.type.name, i.stringValue) for i in investigation.parameters]
         assert ("__datasetCount", "0") in inv_params
         assert ("__sampleCount", "0") in inv_params
         assert ("__fileCount", "0") in inv_params
         assert ("__volume", "0") in inv_params
+        assert (SAMPLE_ACRONYMS_PARAMETER_NAME, ",".join(inv_ctx.sample_acronyms)) in inv_params
         assert len(investigation.investigationUsers) == len(inv_ctx.user_list)
 
     def test_create_investigation_non_existent_user(self, investigation_tasks, icat_client,
@@ -98,14 +101,15 @@ class TestICATInvestigationSync:
         user_ctx = create_user_context(valid_user_investigation)
         user_tasks.sync_user_icat(icat_client, user_ctx)
 
+
         inv_ctx = create_investigation_context(valid_investigation_update)
 
-        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name}, flatten_single=True)
+        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name, "visitId__eq": inv_ctx.icat_visit_id}, flatten_single=True)
         assert investigation is None
 
         investigation_tasks.sync_investigation_icat(icat_client, inv_ctx)
 
-        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name}, flatten_single=True)
+        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name, "visitId__eq": inv_ctx.icat_visit_id}, flatten_single=True)
         assert investigation is not None
         assert investigation.investigationInstruments is not None
         assert len(investigation.investigationUsers) == len(inv_ctx.user_list)
@@ -117,7 +121,7 @@ class TestICATInvestigationSync:
         assert len(prev_inv_ctx_users) != len(inv_ctx.user_list)
 
         investigation_tasks.sync_investigation_icat(icat_client, inv_ctx)
-        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name}, flatten_single=True)
+        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name, "visitId__eq": inv_ctx.icat_visit_id}, flatten_single=True)
 
         assert investigation.title == inv_ctx.title
         assert len(investigation.investigationUsers) == len(inv_ctx.user_list)

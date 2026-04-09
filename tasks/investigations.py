@@ -13,7 +13,7 @@ from helpers.dataclasses.investigation import InvestigationContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.visa_utils import VISALoader
 from helpers.static_settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PROPOSER, \
-    ICAT_USER_ROLE_LOCAL_CONTACT, ICAT_USER_ROLE_PARTICIPANT
+    ICAT_USER_ROLE_LOCAL_CONTACT, ICAT_USER_ROLE_PARTICIPANT, SAMPLE_ACRONYMS_PARAMETER_NAME
 from helpers.utils.base_tasks import BaseTasks
 from helpers.utils.investigation import get_investigation_parameter, set_investigation_parameter
 
@@ -35,7 +35,8 @@ class ProposalTasks(BaseTasks):
                                 **_kwargs) -> None:
         self.logger.info(f"ICAT sync: Synchronizing proposal {investigation_context.name}")
 
-        investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": investigation_context.name},
+        investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": investigation_context.name,
+                                                                                "visitId__eq": investigation_context.icat_visit_id},
                                                    flatten_single=True)
         if not investigation:
             investigation: Entity = icat_client.new("Investigation", name=investigation_context.name)
@@ -43,7 +44,7 @@ class ProposalTasks(BaseTasks):
 
         investigation.title = investigation_context.title
         investigation.summary = investigation_context.summary
-        investigation.visitId = investigation_context.instrument.code.lower()
+        investigation.visitId = investigation_context.icat_visit_id
 
         self.__handle_foreign_keys(icat_client, investigation, investigation_context)
 
@@ -76,6 +77,12 @@ class ProposalTasks(BaseTasks):
             self.__create_investigation_statistics_parameters(icat_client, investigation)
 
         self.__update_reimbursed_parcels_parameter(icat_client, investigation, investigation_context)
+
+        if investigation_context.sample_acronyms:
+            sample_acronym_param = get_investigation_parameter(icat_client, SAMPLE_ACRONYMS_PARAMETER_NAME,
+                                                               entity=investigation)
+            _ = set_investigation_parameter(sample_acronym_param, ",".join(investigation_context.sample_acronyms))
+
         # Users and Roles
         self.__handle_user_roles(icat_client, investigation, investigation_context)
 

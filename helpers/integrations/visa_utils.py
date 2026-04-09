@@ -173,7 +173,7 @@ class VISALoader:
                                  SET identifier = %s, title = %s, summary = %s, public_at = %s \
                              """
                 params: tuple = (
-                    int(investigation_context.name),
+                    investigation_context.visa_visit_id,
                     investigation_context.name,
                     investigation_context.title,
                     investigation_context.summary,
@@ -213,13 +213,13 @@ class VISALoader:
                                         SET proposal_id=%s, instrument_id=%s, start_date=%s, end_date=%s, title=%s \
                                     """
                 insert_params: tuple = (
-                    investigation_context.name,
-                    int(investigation_context.name),
+                    f"{investigation_context.name}/{investigation_context.icat_visit_id}",
+                    investigation_context.visa_visit_id,
                     instrument_id,
                     investigation_context.start_date,
                     investigation_context.end_date,
                     investigation_context.title,
-                    int(investigation_context.name),
+                    investigation_context.visa_visit_id,
                     instrument_id,
                     investigation_context.start_date,
                     investigation_context.end_date,
@@ -247,7 +247,7 @@ class VISALoader:
                                         VALUES (%s, %s) ON CONFLICT DO NOTHING \
                                         """
                     insert_params: tuple = (
-                        int(investigation_context.name),
+                        f"{investigation_context.name}/{investigation_context.icat_visit_id}",
                         user_id
                     )
                     try:

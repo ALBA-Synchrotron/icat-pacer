@@ -80,6 +80,7 @@ class PACERConsumer(ConsumerMixin):
 
     def __callback_router(self, body, message: Message) -> None:
         errors: dict = {}
+        shared_obj_identifiers: dict = {}
         processed_timestamp: str = datetime.datetime.now().isoformat()
         retries: int = message.headers.get("x-retries", 0)
         log_dashboard_retries: bool = (retries == 0 or retries == self.max_msg_retries)
@@ -89,7 +90,8 @@ class PACERConsumer(ConsumerMixin):
                 continue
             try:
                 self.logger.info(f"Calling callback function: {func.__name__}")
-                func(body, message, errors=errors, received_at=processed_timestamp)
+                func(body, message, errors=errors, received_at=processed_timestamp,
+                     shared_obj_identifiers=shared_obj_identifiers)
 
             except Exception as e:
                 if running_in_pytest():
@@ -112,14 +114,16 @@ class PACERConsumer(ConsumerMixin):
         else:
             message.ack()
 
-    def __dashboard_message_logging_handler(self, message: Message, errors: dict = {}, received_at: str = "") -> None:
-        obj_identifiers: dict = self.get_message_object_identifiers(message)
+    def __dashboard_message_logging_handler(self, message: Message, errors: dict = {}, received_at: str = "",
+                                            shared_identifiers: dict = {}) -> None:
+        obj_identifiers: dict = self.get_message_object_identifiers(message, shared_identifiers)
         msg_context = create_message_context(message, self.dashboard_message_type, error_message=errors,
                                              obj_identifiers=obj_identifiers, received_at=received_at)
         self.__configured_dashboard_logging_call(msg_context)
 
     def __dashboard_message_logging_callback(self, _body, message: Message, *_args, **kwargs) -> None:
-        self.__dashboard_message_logging_handler(message, kwargs.get("errors", {}), kwargs.get("received_at", ''))
+        self.__dashboard_message_logging_handler(message, kwargs.get("errors", {}), kwargs.get("received_at", ''),
+                                                 kwargs.get("shared_obj_identifiers", {}))
 
     def __broker_forwarder_callback(self, _body, message: Message, *_args, **_kwargs) -> None:
         msg_exchange_name: str = message.delivery_info.get("exchange", "")
