@@ -42,8 +42,8 @@ class InternalStatisticsTasks(BaseTasks):
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
 
-                if not "visit_id" in kwargs["shared_obj_identifiers"]:
-                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 # Dataset name
                 rb.dataset_name_param = get_dataset_parameter(icat_client, DATASET_NAME_PARAMETER,
@@ -92,8 +92,8 @@ class InternalStatisticsTasks(BaseTasks):
                 raise DatasetNotFound("Dataset not found")
 
             investigation: Entity = rb.dataset.investigation
-            if not "visit_id" in kwargs["shared_obj_identifiers"]:
-                kwargs["shared_obj_identifiers"]["visit_id"] = investigation.visitId
+            if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                kwargs.get("shared_obj_identifiers", {})["visit_id"] = investigation.visitId
 
             try:
                 # Total number of datasets
@@ -256,8 +256,8 @@ class InternalStatisticsTasks(BaseTasks):
             if not rb.dataset:
                 raise DatasetNotFound("Dataset not found")
 
-            if not "visit_id" in kwargs["shared_obj_identifiers"]:
-                kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
+            if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
             dataset_sample = rb.dataset.sample
 

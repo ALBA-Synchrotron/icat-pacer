@@ -23,8 +23,8 @@ class DatasetsTasks(BaseTasks):
             tuple[int, int, bool]:
 
         investigation: Entity = get_dataset_investigation(icat_client, self.logger, dataset_ctx)
-        if not "visit_id" in kwargs["shared_obj_identifiers"]:
-            kwargs["shared_obj_identifiers"]["visit_id"] = investigation.visitId
+        if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+            kwargs.get("shared_obj_identifiers", {})["visit_id"] = investigation.visitId
 
         duplicate_proc_dataset = get_duplicated_processed_dataset_in_investigation(icat_client, dataset_ctx.name, dataset_ctx.type,
                                                                                    investigation.id)

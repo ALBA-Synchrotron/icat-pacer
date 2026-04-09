@@ -155,8 +155,8 @@ class InternalDatasetLinksTasks(BaseTasks):
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
 
-                if not "visit_id" in kwargs["shared_obj_identifiers"]:
-                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 datasets_map = self.__build_dataset_links_map(icat_client, dataset_id)
 

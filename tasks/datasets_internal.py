@@ -40,8 +40,8 @@ class DatasetsInternalTasks(BaseTasks):
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
 
-                if not "visit_id" in kwargs["shared_obj_identifiers"]:
-                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 if is_duplicated:
                     self.logger.info("Duplicated dataset found, removing existing files")
@@ -161,8 +161,8 @@ class DatasetsInternalTasks(BaseTasks):
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
 
-                if not "visit_id" in kwargs["shared_obj_identifiers"]:
-                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 if is_duplicated:
                     if not self.__need_overwrite_dataset_metadata(icat_client, rb.dataset._obj, dataset_ctx):
@@ -232,8 +232,8 @@ class DatasetsInternalTasks(BaseTasks):
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
 
-                if not "visit_id" in kwargs["shared_obj_identifiers"]:
-                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 investigation = rb.dataset.investigation
 
@@ -284,8 +284,8 @@ class DatasetsInternalTasks(BaseTasks):
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
 
-                if not "visit_id" in kwargs["shared_obj_identifiers"]:
-                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 input_dataset_param = get_dataset_parameter(icat_client, INPUT_DATASET_PARAMETER_NAME,
                                                             create_if_missing=False,
@@ -323,7 +323,7 @@ class DatasetsInternalTasks(BaseTasks):
 
     def create_dataset_gallery(self, client: ICATPlusClient, icat_client: ICATClient, dataset_ctx: DatasetContext,
                                dataset_id: int,
-                               *_args, **_kwargs) -> None:
+                               *_args, **kwargs) -> None:
         ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
         if not dataset_id:
@@ -335,8 +335,8 @@ class DatasetsInternalTasks(BaseTasks):
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
 
-                if not "visit_id" in kwargs["shared_obj_identifiers"]:
-                    kwargs["shared_obj_identifiers"]["visit_id"] = rb.dataset.investigation.visitId
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 dataset_resources_gallery_file_paths_param = get_dataset_parameter(icat_client,
                                                                                    DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS,
