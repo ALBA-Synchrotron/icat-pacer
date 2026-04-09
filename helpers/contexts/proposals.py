@@ -43,6 +43,9 @@ def create_investigation_context(investigation_data: str | dict,
     is_investigation_reimbursed: bool = investigation_dict.get("is_reimbursed", False)
     sync_with_icat: bool = investigation_dict.get("icat_sync", False)
     sync_with_visa: bool = investigation_dict.get("visa_sync", False)
+    icat_visit_id: str = investigation_dict.get("icat_visit_id", "")
+    visa_visit_id: int = investigation_dict.get("visa_visit_id", -1)
+    sample_acronyms: list = investigation_dict.get("sample_acronyms", [])
 
     investigation_users_ctx: list = [
         InvestigationUserContext(username=i.get("username", ""), email=i.get("email", ""), role=i.get("role", ""))
@@ -78,6 +81,9 @@ def create_investigation_context(investigation_data: str | dict,
         is_reimbursed=is_investigation_reimbursed,
         visa_sync=sync_with_visa,
         icat_sync=sync_with_icat,
+        icat_visit_id=icat_visit_id,
+        visa_visit_id=visa_visit_id,
+        sample_acronyms=sample_acronyms
     )
 
     return inv_ctx

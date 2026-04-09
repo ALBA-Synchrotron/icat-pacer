@@ -8,6 +8,7 @@ class InvestigationOperationsContext:
     name: str
     operations: list
 
+
 @dataclass
 class InvestigationInstrumentContext:
     name: str
@@ -19,6 +20,7 @@ class InvestigationInstrumentContext:
 
         if not self.code:
             raise InvestigationValidationError("Investigation's instrument code must be provided")
+
 
 @dataclass
 class InvestigationUserContext:
@@ -36,6 +38,7 @@ class InvestigationUserContext:
         if not self.role:
             raise InvestigationValidationError("InvestigationUser's role must be provided")
 
+
 @dataclass
 class InvestigationContext:
     name: str
@@ -48,6 +51,9 @@ class InvestigationContext:
     instrument: InvestigationInstrumentContext
     type: str
     user_list: list[InvestigationUserContext]
+    icat_visit_id: str
+    visa_visit_id: int
+    sample_acronyms: list[str]
     visit_count: int = 0
     is_reimbursed: bool = False
     visa_sync: bool = False
@@ -78,7 +84,11 @@ class InvestigationContext:
         if not self.type:
             raise InvestigationValidationError("Investigation type must be provided")
 
+        if not self.icat_visit_id:
+            raise InvestigationValidationError("Investigation icat_visit_id must be provided")
 
+        if not self.visa_visit_id:
+            raise InvestigationValidationError("Investigation visa_visit_id must be provided")
 
-
-
+        if not self.sample_acronyms:
+            self.sample_acronyms = []
