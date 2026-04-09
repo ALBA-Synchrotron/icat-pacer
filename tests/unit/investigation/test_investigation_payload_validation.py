@@ -1,7 +1,6 @@
 import pytest
 
 from exceptions.investigation import InvestigationValidationError
-from exceptions.user import UserValidationError
 from helpers.contexts.proposals import create_investigation_context
 
 
@@ -22,7 +21,9 @@ class TestInvestigationPayloadValidation:
                                  "investigation_payload_invalid_missing_email",
                                  "investigation_payload_invalid_missing_role",
                                  "investigation_payload_invalid_missing_instrument_name",
-                                 "investigation_payload_invalid_missing_instrument_code"
+                                 "investigation_payload_invalid_missing_instrument_code",
+                                 "investigation_payload_invalid_missing_icat_visit_id",
+                                 "investigation_payload_invalid_missing_visa_visit_id"
                              ],
                              indirect=True)
     def test_invalid_investigation_payload(self, invalid_investigation_payload):

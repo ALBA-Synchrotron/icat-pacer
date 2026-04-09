@@ -139,7 +139,7 @@ class InternalDatasetLinksTasks(BaseTasks):
 
         return dataset_map
 
-    def build_dataset_full_links_information(self, icat_client: ICATClient, dataset_id: int) -> None:
+    def build_dataset_full_links_information(self, icat_client: ICATClient, dataset_id: int, *_args, **kwargs) -> None:
         if not dataset_id:
             raise DatasetValidationError("Dataset ID not received")
 
@@ -154,6 +154,9 @@ class InternalDatasetLinksTasks(BaseTasks):
 
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 datasets_map = self.__build_dataset_links_map(icat_client, dataset_id)
 

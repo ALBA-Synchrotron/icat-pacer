@@ -20,7 +20,10 @@ def investigation_non_existent_user():
             {"username": "testuser", "email": "test_email@<<>>.com", "role": "Principal investigator"},
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -43,7 +46,10 @@ def investigation_payload_empty_name():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -66,7 +72,10 @@ def investigation_payload_empty_facility():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -89,7 +98,10 @@ def investigation_payload_empty_start_date():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -112,7 +124,10 @@ def investigation_payload_empty_end_date():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -135,7 +150,10 @@ def investigation_payload_empty_title():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 
@@ -159,7 +177,10 @@ def investigation_payload_empty_summary():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 
@@ -180,7 +201,10 @@ def investigation_payload_empty_instrument():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 
@@ -204,7 +228,10 @@ def investigation_payload_empty_type():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 
@@ -228,7 +255,10 @@ def investigation_payload_invalid_missing_username():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -251,7 +281,10 @@ def investigation_payload_invalid_missing_email():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -274,7 +307,10 @@ def investigation_payload_invalid_missing_role():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": ""}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 
@@ -298,7 +334,10 @@ def investigation_payload_invalid_missing_instrument_name():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 
@@ -322,7 +361,62 @@ def investigation_payload_invalid_missing_instrument_code():
             {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
+    }
+
+@pytest.fixture()
+def investigation_payload_invalid_missing_icat_visit_id():
+    return {
+        "name": "2025079999",
+        "facility": "ALBA",
+        "start_date": "2025-07-01T00:00:00Z",
+        "end_date": "2025-07-02T00:00:00Z",
+        "release_date": "2028-07-02T00:00:00Z",
+        "title": "test_title",
+        "summary": "test_summary",
+        "instrument": {
+            "name": "BL13 - XALOC",
+            "code": ""
+        },
+        "type": "MX",
+        "user_list": [
+            {"username": "testuser", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+            {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
+        ],
+        "visit_count": 1,
+        "is_reimbursed": True,
+        "icat_visit_id": None,
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
+    }
+
+@pytest.fixture()
+def investigation_payload_invalid_missing_visa_visit_id():
+    return {
+        "name": "2025079999",
+        "facility": "ALBA",
+        "start_date": "2025-07-01T00:00:00Z",
+        "end_date": "2025-07-02T00:00:00Z",
+        "release_date": "2028-07-02T00:00:00Z",
+        "title": "test_title",
+        "summary": "test_summary",
+        "instrument": {
+            "name": "BL13 - XALOC",
+            "code": ""
+        },
+        "type": "MX",
+        "user_list": [
+            {"username": "testuser", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+            {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Local contact"}
+        ],
+        "visit_count": 1,
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": None,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 
@@ -346,7 +440,10 @@ def valid_investigation():
             {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -369,7 +466,10 @@ def valid_investigation_update():
             {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -392,7 +492,10 @@ def investigation_non_existent_instrument():
             {"username": "testuser1", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -415,7 +518,10 @@ def investigation_non_existent_facility():
             {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -438,7 +544,10 @@ def investigation_non_existent_investigation_type():
             {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 1,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
 @pytest.fixture()
@@ -461,5 +570,8 @@ def valid_investigation_reimbursed_parcels():
             {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 982,
-        "is_reimbursed": True
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }

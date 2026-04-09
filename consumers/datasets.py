@@ -25,19 +25,19 @@ class DatasetsConsumer(PACERConsumer):
         self.internal_dataset_exchange_name: str = ingestion_settings.get("internalDatasetExchangeName", "")
         self.internal_dataset_routing_key: str = ingestion_settings.get("internalDatasetRoutingKey", "")
 
-    def get_message_object_identifiers(self, message: Message) -> dict:
+    def get_message_object_identifiers(self, message: Message, shared_obj_identifiers: dict = {}) -> dict:
         try:
             dataset_str: str = message.payload or message.body
             dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
             return {
                 "instrument": dataset_ctx.instrument,
                 "investigation": dataset_ctx.investigation if dataset_ctx.investigation else f"id={dataset_ctx.investigation_id}",
-                "dataset": dataset_ctx.name}
+                "dataset": dataset_ctx.name, **shared_obj_identifiers}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
-    def callback_func_main_dataset_creation(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_main_dataset_creation(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"callback_func_main_dataset_ingestion > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_str: str = message.payload or message.body
@@ -46,7 +46,7 @@ class DatasetsConsumer(PACERConsumer):
         new_dataset_id, investigation_id, is_duplicated = self.tasks.create_base_dataset_icat(
             icat_client=self.icat_client,
             dataset_ctx=dataset_ctx,
-            *_args, **_kwargs)
+            *args, **kwargs)
         if new_dataset_id:
             self.logger.info(
                 f"callback_func_main_dataset_ingestion > Forwarding message to internal ingest queue")

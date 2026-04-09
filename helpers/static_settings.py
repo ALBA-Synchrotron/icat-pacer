@@ -44,6 +44,9 @@ SAMPLE_VOLUME_PARAMETER: str = "__volume"
 SAMPLE_ACQUISITION_VOLUME_PARAMETER: str = "__acquisitionVolume"
 SAMPLE_PROCESSED_VOLUME_PARAMETER: str = "__processedVolume"
 
+# Sample data
+SAMPLE_ACRONYMS_PARAMETER_NAME: str = "sampleAcronyms"
+
 # Internal dataset parameters names
 DATASET_NAME_PARAMETER: str = "datasetName"
 INPUT_DATASET_IDS_PARAMETER_NAME: str = "input_datasetIds"

@@ -31,7 +31,7 @@ class InternalStatisticsTasks(BaseTasks):
     def __init__(self, logger: logging.Logger = None):
         super().__init__(logger)
 
-    def update_dataset_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **_kwargs) -> None:
+    def update_dataset_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **kwargs) -> None:
 
         if not dataset_id:
             raise DatasetValidationError("Dataset ID not received")
@@ -41,6 +41,9 @@ class InternalStatisticsTasks(BaseTasks):
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
                     raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 # Dataset name
                 rb.dataset_name_param = get_dataset_parameter(icat_client, DATASET_NAME_PARAMETER,
@@ -78,7 +81,7 @@ class InternalStatisticsTasks(BaseTasks):
                 raise e
 
     def update_investigation_statistics(self, icat_client: ICATClient, dataset_id: int, *_args,
-                                        **_kwargs) -> None:
+                                        **kwargs) -> None:
         if not dataset_id:
             raise DatasetValidationError("Dataset ID not received")
 
@@ -89,6 +92,8 @@ class InternalStatisticsTasks(BaseTasks):
                 raise DatasetNotFound("Dataset not found")
 
             investigation: Entity = rb.dataset.investigation
+            if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                kwargs.get("shared_obj_identifiers", {})["visit_id"] = investigation.visitId
 
             try:
                 # Total number of datasets
@@ -241,7 +246,7 @@ class InternalStatisticsTasks(BaseTasks):
                 self.logger.error(error_msg)
                 raise e
 
-    def update_sample_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **_kwargs) -> None:
+    def update_sample_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **kwargs) -> None:
         if not dataset_id:
             raise DatasetValidationError("Dataset ID not received")
 
@@ -250,6 +255,9 @@ class InternalStatisticsTasks(BaseTasks):
 
             if not rb.dataset:
                 raise DatasetNotFound("Dataset not found")
+
+            if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
             dataset_sample = rb.dataset.sample
 

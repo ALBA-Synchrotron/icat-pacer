@@ -17,22 +17,23 @@ class InvestigationOperationsConsumer(PACERConsumer):
         super().__init__(dashboard_message_type="investigation-ops", *args, **kwargs)
         self.tasks = InvestigationOpsTasks(self.logger)
 
-    def get_message_object_identifiers(self, message: Message) -> dict:
+    def get_message_object_identifiers(self, message: Message, shared_obj_identifiers: dict = {}) -> dict:
         try:
             inv_ops_str: str = message.payload or message.body
             inv_ops_ctx: InvestigationOperationsContext = create_investigation_ops_context(inv_ops_str)
-            return {"investigation": inv_ops_ctx.name, "operations": inv_ops_ctx.operations}
+            return {"investigation": inv_ops_ctx.name, "operations": inv_ops_ctx.operations, **shared_obj_identifiers}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
-    def callback_func_investigation_mint(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_investigation_mint(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"investigation_mint_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         inv_ops_str: str = message.payload or message.body
         inv_ops_ctx: InvestigationOperationsContext = create_investigation_ops_context(inv_ops_str)
 
         if "mint-proposal" in inv_ops_ctx.operations and self.datacite_client is not None:
-            self.tasks.mint_proposal(self.visa_pg_pool, self.icat_client, self.datacite_client, inv_ops_ctx)
+            self.tasks.mint_proposal(self.visa_pg_pool, self.icat_client, self.datacite_client, inv_ops_ctx, *args,
+                                     **kwargs)
         if "create-panosc-item" in inv_ops_ctx.operations:
-            self.tasks.create_panosc_item(self.icat_client, inv_ops_ctx, self.panosc_client)
+            self.tasks.create_panosc_item(self.icat_client, inv_ops_ctx, self.panosc_client, *args, **kwargs)

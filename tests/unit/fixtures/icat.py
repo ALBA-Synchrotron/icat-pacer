@@ -354,3 +354,9 @@ def mock_icat_plus_client():
         mock_client.upload_gallery_files.return_value = "0x18A"
 
         yield mock_client
+
+@pytest.fixture(autouse=True, scope="session")
+def icat_sample_acronyms_parameter_type(icat_client, icat_facility):
+    parameter_type = icat_client.new("ParameterType", name="sampleAcronyms", valueType="STRING",
+                                     applicableToInvestigation=True, facility=icat_facility, units="NA")
+    parameter_type.create()
