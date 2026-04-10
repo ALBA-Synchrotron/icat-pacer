@@ -16,7 +16,6 @@ from config.config import ConfigParser
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.logging.general import configure_pacer_logger
 from helpers.utils.pacer_consumer import PACERConsumer
-from helpers.utils.serializers import register_custom_serializers
 from helpers.utils.strings import mask_amqp_password
 from helpers.utils.utils import Singleton, running_in_pytest
 
@@ -40,7 +39,7 @@ class PACER:
     __metaclass__ = Singleton
 
     def __init__(self, **kwargs) -> None:
-        config_location: str or None = os.environ.get("PACER_CONFIG_LOCATION", "config.yaml")
+        config_location: str = os.environ.get("PACER_CONFIG_LOCATION", "config.yaml")
         self.config = ConfigParser.load_config(config_location)
 
         if "broker_connection" in kwargs and running_in_pytest():
@@ -90,12 +89,13 @@ class PACER:
             self.logger.debug(f"Queue declared: name={queue.name} ")
 
     @classmethod
-    def __construct_broker_url(cls, protocol: str, host: str, port: int, username: str, password: str,
+    def _construct_broker_url(cls, protocol: str, host: str, port: int, username: str, password: str,
                                vhost: str) -> str:
         url: str = f"{protocol}://"
         url = f"{url}{username}:{password}@" if username and password else url
         url = f"{url}{host}:{port}" if port else f"{url}{host}"
         url = f"{url}/{vhost}" if vhost else url
+
 
         return url
 
@@ -107,7 +107,7 @@ class PACER:
         main_broker_password: str = quote(self.get_config_value("brokers.main.password", fallback_value=""))
         main_broker_vhost: str = quote(self.get_config_value("brokers.main.vHost", fallback_value=""))
 
-        main_broker_url: str = self.__construct_broker_url(main_broker_protocol, main_broker_host, main_broker_port,
+        main_broker_url: str = self._construct_broker_url(main_broker_protocol, main_broker_host, main_broker_port,
                                                            main_broker_username, main_broker_password,
                                                            main_broker_vhost)
         self.broker_connection = Connection(main_broker_url)
@@ -125,7 +125,7 @@ class PACER:
             recipient_password: str = quote(recipient.get("password", ""))
             recipient_vhost: str = quote(recipient.get("vHost", ""))
 
-            recipient_broker_url: str = self.__construct_broker_url(recipient_protocol, recipient_host, recipient_port,
+            recipient_broker_url: str = self._construct_broker_url(recipient_protocol, recipient_host, recipient_port,
                                                                     recipient_username, recipient_password,
                                                                     recipient_vhost)
             self.recipient_connections[recipient_name] = Connection(recipient_broker_url)
@@ -175,11 +175,28 @@ class PACER:
         self.logger.debug(f"Created {len(self.queues)} queues")
 
     def session_check(self):
-        try:
-            _ = self.icat_client.search("Investigation", conditions={"name__eq": "session-check"}, flatten_single=True)
-        except ICATSessionError:
-            self.logger.error("Connection to ICAT lost, sessionId does no longer exist in ICAT. Reopening session...")
-            self.__open_icat_session()
+        while True:
+            try:
+                _ = self.icat_client.search(
+                    "Investigation",
+                    conditions={"name__eq": "session-check"},
+                    flatten_single=True
+                )
+                return
+            except Exception as e:
+                self.logger.error(
+                    f"Connection to ICAT lost, sessionId does no longer exist in ICAT. "
+                    f"Reopening session... ({e!r})"
+                )
+                try:
+                    self.__open_icat_session()
+                    sleep(MAIN_LOOP_WAIT_TIME)
+                except Exception as reopen_error:
+                    self.logger.error(
+                        f"Failed to reopen ICAT session. Retrying in {MAIN_LOOP_WAIT_TIME} seconds... "
+                        f"({reopen_error!r})"
+                    )
+                    sleep(MAIN_LOOP_WAIT_TIME)
 
     def __open_icat_session(self) -> None:
         self.icat_client = ICATClient.open_icat_session(self.config)
@@ -201,10 +218,6 @@ class PACER:
 
         self.__configure_logging()
         self.logger.info("Logging configured for PACER main process")
-
-        self.logger.info("Registering custom serializers")
-        custom_serializers: list = self.get_config_value("customSerializers", [])
-        register_custom_serializers(custom_serializers)
 
         self.__open_broker_connections()
         self.__create_exchanges()

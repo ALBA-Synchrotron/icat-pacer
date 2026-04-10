@@ -54,14 +54,6 @@ config_yaml_schema: dict = {
             }
         }
     },
-    "customSerializers": {
-        "type": "list",
-        "required": False,
-        "schema":
-            {
-                "type": "string", "required": True
-            }
-    },
     "exchanges": {
         "type": "list",
         "required": True,
