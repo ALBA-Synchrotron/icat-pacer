@@ -1,5 +1,6 @@
 import json
 import os
+from time import sleep
 from urllib.parse import quote
 
 from kombu import Connection
@@ -64,7 +65,6 @@ if __name__ == "__main__":
 
     for index in indices:
         dataset = investigation.datasets[index]
-
         msg: dict = {**msg_common,
                      "name": str(dataset.name),
                      "location": str(dataset.location),
@@ -82,3 +82,4 @@ if __name__ == "__main__":
         GenericProducer.send_message(conn=broker_conn, exchange_name=INGESTION_EXCHANGE,
                                      routing_key=INGESTION_ROUTING_KEY,
                                      ctx=json.dumps(msg))
+        sleep(30)
