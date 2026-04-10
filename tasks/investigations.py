@@ -96,7 +96,7 @@ class ProposalTasks(BaseTasks):
         )
 
         if not facility:
-            raise InvestigationFacilityNotFound()
+            raise InvestigationFacilityNotFound(">" + investigation_context.facility + "<")
 
         inv_type = icat_client.search(
             "InvestigationType",
@@ -105,7 +105,7 @@ class ProposalTasks(BaseTasks):
         )
 
         if not inv_type:
-            raise InvestigationTypeNotFound()
+            raise InvestigationTypeNotFound(">" + investigation_context.type + "<")
 
         investigation.facility = facility
         investigation.type = inv_type
