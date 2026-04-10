@@ -35,14 +35,14 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
             if "investigationId" in dataset_dict:
                 dataset_dict["investigation_id"] = int(dataset_dict["investigationId"])
         except Exception as e:
-            raise PayloadParsingError(f"Error parsing XML payload: {e!r}")
+            raise PayloadParsingError(f"Error parsing XML payload: {e!r}", e)
 
     else:
         try:
             dataset_dict = json.loads(dataset_data) if isinstance(dataset_data, str) else dataset_data
         except Exception as e:
             raise PayloadParsingError(
-                f"Error parsing JSON payload (XML is{' not' if not ingestion_settings.get("acceptXMLPayloads") else ''} accepted): {e!r}")
+                f"Error parsing JSON payload (XML is{' not' if not ingestion_settings.get("acceptXMLPayloads") else ''} accepted): {e!r}", e)
 
     investigation_name: str = dataset_dict.get("investigation", "")
     investigation_id: int = dataset_dict.get("investigation_id", 0)
@@ -54,6 +54,10 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
     start_date: str = dataset_dict.get("start_date", "")
     end_date: str = dataset_dict.get("end_date", "")
     sample: dict = dataset_dict.get("sample", {})
+
+    if not sample:
+        raise PayloadParsingError(f"Sample information is missing in dataset payload: {dataset_dict!r}")
+
     sample_name: str = sample.get("name", "")
     sample_type: str = sample.get("type", "")
     datafiles: list = dataset_dict.get("datafiles", []) if isinstance(dataset_dict.get("datafiles"), list) else [

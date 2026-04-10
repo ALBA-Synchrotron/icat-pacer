@@ -16,8 +16,6 @@ logging:
     serviceName: "icat-pacer"
     serviceEnvironment: "local"
     indexName: "pacer-logs"
-customSerializers:
-  - "serializers.xml.register_xml"
 exchanges:
   - name: "dashboard-logging-exchange"
     type: "direct"

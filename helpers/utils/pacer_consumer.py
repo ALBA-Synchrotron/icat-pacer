@@ -26,6 +26,7 @@ from helpers.integrations.panosc import PaNOSCClient, get_panosc_client
 from helpers.integrations.visa_utils import get_pg_connection_pool
 from helpers.logging.general import configure_worker_logger
 from helpers.utils.utils import running_in_pytest, camel_case_to_snake_case
+
 from producers.forwarder import MessageForwarder
 from producers.generic import GenericProducer
 
@@ -100,13 +101,14 @@ class PACERConsumer(ConsumerMixin):
                 errors[func.__name__] = f"{type(e).__name__}: {str(e)}"
         if errors:
             requeue: bool = any(
-                isinstance(i, ICATSessionError) for i, _ in errors.items()) and retries <= self.max_msg_retries
+                isinstance(i, ICATSessionError) or "Service Temporarily Unavailable" in text for i, text in
+                errors.items()) and retries <= self.max_msg_retries
             self.logger.error(f"Message rejected ({'not ' if not requeue else ''}requeued) due to errors: {errors}")
 
             if requeue:
                 GenericProducer.send_message(self.connection, exchange_name="dead-letters-exchange",
                                              routing_key="dead.letters",
-                                             headers={"x-retries": retries + 1, "x-delay": 60,
+                                             headers={"x-retries": retries + 1, "x-delay": 60 * (retries + 1),
                                                       "original-routing-key": message.delivery_info["routing_key"],
                                                       "original-exchange": message.delivery_info["exchange"],
                                                       "x-processing-ts": datetime.datetime.now().isoformat()}, ctx=body)
