@@ -19,7 +19,7 @@ def ops_investigation_with_doi(icat_client, icat_facility, icat_unittest_investi
                         doi="10.1234/test.123456789", facility=icat_facility,
                         type=icat_unittest_investigation_type, visitId=f"{name}-visitId", )
     i.create()
-    return create_investigation_ops_context({"name": i.name, "ops": ops})
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -33,7 +33,7 @@ def ops_investigation_no_datasets(icat_client, icat_facility, icat_unittest_inve
                         facility=icat_facility,
                         type=icat_unittest_investigation_type, visitId=f"{name}-visitId")
     i.create()
-    return create_investigation_ops_context({"name": i.name, "ops": ops})
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -46,7 +46,7 @@ def ops_investigation_missing_end_date(icat_client, icat_facility, icat_unittest
                         facility=icat_facility,
                         type=icat_unittest_investigation_type, visitId=f"{name}-visitId")
     i.create()
-    return create_investigation_ops_context({"name": i.name, "ops": ops})
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -65,7 +65,7 @@ def ops_investigation_missing_investigation_users(icat_client, icat_facility, ic
     dataset = icat_client.new("Dataset", investigation=i, name="test_dataset", type=dataset_type_raw)
     dataset.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops})
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -86,7 +86,7 @@ def ops_investigation_missing_instrument(icat_client, icat_facility, icat_unitte
     inv_user = icat_client.new("InvestigationUser", investigation=i, user=random_user, role="Principal investigator")
     inv_user.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops})
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -111,12 +111,12 @@ def ops_investigation_future_end_date(icat_client, icat_facility, icat_unittest_
     inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
     inv_instr.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops})
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
 def ops_non_existent_investigation():
-    return create_investigation_ops_context({"name": "non_existent_investigation", "ops": ops})
+    return create_investigation_ops_context({"name": "non_existent_investigation", "ops": ops, "visit_id": ""})
 
 
 @pytest.fixture(scope="session")
@@ -140,11 +140,12 @@ def ops_valid_investigation(icat_client, icat_facility, icat_unittest_investigat
     inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
     inv_instr.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops})
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+
 
 @pytest.fixture(scope="session")
 def ops_valid_investigation_with_doi(icat_client, icat_facility, icat_unittest_investigation_type, dataset_type_raw,
-                            random_user, random_instrument):
+                                     random_user, random_instrument):
     name = "inv_valid_ops_with_doi"
     i = icat_client.new("Investigation", name=name, title="Investigation without DOI",
                         summary="Investigation without DOI",
@@ -163,11 +164,12 @@ def ops_valid_investigation_with_doi(icat_client, icat_facility, icat_unittest_i
     inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
     inv_instr.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops})
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+
 
 @pytest.fixture(scope="session")
 def ops_valid_investigation_no_doi(icat_client, icat_facility, icat_unittest_investigation_type, dataset_type_raw,
-                            random_user, random_instrument):
+                                   random_user, random_instrument):
     name = "inv_valid_ops_no_doi"
     i = icat_client.new("Investigation", name=name, title="Investigation without DOI",
                         summary="Investigation without DOI",
@@ -186,7 +188,8 @@ def ops_valid_investigation_no_doi(icat_client, icat_facility, icat_unittest_inv
     inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
     inv_instr.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops})
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+
 
 @pytest.fixture(scope="session")
 def datacite_client_mock():
@@ -196,6 +199,7 @@ def datacite_client_mock():
         client_mock.__check_weight_recomputation_in_progress.return_value = False
 
         yield client_mock
+
 
 @pytest.fixture(scope="session")
 def panosc_client_mock():

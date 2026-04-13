@@ -7,6 +7,7 @@ from exceptions.investigation import InvestigationValidationError
 class InvestigationOperationsContext:
     name: str
     operations: list
+    visit_id: str
 
 
 @dataclass

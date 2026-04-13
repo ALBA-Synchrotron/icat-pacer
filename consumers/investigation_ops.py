@@ -21,7 +21,8 @@ class InvestigationOperationsConsumer(PACERConsumer):
         try:
             inv_ops_str: str = message.payload or message.body
             inv_ops_ctx: InvestigationOperationsContext = create_investigation_ops_context(inv_ops_str)
-            return {"investigation": inv_ops_ctx.name, "operations": inv_ops_ctx.operations, **shared_obj_identifiers}
+            return {"investigation": inv_ops_ctx.name, "operations": inv_ops_ctx.operations,
+                    "visit_id": inv_ops_ctx.visit_id, **shared_obj_identifiers}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
