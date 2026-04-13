@@ -176,7 +176,7 @@ class ProposalTasks(BaseTasks):
         current_investigation_users = icat_client.search(
             "InvestigationUser",
             conditions={
-                "investigation.name__eq": investigation_context.name,
+                "investigation.id__eq": investigation.id,
                 "role__eq": role
             },
             flatten_single=False,
