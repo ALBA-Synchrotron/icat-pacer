@@ -4,13 +4,16 @@ from dataclasses import dataclass
 @dataclass
 class MessageContext:
     object_identifiers: dict
-    processed_at: str = ""
+    error_message: dict
+    processing_start: str = ""
+    processing_end: str = ""
     hash: str = ""
     message_type: str = ""
     payload_format: str = ""
     payload: str = ""
     errored: bool = False
-    error_message: str = ""
+    exchange_name: str = ""
+    routing_key: str = ""
 
 
 @dataclass

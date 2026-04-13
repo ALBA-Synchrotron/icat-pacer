@@ -1,11 +1,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import logging
-from pathlib import Path
 
 from icat.entity import Entity
 
-from helpers.dataclasses.dataset import DatasetContext
+from exceptions.dataset import DatasetValidationError, DatasetNotFound
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.static_settings import DATASET_NAME_PARAMETER, DATASET_FILE_COUNT_PARAMETER, DATASET_VOLUME_PARAMETER, \
     DATASET_ELAPSE_TIME_PARAMETER, INVESTIGATION_DATASET_COUNT_PARAMETER, \
@@ -19,6 +18,7 @@ from helpers.static_settings import DATASET_NAME_PARAMETER, DATASET_FILE_COUNT_P
     SAMPLE_PROCESSED_DATASET_COUNT_PARAMETER, SAMPLE_FILE_COUNT_PARAMETER, SAMPLE_ACQUISITION_FILE_COUNT_PARAMETER, \
     SAMPLE_PROCESSED_FILE_COUNT_PARAMETER, INVESTIGATION_PROCESSED_VOLUME_PARAMETER, SAMPLE_VOLUME_PARAMETER, \
     SAMPLE_ACQUISITION_VOLUME_PARAMETER, SAMPLE_PROCESSED_VOLUME_PARAMETER
+from helpers.utils.base_tasks import BaseTasks
 from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 from helpers.utils.investigation import set_investigation_parameter, get_investigation_parameter
@@ -26,21 +26,24 @@ from helpers.utils.parameters import get_parameter_type
 from helpers.utils.sample import get_sample_parameter, set_sample_parameter
 
 
-class InternalStatisticsTasks:
+class InternalStatisticsTasks(BaseTasks):
 
     def __init__(self, logger: logging.Logger = None):
-        self.logger = logger
+        super().__init__(logger)
 
-    def update_dataset_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **_kwargs) -> None:
+    def update_dataset_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **kwargs) -> None:
 
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
-                    raise Exception("Dataset not found")
+                    raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 # Dataset name
                 rb.dataset_name_param = get_dataset_parameter(icat_client, DATASET_NAME_PARAMETER,
@@ -62,7 +65,7 @@ class InternalStatisticsTasks:
 
                 if rb.dataset.startDate is not None:
                     if rb.dataset.endDate is not None:
-                        elapsed_time: float = int((rb.dataset.endDate - rb.dataset.startDate).total_seconds())
+                        elapsed_time: float = int((rb.dataset.endDate - rb.dataset.startDate).total_seconds()) * 1000
 
                         rb.elapsed_time_param = get_dataset_parameter(icat_client,
                                                                       DATASET_ELAPSE_TIME_PARAMETER,
@@ -75,18 +78,22 @@ class InternalStatisticsTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def update_investigation_statistics(self, icat_client: ICATClient, dataset_id: int, *_args,
-                                        **_kwargs) -> None:
+                                        **kwargs) -> None:
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
-            investigation: Entity = rb.dataset.investigation
+
             if not rb.dataset:
-                raise Exception("Dataset not found")
+                raise DatasetNotFound("Dataset not found")
+
+            investigation: Entity = rb.dataset.investigation
+            if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                kwargs.get("shared_obj_identifiers", {})["visit_id"] = investigation.visitId
 
             try:
                 # Total number of datasets
@@ -237,17 +244,22 @@ class InternalStatisticsTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
-    def update_sample_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **_kwargs) -> None:
+    def update_sample_statistics(self, icat_client: ICATClient, dataset_id: int, *_args, **kwargs) -> None:
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
-            dataset_sample = rb.dataset.sample
+
             if not rb.dataset:
-                raise Exception("Dataset not found")
+                raise DatasetNotFound("Dataset not found")
+
+            if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
+
+            dataset_sample = rb.dataset.sample
 
             try:
                 # Total number of datasets referencing sample
@@ -380,7 +392,7 @@ class InternalStatisticsTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     """
     def update_per_dataset_parameter_statistics(self, icat_client: ICATClient, investigation_name: str, dataset_id: int,

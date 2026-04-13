@@ -1,3 +1,4 @@
+import multiprocessing
 import re
 from typing import Iterable, TypeVar
 
@@ -5,11 +6,15 @@ import suds
 from icat import Client, translateError
 from icat.entity import Entity
 from icat.query import Query
+from suds.sax.text import Text
 
 T = TypeVar("T")
 
 
 class ICATClient(Client):
+
+    _session_id: multiprocessing.Value
+
     def __init__(self, url: str, username: str = None, password: str = None, auth_plugin: str = None,
                  session_id: str = None, *_args, **_kwargs) -> None:
 
@@ -28,6 +33,18 @@ class ICATClient(Client):
     def __del__(self) -> None:
         super().__del__()
         self.logout()
+
+    @property
+    def sessionId(self) -> str | None:
+        if self._session_id:
+            if type(self._session_id) in [Text, str]:
+                return self._session_id
+            return self._session_id.value
+        return None
+
+    @sessionId.setter
+    def sessionId(self, value) -> None:
+        self._session_id = value
 
     def auto_refresh_session(self) -> None:
         self.autoRefresh()
@@ -86,6 +103,10 @@ class ICATClient(Client):
     @classmethod
     def __to_sql_in_clause(cls, values: Iterable) -> str:
         formatted = []
+
+        if not values:
+            return "NULL"
+
         for v in values:
             if isinstance(v, str):
                 escaped = v.replace("'", "''")
@@ -169,6 +190,9 @@ class ICATClient(Client):
 
         if results:
             return results[0] if len(results) == 1 and flatten_single else results
+
+        if not flatten_single:
+            return results if results else []
         return None
 
     def query_search(self, query: str | Query, flatten_single: bool = True) -> list:

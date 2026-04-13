@@ -38,9 +38,9 @@ def get_entity_parameter(icat_client: ICATClient, parameter_name: str, condition
 
     if not entity_param and create_if_missing:
         entity_param = icat_client.new(f"{entity_param_main_fk_name}Parameter")
-        type: Entity = get_parameter_type(icat_client, parameter_name)
+        param_type: Entity = get_parameter_type(icat_client, parameter_name)
 
-        entity_param.type = type
+        entity_param.type = param_type
         setattr(entity_param, entity_param_main_fk_name, entity)
 
     return entity_param
@@ -50,10 +50,9 @@ def set_entity_parameter(entity_parameter: Entity, parameter_value: str | int | 
     if len(str(parameter_value)) > PARAMETER_STRING_VALUE_MAX_LENGTH:
         raise Exception(f"Parameter value for {entity_parameter.type.name} is too long, exceeds max limit.")
 
-
     store_value_also_as_text: bool = globals_var.ingestion_settings.get("parameters", {}).get(
         "storeParametersValuesAlsoAsString",
-        False)
+        True)
 
     match entity_parameter.type.valueType:
         case "DATE_AND_TIME":

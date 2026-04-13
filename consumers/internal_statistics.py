@@ -19,7 +19,7 @@ class InternalStatisticsConsumer(PACERConsumer):
 
         self.tasks = InternalStatisticsTasks(self.logger)
 
-    def get_message_object_identifiers(self, message: Message) -> dict:
+    def get_message_object_identifiers(self, message: Message, shared_obj_identifiers: dict = {}) -> dict:
         try:
             dataset_str: str = message.payload or message.body
             dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
@@ -29,28 +29,28 @@ class InternalStatisticsConsumer(PACERConsumer):
             return {
                 "instrument": dataset_ctx.instrument,
                 "investigation": dataset_ctx.investigation if dataset_ctx.investigation else f"id={investigation_id}",
-                "dataset": dataset_ctx.name, "dataset_id": dataset_id}
+                "dataset": dataset_ctx.name, "dataset_id": dataset_id, **shared_obj_identifiers}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
-    def callback_func_update_dataset_statistics(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_update_dataset_statistics(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"callback_func_update_dataset_statistics > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_id: int = message.headers.get("dataset_id", 0)
 
-        self.tasks.update_dataset_statistics(self.icat_client, dataset_id)
+        self.tasks.update_dataset_statistics(self.icat_client, dataset_id, *args, **kwargs)
 
-    def callback_func_update_investigation_statistics(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_update_investigation_statistics(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"callback_func_update_investigation_statistics > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_id: int = message.headers.get("dataset_id", 0)
 
-        self.tasks.update_investigation_statistics(self.icat_client, dataset_id)
+        self.tasks.update_investigation_statistics(self.icat_client, dataset_id, *args, **kwargs)
 
-    def callback_func_update_sample_statistics(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_update_sample_statistics(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"callback_func_update_sample_statistics > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_id: int = message.headers.get("dataset_id", 0)
 
-        self.tasks.update_sample_statistics(self.icat_client, dataset_id)
+        self.tasks.update_sample_statistics(self.icat_client, dataset_id, *args, **kwargs)

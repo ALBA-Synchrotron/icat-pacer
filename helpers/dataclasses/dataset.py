@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 
+from exceptions.dataset import DatasetValidationError, DatasetParameterValidationError, DatasetDatafileValidationError, \
+    DatasetSampleValidationError
+
 
 @dataclass
 class DatasetSampleContext:
@@ -8,7 +11,7 @@ class DatasetSampleContext:
 
     def __post_init__(self):
         if not self.name:
-            raise ValueError("Sample name cannot be empty")
+            raise DatasetSampleValidationError("Sample name cannot be empty")
 
 @dataclass
 class DatasetDatafileContext:
@@ -16,7 +19,7 @@ class DatasetDatafileContext:
 
     def __post_init__(self):
         if not self.location:
-            raise ValueError("Datafile location cannot be empty")
+            raise DatasetDatafileValidationError("Datafile location cannot be empty")
 
 
 @dataclass
@@ -25,10 +28,10 @@ class DatasetParameterContext:
     value: str
 
     def __post_init__(self):
-        if self.name is None:
-            raise ValueError("Dataset parameter name cannot be empty")
+        if self.name is None or not self.name:
+            raise DatasetParameterValidationError("Dataset parameter name cannot be empty")
         if self.value is None:
-            raise ValueError("Dataset parameter value cannot be empty")
+            raise DatasetParameterValidationError("Dataset parameter value cannot be empty")
 
 
 @dataclass
@@ -47,19 +50,19 @@ class DatasetContext:
 
     def __post_init__(self):
         if not self.investigation and not self.investigation_id:
-            raise ValueError(f"Investigation name nor id not found in payload")
+            raise DatasetValidationError(f"Investigation name nor id not found in payload")
 
         if not self.instrument:
-            raise ValueError(f"Instrument not found in payload")
+            raise DatasetValidationError(f"Instrument not found in payload")
 
         if not self.name:
-            raise ValueError(f"Name not found in payload")
+            raise DatasetValidationError(f"Name not found in payload")
 
         if not self.location:
-            raise ValueError(f"Location not found in payload")
+            raise DatasetValidationError(f"Location not found in payload")
 
         if not self.start_date:
-            raise ValueError(f"Start date not found in payload")
+            raise DatasetValidationError(f"Start date not found in payload")
 
         if not self.end_date:
-            raise ValueError(f"End date not found in payload")
+            raise DatasetValidationError(f"End date not found in payload")

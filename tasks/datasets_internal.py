@@ -1,6 +1,5 @@
 from __future__ import absolute_import, unicode_literals
 
-import glob
 import logging
 import os
 from pathlib import Path
@@ -8,35 +7,41 @@ from pathlib import Path
 from icat.entity import Entity
 
 import globals_var
+from exceptions.dataset import DatasetValidationError, DatasetNotFound
 from helpers.dataclasses.dataset import DatasetContext, DatasetDatafileContext
 from helpers.integrations.icat.extended_client import ICATClient
+from helpers.integrations.icat.icat_plus import ICATPlusClient
 from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME, INPUT_DATASET_IDS_PARAMETER_NAME, \
     OUTPUT_DATASET_IDS_PARAMETER_NAME, OUTPUT_DATASET_DATASETS_PARAMETER_NAME, OUTPUT_DATASET_NAMES_PARAMETER_NAME, \
     DATASET_PROCESSING_VERSION_PARAMETER_NAME, DATASET_PARAMETER_START_DATE_PARAMETER_NAME, \
-    DATASET_PARAMETER_END_DATE_PARAMETER_NAME
-from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter, \
-    get_duplicated_processed_dataset_in_investigation
+    DATASET_PARAMETER_END_DATE_PARAMETER_NAME, DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS, \
+    DATASET_PARAMETER_RESOURCE_GALLERY
+from helpers.utils.base_tasks import BaseTasks
+from helpers.utils.dataset import set_dataset_parameter, get_dataset_parameter
 from helpers.utils.icat_rollback_proxy import ICATRollbackContext
 
 
-class DatasetsInternalTasks:
+class DatasetsInternalTasks(BaseTasks):
 
     def __init__(self, logger: logging.Logger = None):
-        self.logger = logger
+        super().__init__(logger)
 
     def create_dataset_datafiles(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int,
-                                 is_duplicated: bool, *_args, **_kwargs) -> None:
+                                 is_duplicated: bool, *_args, **kwargs) -> None:
 
         ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
 
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
-                    raise Exception("Dataset not found")
+                    raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 if is_duplicated:
                     self.logger.info("Duplicated dataset found, removing existing files")
@@ -75,11 +80,11 @@ class DatasetsInternalTasks:
                     self.logger.info(f"Created datafile {dataset_ctx.location} with id {new_datafile.id}")
 
             except Exception as e:
-                rb.rollback_all(force_delete=True)
+                rb.rollback_all(force_delete=(not is_duplicated))
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def __need_overwrite_dataset_metadata(self, icat_client: ICATClient, dataset: Entity,
                                           dataset_ctx: DatasetContext) -> bool:
@@ -90,7 +95,7 @@ class DatasetsInternalTasks:
                                                                        DATASET_PROCESSING_VERSION_PARAMETER_NAME,
                                                                        entity=rb.dataset, create_if_missing=False)
                 new_proc_version_param = next(
-                    x for x in dataset_ctx.parameters if x.name == DATASET_PROCESSING_VERSION_PARAMETER_NAME)
+                    (x for x in dataset_ctx.parameters if x.name == DATASET_PROCESSING_VERSION_PARAMETER_NAME), None)
 
                 if rb.existing_proc_version_param and new_proc_version_param:
                     # Overwrite dataset metadata with processing version
@@ -122,36 +127,42 @@ class DatasetsInternalTasks:
                                                               entity=rb.dataset, create_if_missing=False)
 
                     new_start_date_param = next(
-                        x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME)
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_START_DATE_PARAMETER_NAME),
+                        None)
                     new_end_date_param = next(
-                        x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME)
+                        (x for x in dataset_ctx.parameters if x.name == DATASET_PARAMETER_END_DATE_PARAMETER_NAME),
+                        None)
 
                     if rb.start_date_param:
                         rb.start_date_param = set_dataset_parameter(rb.start_date_param._obj,
-                                                                    new_start_date_param.value)
+                                                                    new_start_date_param.stringValue)
 
                     if rb.end_date_param:
-                        rb.end_date_param = set_dataset_parameter(rb.end_date_param._obj, new_end_date_param.value)
+                        rb.end_date_param = set_dataset_parameter(rb.end_date_param._obj,
+                                                                  new_end_date_param.stringValue)
                     return False
 
             except Exception as e:
-                rb.rollback_all(force_delete=True)
+                rb.rollback_all()
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def create_dataset_parameters(self, icat_client: ICATClient, dataset_ctx: DatasetContext, dataset_id: int,
-                                  is_duplicated: bool, *_args, **_kwargs) -> None:
+                                  is_duplicated: bool, *_args, **kwargs) -> None:
 
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
                 if not rb.dataset:
-                    raise Exception("Dataset not found")
+                    raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 if is_duplicated:
                     if not self.__need_overwrite_dataset_metadata(icat_client, rb.dataset._obj, dataset_ctx):
@@ -172,11 +183,11 @@ class DatasetsInternalTasks:
                 self.logger.info(f"Created following parameters for dataset {dataset_ctx.parameters}")
 
             except Exception as e:
-                rb.rollback_all(force_delete=True)
+                rb.rollback_all(force_delete=(not is_duplicated))
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def __link_output_dataset_to_input_dataset(self, icat_client: ICATClient, raw_dataset: Entity,
                                                processed_datasets: list[Entity]) -> None:
@@ -184,58 +195,65 @@ class DatasetsInternalTasks:
             try:
                 rb.output_dataset_ids_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_IDS_PARAMETER_NAME,
                                                                     entity=raw_dataset)
-
+                output_dataset_ids_value = f"{rb.output_dataset_ids_param._obj.stringValue or ''} {' '.join(str(i.id) for i in processed_datasets)}"
                 rb.output_dataset_ids_param = set_dataset_parameter(rb.output_dataset_ids_param._obj,
-                                                                    " ".join(i.id for i in processed_datasets))
+                                                                    output_dataset_ids_value.strip())
 
                 rb.output_dataset_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_DATASETS_PARAMETER_NAME,
                                                                 entity=raw_dataset)
-
+                output_dataset_value = f"{rb.output_dataset_param._obj.stringValue or ''} {' '.join(i.location for i in processed_datasets)}"
                 rb.output_dataset_param = set_dataset_parameter(rb.output_dataset_param._obj,
-                                                                " ".join(i.location for i in processed_datasets))
+                                                                output_dataset_value.strip())
 
                 rb.output_dataset_names_param = get_dataset_parameter(icat_client, OUTPUT_DATASET_NAMES_PARAMETER_NAME,
                                                                       entity=raw_dataset)
-
+                output_dataset_names_value = f"{rb.output_dataset_names_param._obj.stringValue or ''} {' '.join(i.name for i in processed_datasets)}"
                 rb.output_dataset_names_param = set_dataset_parameter(rb.output_dataset_names_param._obj,
-                                                                      " ".join(i.name for i in processed_datasets))
+                                                                      output_dataset_names_value.strip())
 
             except Exception as e:
                 rb.rollback_all(force_delete=True)
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def raw_dataset_linkage(self, icat_client: ICATClient, dataset_id: int, *_args,
-                            **_kwargs) -> None:
+                            **kwargs) -> None:
         """
         Link a raw dataset to its input_datasets
         """
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
+                if not rb.dataset:
+                    raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
+
                 investigation = rb.dataset.investigation
 
-                processed_datasets = icat_client.search("DatasetParameter", flatten_single=False, conditions={
+                processed_datasets_params = icat_client.search("DatasetParameter", flatten_single=False, conditions={
                     "dataset.investigation.id__eq": investigation.id,
                     "type.name__eq": INPUT_DATASET_PARAMETER_NAME,
                     "stringValue__eq": rb.dataset.location
                 })
-
-                if not processed_datasets:
+                if not processed_datasets_params:
                     return
+
+                processed_datasets = [i.dataset for i in processed_datasets_params]
 
                 self.logger.info(
                     f"Found {len(processed_datasets)} datasets for which input dataset parameter is location of dataset={dataset_id}")
 
-                for index, processed_dataset in enumerate(processed_datasets):
+                for index, dataset in enumerate(processed_datasets):
                     processed_dataset_input_ids_param = get_dataset_parameter(icat_client,
                                                                               INPUT_DATASET_IDS_PARAMETER_NAME,
-                                                                              entity=processed_dataset)
+                                                                              entity=dataset)
                     setattr(rb, f"processed_dataset_input_ids_param_{index}", processed_dataset_input_ids_param)
 
                     processed_dataset_input_ids_param = set_dataset_parameter(processed_dataset_input_ids_param,
@@ -250,19 +268,24 @@ class DatasetsInternalTasks:
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
 
     def processed_dataset_linkage(self, icat_client: ICATClient, dataset_id: int, *_args,
-                                  **_kwargs) -> None:
+                                  **kwargs) -> None:
         """
         Link a processed dataset to its input_datasets
         """
         if not dataset_id:
-            raise Exception("Dataset ID not received")
+            raise DatasetValidationError("Dataset ID not received")
 
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
+                if not rb.dataset:
+                    raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
 
                 input_dataset_param = get_dataset_parameter(icat_client, INPUT_DATASET_PARAMETER_NAME,
                                                             create_if_missing=False,
@@ -284,15 +307,95 @@ class DatasetsInternalTasks:
 
                 rb.input_dataset_ids_param = get_dataset_parameter(icat_client, INPUT_DATASET_IDS_PARAMETER_NAME,
                                                                    entity=rb.dataset._obj)
-                raw_datasets_ids = " ".join(i.id for i in raw_datasets)
-                rb.input_dataset_ids_param = set_dataset_parameter(rb.dataset._obj, raw_datasets_ids)
+                raw_datasets_ids = " ".join(str(i.id) for i in raw_datasets)
+                rb.input_dataset_ids_param = set_dataset_parameter(rb.input_dataset_ids_param._obj, raw_datasets_ids)
                 self.logger.info(f"Linked following raw datasets to dataset {dataset_id}: {raw_datasets_ids}")
 
-                self.__link_output_dataset_to_input_dataset(icat_client, raw_datasets, [rb.dataset._obj])
+                for raw_dataset in raw_datasets:
+                    self.__link_output_dataset_to_input_dataset(icat_client, raw_dataset, [rb.dataset._obj])
 
             except Exception as e:
                 rb.rollback_all(force_delete=True)
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
-                raise Exception(error_msg)
+                raise e
+
+    def create_dataset_gallery(self, client: ICATPlusClient, icat_client: ICATClient, dataset_ctx: DatasetContext,
+                               dataset_id: int,
+                               *_args, **kwargs) -> None:
+        ingestion_settings: dict = globals_var.ingestion_settings.get("dataset", {})
+
+        if not dataset_id:
+            raise DatasetValidationError("Dataset ID not received")
+
+        with ICATRollbackContext(icat_client, self.logger) as rb:
+            try:
+                rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
+                if not rb.dataset:
+                    raise DatasetNotFound("Dataset not found")
+
+                if not "visit_id" in kwargs.get("shared_obj_identifiers", {}):
+                    kwargs.get("shared_obj_identifiers", {})["visit_id"] = rb.dataset.investigation.visitId
+
+                dataset_resources_gallery_file_paths_param = get_dataset_parameter(icat_client,
+                                                                                   DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS,
+                                                                                   create_if_missing=False,
+                                                                                   entity=rb.dataset._obj)
+                file_paths: list = []
+                if dataset_resources_gallery_file_paths_param and dataset_resources_gallery_file_paths_param.stringValue:
+                    file_paths: list[str] = dataset_resources_gallery_file_paths_param.stringValue.split(",")
+
+                    self.logger.info(
+                        f"Processing gallery for dataset {dataset_ctx.name}, given {len(file_paths)} files")
+
+                else:
+                    self.logger.info(
+                        f"No ResourcesGalleryFilePaths parameter found for dataset {dataset_ctx.name}, checking default location")
+
+                    location: Path = Path(dataset_ctx.location)
+
+                    if location.exists() and location.is_dir():
+                        location = location / ingestion_settings.get("galleryFolderName", "gallery")
+                        if location.exists() and location.is_dir():
+
+                            allowed_extensions: list = ingestion_settings.get("galleryAcceptedUploadTypes", [])
+                            file_paths = [
+                                f for f in location.rglob("*")
+                                if f.is_file() and f.suffix in allowed_extensions
+                            ]
+
+                            if not file_paths:
+                                self.logger.info(f"No files found in gallery folder for dataset {dataset_ctx.name}")
+                                return
+                        else:
+                            self.logger.info("No gallery folder found in dataset location, skipping gallery upload")
+                            return
+
+                self.logger.info(
+                    f"Processing gallery for dataset {dataset_ctx.name}, found {len(file_paths)} files.")
+                if file_paths:
+                    resource_ids: str = client.upload_gallery_files(file_paths, dataset_ctx)
+
+                    if resource_ids:
+                        rb.resources_gallery_file_paths_param = get_dataset_parameter(icat_client,
+                                                                                      DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS,
+                                                                                      entity=rb.dataset._obj)
+                        rb.resources_gallery_file_paths_param = set_dataset_parameter(
+                            rb.resources_gallery_file_paths_param._obj, ",".join(str(i) for i in file_paths))
+                        self.logger.info(
+                            f"Set dataset parameter {DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS} with resource IDs: {resource_ids}")
+
+                        rb.resources_gallery_param = get_dataset_parameter(icat_client,
+                                                                           DATASET_PARAMETER_RESOURCE_GALLERY,
+                                                                           entity=rb.dataset._obj)
+                        rb.resources_gallery_param = set_dataset_parameter(
+                            rb.resources_gallery_param._obj, resource_ids)
+                        self.logger.info(
+                            f"Set dataset parameter {DATASET_PARAMETER_RESOURCE_GALLERY} with resource IDs: {resource_ids}")
+
+            except Exception as e:
+                rb.rollback_all(force_delete=True)
+                error_msg: str = f"Error: {e}"
+                self.logger.error(error_msg)
+                raise e

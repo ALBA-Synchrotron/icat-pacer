@@ -54,14 +54,6 @@ config_yaml_schema: dict = {
             }
         }
     },
-    "customSerializers": {
-        "type": "list",
-        "required": False,
-        "schema":
-            {
-                "type": "string", "required": True
-            }
-    },
     "exchanges": {
         "type": "list",
         "required": True,
@@ -151,6 +143,7 @@ config_yaml_schema: dict = {
         "required": True,
         "check_allowed_root_location_paths": True,
         "schema": {
+            "messageProcessingRetries": {"type": "integer", "required": True},
             "dataset": {
                 "type": "dict",
                 "required": True,
@@ -168,7 +161,23 @@ config_yaml_schema: dict = {
                     "internalStatisticsRoutingKey": {"type": "string", "required": True},
                     "internalDatasetLinksRoutingKey": {"type": "string", "required": True},
                     "automaticDatasetLocationIndex": {"type": "boolean", "required": True},
-                    "maxDatafilesPerDataset": {"type": "integer", "required": True}
+                    "maxDatafilesPerDataset": {"type": "integer", "required": True},
+                    "galleryFolderName": {"type": "string", "required": True, "default": "gallery"},
+                    "xmlNamespacesTransform": {"type": "list", "schema": {"type": "dict", "schema": {
+                        "schema": {"type": "string", "required": True}, "to": {"type": "string", "nullable": True}}},
+                                               "default": []},
+                    "galleryAcceptedUploadTypes": {
+                        "type": "list",
+                        "default": [
+                            ".jpg", ".jpeg", ".png", ".gif", ".bmp",
+                            ".tiff", ".tif", ".webp", ".svg", ".ico",
+                            ".heic", ".heif",
+                            ".cr2", ".nef", ".arw", ".dng"
+                        ],
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
                 }
             },
             "investigation": {
@@ -276,6 +285,20 @@ config_yaml_schema: dict = {
                     "searchApiUrl": {"type": "string", "required": False},
                 }
             },
+            "icatPlus": {
+                "type": "dict",
+                "schema": {
+                    "enabled": {"type": "boolean", "required": True},
+                    "server": {
+                        "type": "dict",
+                        "required": False,
+                        "schema": {
+                            "url": {"type": "string", "required": True},
+                            "apiKey": {"type": "string", "required": True},
+                        }
+                    }
+                }
+            }
         }
     }
 }

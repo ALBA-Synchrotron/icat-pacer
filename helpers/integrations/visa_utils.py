@@ -29,36 +29,22 @@ def get_pg_connection_pool(config: dict) -> ConnectionPool:
 class VISALoader:
 
     @classmethod
-    def db_update_investigation_doi(cls, pool: ConnectionPool, investigation: str, doi: str, doi_landing_url: str,
+    def db_update_investigation_doi(cls, pool: ConnectionPool, visa_investigation_id: str, doi: str,
+                                    doi_landing_url: str,
                                     logger: Logger) -> None:
         query: str = """UPDATE experiment
                         SET doi=%s,
                             url=%s
                         WHERE id = %s"""
         logger.debug(
-            f"Writing to VISA db an investigation DOI update: investigation={investigation} doi={doi} url={doi_landing_url}")
-        params: tuple = (doi, doi_landing_url, investigation)
+            f"Writing to VISA db an investigation DOI update: investigation={visa_investigation_id} doi={doi} url={doi_landing_url}")
+        params: tuple = (doi, doi_landing_url, visa_investigation_id)
         try:
             with pool.connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(query, params)
         except Exception as e:
             error_msg: str = f"Error updating investigation's DOI / DOI url to VISA db (db_table=experiment): {e}"
-            logger.error(error_msg)
-            raise Exception(error_msg)
-        query: str = """UPDATE proposal
-                        SET doi=%s,
-                            url=%s
-                        WHERE id = %s"""
-        logger.debug(
-            f"Writing to VISA db an investigation DOI update: investigation={investigation} doi={doi} url={doi_landing_url}")
-        params: tuple = (doi, doi_landing_url, investigation)
-        try:
-            with pool.connection() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(query, params)
-        except Exception as e:
-            error_msg: str = f"Error updating investigation's DOI / DOI url to VISA db (db_table=proposal): {e}"
             logger.error(error_msg)
             raise Exception(error_msg)
 
@@ -173,7 +159,7 @@ class VISALoader:
                                  SET identifier = %s, title = %s, summary = %s, public_at = %s \
                              """
                 params: tuple = (
-                    int(investigation_context.name),
+                    investigation_context.visa_visit_id,
                     investigation_context.name,
                     investigation_context.title,
                     investigation_context.summary,
@@ -213,13 +199,13 @@ class VISALoader:
                                         SET proposal_id=%s, instrument_id=%s, start_date=%s, end_date=%s, title=%s \
                                     """
                 insert_params: tuple = (
-                    investigation_context.name,
-                    int(investigation_context.name),
+                    f"{investigation_context.name}/{investigation_context.icat_visit_id}",
+                    investigation_context.visa_visit_id,
                     instrument_id,
                     investigation_context.start_date,
                     investigation_context.end_date,
                     investigation_context.title,
-                    int(investigation_context.name),
+                    investigation_context.visa_visit_id,
                     instrument_id,
                     investigation_context.start_date,
                     investigation_context.end_date,
@@ -247,7 +233,7 @@ class VISALoader:
                                         VALUES (%s, %s) ON CONFLICT DO NOTHING \
                                         """
                     insert_params: tuple = (
-                        int(investigation_context.name),
+                        f"{investigation_context.name}/{investigation_context.icat_visit_id}",
                         user_id
                     )
                     try:

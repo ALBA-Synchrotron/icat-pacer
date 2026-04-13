@@ -44,6 +44,9 @@ SAMPLE_VOLUME_PARAMETER: str = "__volume"
 SAMPLE_ACQUISITION_VOLUME_PARAMETER: str = "__acquisitionVolume"
 SAMPLE_PROCESSED_VOLUME_PARAMETER: str = "__processedVolume"
 
+# Sample data
+SAMPLE_ACRONYMS_PARAMETER_NAME: str = "sampleAcronyms"
+
 # Internal dataset parameters names
 DATASET_NAME_PARAMETER: str = "datasetName"
 INPUT_DATASET_IDS_PARAMETER_NAME: str = "input_datasetIds"
@@ -57,6 +60,10 @@ FULL_OUTPUT_DATASET_NAMES_PARAMETER_NAME: str = "__full_output_datasetNames"
 DATASET_PROCESSING_VERSION_PARAMETER_NAME: str = "Process_sequence_index"
 DATASET_PARAMETER_START_DATE_PARAMETER_NAME: str = "startDate"
 DATASET_PARAMETER_END_DATE_PARAMETER_NAME: str = "endDate"
+
+# Dataset gallery
+DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS: str = "ResourcesGalleryFilePaths"
+DATASET_PARAMETER_RESOURCE_GALLERY: str = "ResourcesGallery"
 
 PARAMETER_STRING_VALUE_MAX_LENGTH: int = 4000
 

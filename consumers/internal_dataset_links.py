@@ -20,7 +20,7 @@ class InternalDatasetsLinksConsumer(PACERConsumer):
         self.tasks = InternalDatasetLinksTasks(self.logger)
 
 
-    def get_message_object_identifiers(self, message: Message) -> dict:
+    def get_message_object_identifiers(self, message: Message, shared_obj_identifiers: dict = {}) -> dict:
         try:
             dataset_str: str = message.payload or message.body
             dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
@@ -30,17 +30,16 @@ class InternalDatasetsLinksConsumer(PACERConsumer):
             return {
                 "instrument": dataset_ctx.instrument,
                 "investigation": dataset_ctx.investigation if dataset_ctx.investigation else f"id={investigation_id}",
-                "dataset": dataset_ctx.name, "dataset_id": dataset_id}
+                "dataset": dataset_ctx.name, "dataset_id": dataset_id, **shared_obj_identifiers}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
-    def callback_func_build_dataset_full_links_information(self, _body, message: Message, *_args, **_kwargs) -> None:
+    def callback_func_build_dataset_full_links_information(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"callback_func_build_dataset_full_links_information > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
-        dataset_str: str = message.payload or message.body
         dataset_id: int = message.headers.get("dataset_id", 0)
 
-        self.tasks.build_dataset_links_map(self.icat_client, dataset_id)
+        self.tasks.build_dataset_full_links_information(self.icat_client, dataset_id, *args, **kwargs)
 
 

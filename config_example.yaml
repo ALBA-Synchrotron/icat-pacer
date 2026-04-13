@@ -16,10 +16,10 @@ logging:
     serviceName: "icat-pacer"
     serviceEnvironment: "local"
     indexName: "pacer-logs"
-customSerializers:
-  - "serializers.xml.register_xml"
 exchanges:
   - name: "dashboard-logging-exchange"
+    type: "direct"
+  - name: "dead-letters-exchange"
     type: "direct"
   - name: "uos-sync-exchange"
     type: "direct"
@@ -33,6 +33,9 @@ queues:
   - name: "dashboard-logging"
     exchange: "dashboard-logging-exchange"
     routingKey: "message.logging"
+  - name: "dead-letters"
+    exchange: "dead-letters-exchange"
+    routingKey: "dead.letters"
   - name: "uos-sync-users"
     exchange: "uos-sync-exchange"
     routingKey: "uos_user.sync"
@@ -55,6 +58,13 @@ queues:
     exchange: "dataset-internal-ingest-exchange"
     routingKey: "dataset.internal_links"
 consumers:
+  - className: "DeadLettersConsumer"
+    module: "consumers.dead_letters"
+    enabled: true
+    queues:
+      - "dead-letters"
+    workers: 1
+    integrations: []
   - className: "UsersConsumer"
     module: "consumers.users"
     enabled: true
@@ -107,6 +117,7 @@ consumers:
     integrations:
       - "dashboard"
       - "icat"
+      - "icatPlus"
   - className: "InternalStatisticsConsumer"
     module: "consumers.internal_statistics"
     enabled: true
@@ -145,6 +156,7 @@ brokers:
   #      - fromExchange: "uos-sync-exchange"
   #        toBroker: "pacer-prod"
 ingestionSettings:
+  messageProcessingRetries: 15
   dataset:
     acceptXMLPayloads: true
     mandatoryPathsExistence: false
@@ -158,6 +170,12 @@ ingestionSettings:
     internalDatasetLinksRoutingKey: "dataset.internal_links"
     automaticDatasetLocationIndex: true
     maxDatafilesPerDataset: 30000
+    galleryFolderName: "gallery"
+    #xmlNamespacesTransform:
+    #  - schema: "http://www.esrf.fr/icat"
+    #    to: null
+    #galleryAcceptedUploadTypes:
+    #  - ".lel"
   investigation:
     defaultEmbargoYears: 3
     defaultFacilityName: "ALBA"
@@ -194,7 +212,7 @@ integrations:
     password: "<<REDACTED>>"
     apiUrl: "https://api.test.datacite.org"
     language: "en"
-    rightsName: "Creative Commons Attribution 4.0 International"
+    rightsName: "Creative Commons Attribºution 4.0 International"
     rightsSchemeUri: "https://spdx.org/licenses/"
     rightsUri: "https://creativecommons.org/licenses/by/4.0/"
     rightsIdentifierScheme: "SPDX"
@@ -208,3 +226,8 @@ integrations:
     username: "<<REDACTED>>"
     password: "<<REDACTED>>"
     searchApiUrl: "https://data.cells.es/iws/datagateway/search-api"
+  icatPlus:
+    enabled: true
+    server:
+      url: "https://icattest.cells.es/iws/icat_plus/"
+      apiKey: "<<REDACTED>>"
