@@ -82,4 +82,5 @@ if __name__ == "__main__":
         GenericProducer.send_message(conn=broker_conn, exchange_name=INGESTION_EXCHANGE,
                                      routing_key=INGESTION_ROUTING_KEY,
                                      ctx=json.dumps(msg))
-        sleep(30)
+        print(f"Sent message to broker dataset: {dataset.id}")
+        client.auto_refresh_session()
