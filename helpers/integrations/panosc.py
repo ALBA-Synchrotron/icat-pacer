@@ -32,17 +32,17 @@ class PaNOSCClient:
                                           **({"auth": basic_auth} if self.username and self.password else {}))
         return resp
 
-    def item_exists(self, investigation_name: str) -> bool:
-        self.logger.debug(f"Checking if investigation {investigation_name} item exists in PSS database")
-        url: str = f"{self.url}/items/{investigation_name}"
+    def item_exists(self, pss_id: str) -> bool:
+        self.logger.debug(f"Checking if investigation {pss_id} item exists in PSS database")
+        url: str = f"{self.url}/items/{pss_id}"
         resp: Response = self.__generic_pss_call(url=url, method="GET")
 
         return resp.status_code == 200
 
     @classmethod
-    def __construct_item_payload(cls, investigation_name: str, investigation_info: dict) -> dict:
+    def __construct_item_payload(cls, pss_id: str, investigation_info: dict) -> dict:
         ret: dict = {
-            "id": investigation_name,
+            "id": pss_id,
             "group": "documents",
             "fields": investigation_info
         }
@@ -86,24 +86,24 @@ class PaNOSCClient:
             raise PaNOSCClientError(error_msg)
         self.logger.info("Weights recomputation finished")
 
-    def create_item(self, investigation_name: str, investigation_info: dict) -> None:
-        self.logger.info(f"Creating investigation {investigation_name} item in PSS database")
-        payload: dict = self.__construct_item_payload(investigation_name, investigation_info)
+    def create_item(self, pss_id: str, investigation_info: dict) -> None:
+        self.logger.info(f"Creating investigation {pss_id} item in PSS database")
+        payload: dict = self.__construct_item_payload(pss_id, investigation_info)
 
         url: str = f"{self.url}/items/"
         resp: Response = self.__generic_pss_call(url=url, method="POST", data=payload)
         if resp.status_code != 201:
-            error_msg: str = f"Error creating investigation item {investigation_name} item in PSS database"
+            error_msg: str = f"Error creating investigation item {pss_id} item in PSS database"
             self.logger.error(error_msg)
             raise PaNOSCClientError(error_msg)
 
-    def update_item(self, investigation_name: str, investigation_info: dict) -> None:
-        self.logger.info(f"Updating investigation {investigation_name} item in PSS database")
-        payload: dict = self.__construct_item_payload(investigation_name, investigation_info)
-        url: str = f"{self.url}/items/{investigation_name}"
+    def update_item(self, pss_id: str, investigation_info: dict) -> None:
+        self.logger.info(f"Updating investigation {pss_id} item in PSS database")
+        payload: dict = self.__construct_item_payload(pss_id, investigation_info)
+        url: str = f"{self.url}/items/{pss_id}"
         resp: Response = self.__generic_pss_call(url=url, method="PUT", data=payload)
         if resp.status_code != 200:
-            error_msg: str = f"Error updating investigation item {investigation_name} item in PSS database"
+            error_msg: str = f"Error updating investigation item {pss_id} item in PSS database"
             self.logger.error(error_msg)
 
     def retrieve_public_investigation_info(self, investigation_name: str) -> dict:

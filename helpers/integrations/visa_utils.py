@@ -29,36 +29,22 @@ def get_pg_connection_pool(config: dict) -> ConnectionPool:
 class VISALoader:
 
     @classmethod
-    def db_update_investigation_doi(cls, pool: ConnectionPool, investigation: str, doi: str, doi_landing_url: str,
+    def db_update_investigation_doi(cls, pool: ConnectionPool, visa_investigation_id: str, doi: str,
+                                    doi_landing_url: str,
                                     logger: Logger) -> None:
         query: str = """UPDATE experiment
                         SET doi=%s,
                             url=%s
                         WHERE id = %s"""
         logger.debug(
-            f"Writing to VISA db an investigation DOI update: investigation={investigation} doi={doi} url={doi_landing_url}")
-        params: tuple = (doi, doi_landing_url, investigation)
+            f"Writing to VISA db an investigation DOI update: investigation={visa_investigation_id} doi={doi} url={doi_landing_url}")
+        params: tuple = (doi, doi_landing_url, visa_investigation_id)
         try:
             with pool.connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(query, params)
         except Exception as e:
             error_msg: str = f"Error updating investigation's DOI / DOI url to VISA db (db_table=experiment): {e}"
-            logger.error(error_msg)
-            raise Exception(error_msg)
-        query: str = """UPDATE proposal
-                        SET doi=%s,
-                            url=%s
-                        WHERE id = %s"""
-        logger.debug(
-            f"Writing to VISA db an investigation DOI update: investigation={investigation} doi={doi} url={doi_landing_url}")
-        params: tuple = (doi, doi_landing_url, investigation)
-        try:
-            with pool.connection() as conn:
-                with conn.cursor() as cur:
-                    cur.execute(query, params)
-        except Exception as e:
-            error_msg: str = f"Error updating investigation's DOI / DOI url to VISA db (db_table=proposal): {e}"
             logger.error(error_msg)
             raise Exception(error_msg)
 

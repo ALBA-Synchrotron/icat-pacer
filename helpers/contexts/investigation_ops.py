@@ -8,4 +8,5 @@ def create_investigation_ops_context(inv_ops_data: str | dict) -> InvestigationO
     return InvestigationOperationsContext(
         name=inv_ops_dict.get("name", ""),
         operations=inv_ops_dict.get("operations", []),
+        visit_id=inv_ops_dict.get("visit_id", "")
     )
