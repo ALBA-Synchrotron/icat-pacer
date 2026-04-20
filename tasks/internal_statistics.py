@@ -35,7 +35,7 @@ class InternalStatisticsTasks(BaseTasks):
 
         if not dataset_id:
             raise DatasetValidationError("Dataset ID not received")
-
+        # TODO: Consider removing rollbacks from here
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
