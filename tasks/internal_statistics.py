@@ -35,7 +35,6 @@ class InternalStatisticsTasks(BaseTasks):
 
         if not dataset_id:
             raise DatasetValidationError("Dataset ID not received")
-        # TODO: Consider removing rollbacks from here
         with ICATRollbackContext(icat_client, self.logger) as rb:
             try:
                 rb.dataset = icat_client.search("Dataset", conditions={"id__eq": dataset_id}, flatten_single=True)
@@ -54,13 +53,16 @@ class InternalStatisticsTasks(BaseTasks):
                 # Dataset file count
                 rb.file_count_param = get_dataset_parameter(icat_client, DATASET_FILE_COUNT_PARAMETER,
                                                             entity=rb.dataset._obj)
-                rb.file_count_param = set_dataset_parameter(rb.file_count_param._obj, rb.dataset.count("datafiles"))
+                datafile_count = icat_client.search("Datafile", conditions={"dataset.id__eq": dataset_id},
+                                                    aggregate="COUNT")
+                rb.file_count_param = set_dataset_parameter(rb.file_count_param._obj, datafile_count)
                 self.logger.debug("Updated dataset statistic: Dataset file count")
 
                 # Dataset file volume
                 rb.volume_param = get_dataset_parameter(icat_client, DATASET_VOLUME_PARAMETER, entity=rb.dataset._obj)
-                rb.volume_param = set_dataset_parameter(rb.volume_param._obj,
-                                                        sum(i.fileSize for i in rb.dataset.datafiles))
+                dataset_volume = icat_client.search("Datafile", conditions={"dataset.id__eq": dataset_id},
+                                                    aggregate="SUM", attributes="fileSize")
+                rb.volume_param = set_dataset_parameter(rb.volume_param._obj, dataset_volume)
                 self.logger.debug("Updated dataset statistic: Dataset file volume")
 
                 if rb.dataset.startDate is not None:
@@ -74,7 +76,7 @@ class InternalStatisticsTasks(BaseTasks):
 
                 self.logger.info(f"Updated dataset statistics for dataset={dataset_id}")
             except Exception as e:
-                rb.rollback_all(force_delete=True)
+                rb.rollback_all()
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
@@ -100,17 +102,21 @@ class InternalStatisticsTasks(BaseTasks):
                 rb.dataset_count_param = get_investigation_parameter(icat_client,
                                                                      INVESTIGATION_DATASET_COUNT_PARAMETER,
                                                                      entity=investigation)
+                total_datasets = icat_client.search("Dataset", conditions={"investigation.id__eq": investigation.id},
+                                                    aggregate="COUNT")
                 rb.dataset_count_param = set_investigation_parameter(rb.dataset_count_param._obj,
-                                                                     len(investigation.datasets))
+                                                                     total_datasets)
                 self.logger.debug("Updated investigation statistic: Total number of datasets")
 
                 # Total number of raw datasets
                 rb.acq_dataset_count_param = get_investigation_parameter(icat_client,
                                                                          INVESTIGATION_ACQUISITION_DATASET_COUNT_PARAMETER,
                                                                          entity=investigation)
+                total_raw_datasets = icat_client.search("Dataset", conditions={"investigation.id__eq": investigation.id,
+                                                                               "type.name__eq": RAW_DATASET_TYPE_NAME},
+                                                        aggregate="COUNT")
                 rb.acq_dataset_count_param = set_investigation_parameter(rb.acq_dataset_count_param._obj,
-                                                                         sum(1 for i in investigation.datasets if
-                                                                             i.type.name == RAW_DATASET_TYPE_NAME)
+                                                                         total_raw_datasets
                                                                          )
                 self.logger.debug("Updated investigation statistic: Total number of raw datasets")
 
@@ -118,17 +124,22 @@ class InternalStatisticsTasks(BaseTasks):
                 rb.proc_dataset_count_param = get_investigation_parameter(icat_client,
                                                                           INVESTIGATION_PROCESSED_DATASET_COUNT_PARAMETER,
                                                                           entity=investigation)
+                total_proc_datasets = icat_client.search("Dataset",
+                                                         conditions={"investigation.id__eq": investigation.id,
+                                                                     "type.name__eq": PROCESSED_DATASET_TYPE_NAME},
+                                                         aggregate="COUNT")
+
                 rb.proc_dataset_count_param = set_investigation_parameter(rb.proc_dataset_count_param._obj,
-                                                                          sum(1 for i in investigation.datasets if
-                                                                              i.type.name == PROCESSED_DATASET_TYPE_NAME))
+                                                                          total_proc_datasets)
                 self.logger.debug("Updated investigation statistic: Total number of processed datasets")
 
                 # Total number of samples
                 rb.sample_count_param = get_investigation_parameter(icat_client,
                                                                     INVESTIGATION_SAMPLE_COUNT_PARAMETER,
                                                                     entity=investigation)
-                rb.sample_count_param = set_investigation_parameter(rb.sample_count_param._obj,
-                                                                    investigation.count("samples"))
+                total_samples = icat_client.search("Sample", conditions={"investigation.id__eq": investigation.id},
+                                                   aggregate="COUNT")
+                rb.sample_count_param = set_investigation_parameter(rb.sample_count_param._obj, total_samples)
                 self.logger.debug("Updated investigation statistic: Total number of samples")
 
                 # Total volume of all datasets
@@ -136,13 +147,8 @@ class InternalStatisticsTasks(BaseTasks):
                                                                INVESTIGATION_VOLUME_PARAMETER,
                                                                entity=investigation)
 
-                dataset_vol_param_type: Entity = get_parameter_type(icat_client, DATASET_VOLUME_PARAMETER)
-
-                vol_params: filter = filter(
-                    lambda x: x.type == dataset_vol_param_type, (j for i in investigation.datasets for j in
-                                                                 i.parameters))
-
-                inv_vol: int = sum(int(p.stringValue) if p.stringValue else p.numericValue for p in vol_params)
+                inv_vol = icat_client.search("Datafile", conditions={"dataset.investigation.id__eq": investigation.id},
+                                             aggregate="SUM", attributes="fileSize")
 
                 rb.inv_vol_param = set_investigation_parameter(rb.inv_vol_param._obj, inv_vol)
                 self.logger.debug("Updated investigation statistic: Total volume of all datasets")
@@ -152,11 +158,10 @@ class InternalStatisticsTasks(BaseTasks):
                                                                INVESTIGATION_ACQUISITION_VOLUME_PARAMETER,
                                                                entity=investigation)
 
-                acq_vol_params: filter = filter(
-                    lambda x: x.type == dataset_vol_param_type, (j for i in investigation.datasets for j in
-                                                                 i.parameters if i.type.name == RAW_DATASET_TYPE_NAME))
-
-                inv_acq_vol: int = sum(int(p.stringValue) if p.stringValue else p.numericValue for p in acq_vol_params)
+                inv_acq_vol = icat_client.search("Datafile",
+                                                 conditions={"dataset.investigation.id__eq": investigation.id,
+                                                             "dataset.type.name__eq": RAW_DATASET_TYPE_NAME},
+                                                 aggregate="SUM", attributes="fileSize")
 
                 rb.acq_vol_param = set_investigation_parameter(rb.acq_vol_param._obj, inv_acq_vol)
                 self.logger.debug("Updated investigation statistic: Total volume of all raw datasets")
@@ -166,13 +171,10 @@ class InternalStatisticsTasks(BaseTasks):
                                                                 INVESTIGATION_PROCESSED_VOLUME_PARAMETER,
                                                                 entity=investigation)
 
-                proc_vol_params: filter = filter(
-                    lambda x: x.type == dataset_vol_param_type, (j for i in investigation.datasets for j in
-                                                                 i.parameters if
-                                                                 i.type.name == PROCESSED_DATASET_TYPE_NAME))
-
-                inv_proc_vol: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in proc_vol_params)
+                inv_proc_vol = icat_client.search("Datafile",
+                                                  conditions={"dataset.investigation.id__eq": investigation.id,
+                                                              "dataset.type.name__eq": PROCESSED_DATASET_TYPE_NAME},
+                                                  aggregate="SUM", attributes="fileSize")
 
                 rb.proc_vol_param = set_investigation_parameter(rb.proc_vol_param._obj, inv_proc_vol)
                 self.logger.debug("Updated investigation statistic: Total volume of all processed datasets")
@@ -182,13 +184,9 @@ class InternalStatisticsTasks(BaseTasks):
                                                                         INVESTIGATION_ELAPSE_TIME_PARAMETER,
                                                                         entity=investigation)
 
-                elapsed_time_param_type: Entity = get_parameter_type(icat_client, DATASET_ELAPSE_TIME_PARAMETER)
-                elapsed_time_params: filter = filter(
-                    lambda x: x.type == elapsed_time_param_type, (j for i in investigation.datasets for j in
-                                                                  i.parameters))
-
-                elapsed_time: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in elapsed_time_params)
+                elapsed_time = icat_client.search("DatasetParameter", aggregate="SUM", attributes=["numericValue"],
+                                                  conditions={"type.name__eq": DATASET_ELAPSE_TIME_PARAMETER,
+                                                              "dataset.investigation.id__eq": investigation.id})
 
                 rb.inv_elapsed_time_param = set_investigation_parameter(rb.inv_elapsed_time_param._obj, elapsed_time)
                 self.logger.debug("Updated investigation statistic: Total elapsed time")
@@ -198,13 +196,9 @@ class InternalStatisticsTasks(BaseTasks):
                                                                   INVESTIGATION_FILE_COUNT_PARAMETER,
                                                                   entity=investigation)
 
-                file_count_param_type: Entity = get_parameter_type(icat_client, DATASET_FILE_COUNT_PARAMETER)
-                file_count_params: filter = filter(
-                    lambda x: x.type == file_count_param_type, (j for i in investigation.datasets for j in
-                                                                i.parameters))
-
-                file_count: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in file_count_params)
+                file_count = icat_client.search("Datafile",
+                                                conditions={"dataset.investigation.id__eq": investigation.id},
+                                                aggregate="COUNT")
 
                 rb.file_count_param = set_investigation_parameter(rb.file_count_param._obj, file_count)
                 self.logger.debug("Updated investigation statistic: Total number of files")
@@ -213,12 +207,10 @@ class InternalStatisticsTasks(BaseTasks):
                 rb.acq_file_count_param = get_investigation_parameter(icat_client,
                                                                       INVESTIGATION_ACQUISITION_FILE_COUNT_PARAMETER,
                                                                       entity=investigation)
-                acq_file_count_params: filter = filter(
-                    lambda x: x.type == file_count_param_type, (j for i in investigation.datasets for j in
-                                                                i.parameters if i.type.name == RAW_DATASET_TYPE_NAME))
-
-                acq_file_count: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in acq_file_count_params)
+                acq_file_count = icat_client.search("Datafile",
+                                                    conditions={"dataset.investigation.id__eq": investigation.id,
+                                                                "dataset.type.name__eq": RAW_DATASET_TYPE_NAME},
+                                                    aggregate="COUNT")
 
                 rb.acq_file_count_param = set_investigation_parameter(rb.acq_file_count_param._obj, acq_file_count)
                 self.logger.debug("Updated investigation statistic: Total number of raw files")
@@ -227,20 +219,18 @@ class InternalStatisticsTasks(BaseTasks):
                 rb.proc_file_count_param = get_investigation_parameter(icat_client,
                                                                        INVESTIGATION_PROCESSED_FILE_COUNT_PARAMETER,
                                                                        entity=investigation)
-                proc_file_count_params: filter = filter(
-                    lambda x: x.type == file_count_param_type, (j for i in investigation.datasets for j in
-                                                                i.parameters if
-                                                                i.type.name == PROCESSED_DATASET_TYPE_NAME))
-
-                proc_file_count: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in proc_file_count_params)
+                proc_file_count = icat_client.search("Datafile",
+                                                     conditions={"dataset.investigation.id__eq": investigation.id,
+                                                                 "dataset.type.name__eq": PROCESSED_DATASET_TYPE_NAME},
+                                                     aggregate="COUNT")
 
                 rb.proc_file_count_param = set_investigation_parameter(rb.proc_file_count_param._obj, proc_file_count)
                 self.logger.debug("Updated investigation statistic: Total number of processed files")
 
-                self.logger.info(f"Updated investigation statistics for investigation={investigation.name}/{investigation.visitId}")
+                self.logger.info(
+                    f"Updated investigation statistics for investigation={investigation.name}/{investigation.visitId}")
             except Exception as e:
-                rb.rollback_all(force_delete=True)
+                rb.rollback_all()
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)
@@ -266,26 +256,34 @@ class InternalStatisticsTasks(BaseTasks):
                 rb.sample_dataset_count_param = get_sample_parameter(icat_client,
                                                                      SAMPLE_DATASET_COUNT_PARAMETER,
                                                                      entity=dataset_sample)
+                dataset_count = icat_client.search("Dataset", conditions={"sample.id__eq": dataset_sample.id},
+                                                   aggregate="COUNT")
+
                 rb.sample_dataset_count_param = set_sample_parameter(rb.sample_dataset_count_param._obj,
-                                                                     dataset_sample.count("datasets"))
+                                                                     dataset_count)
                 self.logger.debug("Updated sample statistic: Total number of datasets referencing sample")
 
                 # Total number of raw datasets referencing sample
                 rb.sample_acq_dataset_count_param = get_sample_parameter(icat_client,
                                                                          SAMPLE_ACQUISITION_DATASET_COUNT_PARAMETER,
                                                                          entity=dataset_sample)
+                raw_dataset_count = icat_client.search("Dataset", conditions={"sample.id__eq": dataset_sample.id,
+                                                                              "type.name__eq": RAW_DATASET_TYPE_NAME},
+                                                       aggregate="COUNT")
                 rb.sample_acq_dataset_count_param = set_sample_parameter(rb.sample_acq_dataset_count_param._obj,
-                                                                         sum(1 for i in dataset_sample.datasets if
-                                                                             i.type.name == RAW_DATASET_TYPE_NAME))
+                                                                         raw_dataset_count)
                 self.logger.debug("Updated sample statistic: Total number of raw datasets referencing sample")
 
                 # Total number of processed datasets referencing sample
                 rb.sample_proc_dataset_count_param = get_sample_parameter(icat_client,
                                                                           SAMPLE_PROCESSED_DATASET_COUNT_PARAMETER,
                                                                           entity=dataset_sample)
+                proc_dataset_count = icat_client.search("Dataset", conditions={"sample.id__eq": dataset_sample.id,
+                                                                               "type.name__eq": PROCESSED_DATASET_TYPE_NAME},
+                                                        aggregate="COUNT")
+
                 rb.sample_proc_dataset_count_param = set_sample_parameter(rb.sample_proc_dataset_count_param._obj,
-                                                                          sum(1 for i in dataset_sample.datasets if
-                                                                              i.type.name == PROCESSED_DATASET_TYPE_NAME))
+                                                                          proc_dataset_count)
                 self.logger.debug("Updated sample statistic: Total number of processed datasets referencing sample")
 
                 # Total number of files referencing sample
@@ -293,16 +291,11 @@ class InternalStatisticsTasks(BaseTasks):
                                                                   SAMPLE_FILE_COUNT_PARAMETER,
                                                                   entity=dataset_sample)
 
-                file_count_param_type: Entity = get_parameter_type(icat_client, DATASET_FILE_COUNT_PARAMETER)
-                file_count_params: filter = filter(
-                    lambda x: x.type == file_count_param_type, (j for i in dataset_sample.datasets for j in
-                                                                i.parameters))
-
-                sample_file_count: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in file_count_params)
+                datafile_count = icat_client.search("Datafile", conditions={"dataset.sample.id__eq": dataset_sample.id},
+                                                    aggregate="COUNT")
 
                 rb.sample_file_count_param = set_sample_parameter(rb.sample_file_count_param._obj,
-                                                                  sample_file_count)
+                                                                  datafile_count)
                 self.logger.debug("Updated sample statistic: Total number of files referencing sample")
 
                 # Total number of raw files referencing sample
@@ -310,12 +303,10 @@ class InternalStatisticsTasks(BaseTasks):
                                                                       SAMPLE_ACQUISITION_FILE_COUNT_PARAMETER,
                                                                       entity=dataset_sample)
 
-                sample_acq_file_count_params: filter = filter(
-                    lambda x: x.type == file_count_param_type, (j for i in dataset_sample.datasets for j in
-                                                                i.parameters if i.type.name == RAW_DATASET_TYPE_NAME))
-
-                sample_acq_file_count: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in sample_acq_file_count_params)
+                sample_acq_file_count = icat_client.search("Datafile",
+                                                           conditions={"dataset.sample.id__eq": dataset_sample.id,
+                                                                       "dataset.type.name__eq": RAW_DATASET_TYPE_NAME},
+                                                           aggregate="COUNT")
 
                 rb.sample_acq_file_count_param = set_sample_parameter(rb.sample_acq_file_count_param._obj,
                                                                       sample_acq_file_count)
@@ -326,13 +317,10 @@ class InternalStatisticsTasks(BaseTasks):
                                                                        SAMPLE_PROCESSED_FILE_COUNT_PARAMETER,
                                                                        entity=dataset_sample)
 
-                sample_proc_file_count_params: filter = filter(
-                    lambda x: x.type == file_count_param_type, (j for i in dataset_sample.datasets for j in
-                                                                i.parameters if
-                                                                i.type.name == PROCESSED_DATASET_TYPE_NAME))
-
-                sample_proc_file_count: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in sample_proc_file_count_params)
+                sample_proc_file_count = icat_client.search("Datafile",
+                                                            conditions={"dataset.sample.id__eq": dataset_sample.id,
+                                                                        "dataset.type.name__eq": PROCESSED_DATASET_TYPE_NAME},
+                                                            aggregate="COUNT")
 
                 rb.sample_proc_file_count_param = set_sample_parameter(rb.sample_proc_file_count_param._obj,
                                                                        sample_proc_file_count)
@@ -345,12 +333,8 @@ class InternalStatisticsTasks(BaseTasks):
 
                 dataset_vol_param_type: Entity = get_parameter_type(icat_client, DATASET_VOLUME_PARAMETER)
 
-                sample_vol_params: filter = filter(
-                    lambda x: x.type == dataset_vol_param_type, (j for i in dataset_sample.datasets for j in
-                                                                 i.parameters))
-
-                sample_vol: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in sample_vol_params)
+                sample_vol = icat_client.search("Datafile", conditions={"dataset.sample.id__eq": dataset_sample.id},
+                                                aggregate="SUM", attributes="fileSize")
 
                 rb.sample_vol_param = set_sample_parameter(rb.sample_vol_param._obj, sample_vol)
                 self.logger.debug("Updated sample statistic: Total volume of all datasets of sample")
@@ -360,12 +344,9 @@ class InternalStatisticsTasks(BaseTasks):
                                                                SAMPLE_ACQUISITION_VOLUME_PARAMETER,
                                                                entity=dataset_sample)
 
-                sample_acq_vol_params: filter = filter(
-                    lambda x: x.type == dataset_vol_param_type, (j for i in dataset_sample.datasets for j in
-                                                                 i.parameters if i.type.name == RAW_DATASET_TYPE_NAME))
-
-                sample_acq_vol: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in sample_acq_vol_params)
+                sample_acq_vol = icat_client.search("Datafile", conditions={"dataset.sample.id__eq": dataset_sample.id,
+                                                                            "dataset.type.name__eq": RAW_DATASET_TYPE_NAME},
+                                                    aggregate="SUM", attributes="fileSize")
 
                 rb.sample_acq_vol_param = set_sample_parameter(rb.sample_acq_vol_param._obj, sample_acq_vol)
                 self.logger.debug("Updated sample statistic: Total volume of all raw datasets of sample")
@@ -375,20 +356,16 @@ class InternalStatisticsTasks(BaseTasks):
                                                                 SAMPLE_PROCESSED_VOLUME_PARAMETER,
                                                                 entity=dataset_sample)
 
-                sample_proc_vol_params: filter = filter(
-                    lambda x: x.type == dataset_vol_param_type, (j for i in dataset_sample.datasets for j in
-                                                                 i.parameters if
-                                                                 i.type.name == PROCESSED_DATASET_TYPE_NAME))
-
-                sample_proc_vol: int = sum(
-                    int(p.stringValue) if p.stringValue else p.numericValue for p in sample_proc_vol_params)
+                sample_proc_vol = icat_client.search("Datafile", conditions={"dataset.sample.id__eq": dataset_sample.id,
+                                                                             "dataset.type.name__eq": PROCESSED_DATASET_TYPE_NAME},
+                                                     aggregate="SUM", attributes="fileSize")
 
                 rb.sample_proc_vol_param = set_sample_parameter(rb.sample_proc_vol_param._obj, sample_proc_vol)
                 self.logger.debug("Updated sample statistic: Total volume of all processed datasets of sample")
 
                 self.logger.info(f"Updated sample statistics for dataset={dataset_id}")
             except Exception as e:
-                rb.rollback_all(force_delete=True)
+                rb.rollback_all()
 
                 error_msg: str = f"Error: {e}"
                 self.logger.error(error_msg)

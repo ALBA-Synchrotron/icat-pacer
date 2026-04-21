@@ -6,7 +6,7 @@ from typing import override
 from kombu import Message
 
 from exceptions.base import TooEarlyForRetry
-from helpers.utils.pacer_consumer import PACERConsumer
+from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from producers.generic import GenericProducer
 
 
@@ -34,6 +34,7 @@ class DeadLettersConsumer(PACERConsumer):
             self.logger.error(f"Error setting up consumers: {e!r}")
             raise e
 
+    @callback_order(1)
     def callback_func_dead_letter_retry(self, body, message: Message, *_args, **_kwargs) -> None:
         delay_seconds: int = message.headers.get("x-delay", 60)
         routing_key: str = message.headers.get("original-routing-key", "dead-letters")

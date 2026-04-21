@@ -163,12 +163,7 @@ class PACERConsumer(ConsumerMixin):
             getattr(self, attr) for attr in dir(self)
             if callable(getattr(self, attr)) and attr.startswith('callback_func_')
         ]
-        callback_functions.sort(
-            key=lambda f: (
-                1 if f.__name__ == "__dashboard_message_logging_callback" else 0,
-                f.__name__
-            )
-        )
+        callback_functions.sort(key=lambda f: getattr(f, "_order", 0))
         if not log_dashboard:
             with suppress(ValueError):
                 callback_functions.remove(self.__dashboard_message_logging_callback)
@@ -202,10 +197,10 @@ class PACERConsumer(ConsumerMixin):
         globals_var.ingestion_settings = self.pacer_config.get("ingestionSettings", {})
 
         if "messageForwarding" in self.integrations:
-            self.callback_func_broker_forwarder_callback = self.__broker_forwarder_callback
+            self.callback_func_broker_forwarder_callback = callback_order(9999999)(self.__broker_forwarder_callback)
         if "dashboard" in self.integrations:
             self.__configured_dashboard_logging_call = get_configured_dashboard_callback(self)
-            self.callback_func_dashboard_message_logging = self.__dashboard_message_logging_callback
+            self.callback_func_dashboard_message_logging = callback_order(9999999)(self.__dashboard_message_logging_callback)
         if "icat" in self.integrations:
             self.icat_client = ICATClient.open_icat_session(self.pacer_config)
             self.icat_client.sessionId = shared_session_id
@@ -246,3 +241,11 @@ class PACERConsumer(ConsumerMixin):
             message.headers = message.headers or {}
             message.headers['received_at'] = datetime.now(datetime.timezone.utc).isoformat()
         return super().receive(*args, **kwargs)
+
+
+def callback_order(order: int) -> callable:
+    def decorator(func: callable) -> callable:
+        target = func.__func__ if hasattr(func, "__func__") else func
+        target._order = order
+        return func
+    return decorator

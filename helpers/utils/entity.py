@@ -25,15 +25,12 @@ def get_entity_parameter(icat_client: ICATClient, parameter_name: str, condition
 
     entity_param_main_fk_name: str = to_camel_case(entity_name or entity.BeanName)
 
-    entity_param = icat_client.search(f"{entity_param_main_fk_name}Parameter",
+    entity_param = icat_client.search(f"{entity_param_main_fk_name[:1].upper() + entity_param_main_fk_name[1:]}Parameter",
                                                      conditions={
                                                          "type.name__eq": parameter_name,
                                                                     **({f"{entity_param_main_fk_name}.id__eq": entity_id} if
                                                          not conditions_override else conditions_override)
                                                      }, flatten_single=True)
-
-    if not entity_param:
-        raise Exception(f"{entity_param_main_fk_name}Parameter with filters {conditions_override} not found in ICAT.")
 
 
     if not entity_param and create_if_missing:
@@ -47,7 +44,9 @@ def get_entity_parameter(icat_client: ICATClient, parameter_name: str, condition
 
         entity_param.type = param_type
         setattr(entity_param, entity_param_main_fk_name, entity)
-
+    elif entity_param:
+        # Access xxxxParameter FK to trigger lazy loading and avoid NULL save
+        _ = getattr(entity_param, entity_param_main_fk_name)
     return entity_param
 
 

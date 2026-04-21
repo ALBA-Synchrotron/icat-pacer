@@ -4,7 +4,7 @@ from kombu import Message
 
 from helpers.contexts.dataset import create_dataset_context
 from helpers.dataclasses.dataset import DatasetContext
-from helpers.utils.pacer_consumer import PACERConsumer
+from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from tasks.internal_dataset_links import InternalDatasetLinksTasks
 
 
@@ -35,6 +35,7 @@ class InternalDatasetsLinksConsumer(PACERConsumer):
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
+    @callback_order(1)
     def callback_func_build_dataset_full_links_information(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"callback_func_build_dataset_full_links_information > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
