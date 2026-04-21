@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from kombu import Message
 
 from helpers.dataclasses.user import UserContext
-from helpers.utils.pacer_consumer import PACERConsumer
+from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from helpers.contexts.user import create_user_context
 from tasks.users import UserTasks
 
@@ -26,6 +26,7 @@ class UsersConsumer(PACERConsumer):
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
+    @callback_order(1)
     def callback_func_sync_user_visa(self, body, message: Message, *_args, **_kwargs) -> None:
         if "visa" in self.integrations:
             self.logger.info(
@@ -35,6 +36,7 @@ class UsersConsumer(PACERConsumer):
 
             self.tasks.sync_user_visa(self.visa_pg_pool, user_context, message=message, body=body)
 
+    @callback_order(2)
     def callback_func_sync_user_icat(self, body, message: Message, *_args, **_kwargs) -> None:
         if "icat" in self.integrations:
             self.logger.info(

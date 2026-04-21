@@ -12,37 +12,41 @@ import globals_var
 ENTITIES_WITH_PARAMETERS: list = ["Dataset", "Sample", "Investigation", "DataCollection", "Datafile"]
 
 
-def get_entity_parameter(icat_client: ICATClient, parameter_name: str, conditions: dict = {},
+def get_entity_parameter(icat_client: ICATClient, parameter_name: str, conditions_override: dict = {},
                          create_if_missing: bool = True, entity_name: str = "",
-                         entity: Entity | None = None) -> Entity | None:
+                         entity: Entity | None = None, entity_id: int | None = None) -> Entity | None:
+
+    if not entity and not entity_name:
+        raise Exception("Entity or entity name must be provided.")
+
     if (entity_name and entity_name not in ENTITIES_WITH_PARAMETERS) or (
             entity and entity.BeanName not in ENTITIES_WITH_PARAMETERS):
         raise Exception(f"{entity_name or Entity.BeanName} does not support parameters.")
 
-    if not entity:
-        entity = icat_client.search(entity_name, conditions=conditions,
-                                    flatten_single=True)
-
     entity_param_main_fk_name: str = to_camel_case(entity_name or entity.BeanName)
 
-    if not entity:
-        raise Exception(f"{entity_param_main_fk_name} with filters {conditions} not found in ICAT.")
+    entity_param = icat_client.search(f"{entity_param_main_fk_name[:1].upper() + entity_param_main_fk_name[1:]}Parameter",
+                                                     conditions={
+                                                         "type.name__eq": parameter_name,
+                                                                    **({f"{entity_param_main_fk_name}.id__eq": entity_id} if
+                                                         not conditions_override else conditions_override)
+                                                     }, flatten_single=True)
 
-    entity_param: Entity | None = next(
-        (p for p in entity.parameters if p.type.name == parameter_name),
-        None
-    )
-
-    if entity_param and not hasattr(entity_param, entity_param_main_fk_name):
-        raise Exception(f"{entity_param_main_fk_name}Parameter does not have foreign key {entity_param_main_fk_name}.")
 
     if not entity_param and create_if_missing:
+        if not entity:
+            entity = icat_client.search(entity_name, conditions={"id__eq": entity_id}, flatten_single=True)
+            if not entity:
+                raise Exception(f"{entity_name} with ID {entity_id} not found in ICAT.")
+
         entity_param = icat_client.new(f"{entity_param_main_fk_name}Parameter")
         param_type: Entity = get_parameter_type(icat_client, parameter_name)
 
         entity_param.type = param_type
         setattr(entity_param, entity_param_main_fk_name, entity)
-
+    elif entity_param:
+        # Access xxxxParameter FK to trigger lazy loading and avoid NULL save
+        _ = getattr(entity_param, entity_param_main_fk_name)
     return entity_param
 
 

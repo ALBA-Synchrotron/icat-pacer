@@ -5,12 +5,12 @@ from helpers.utils.entity import get_entity_parameter, set_entity_parameter
 
 
 def get_investigation_parameter(icat_client: ICATClient, parameter_name: str,
-                                create_if_missing: bool = True, investigation_name: str = "",
+                                create_if_missing: bool = True, investigation_id: int = 0,
                                 entity: Entity | None = None) -> Entity | None:
     return get_entity_parameter(icat_client, parameter_name,
-                                conditions={"name__eq": investigation_name} if investigation_name else {},
+                                entity_id=investigation_id or entity.id,
                                 create_if_missing=create_if_missing,
-                                entity_name="Investigation" if not entity else "", entity=entity)
+                                entity_name="Investigation", entity=entity)
 
 
 def set_investigation_parameter(dataset_parameter: Entity,
