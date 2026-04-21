@@ -102,7 +102,7 @@ class TestInternalStatisticsConsumer:
         inv_elapsed_time_param = get_investigation_parameter(icat_client,
                                                              INVESTIGATION_ELAPSE_TIME_PARAMETER,
                                                              entity=investigation)
-        assert inv_elapsed_time_param.stringValue == expected_results["total_elapsed_time"]
+        assert inv_elapsed_time_param.numericValue == expected_results["total_elapsed_time"]
 
         file_count_param = get_investigation_parameter(icat_client,
                                                        INVESTIGATION_FILE_COUNT_PARAMETER,
