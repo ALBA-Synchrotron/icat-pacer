@@ -4,7 +4,7 @@ from kombu import Message
 
 from helpers.dataclasses.investigation import InvestigationOperationsContext
 from helpers.contexts.investigation_ops import create_investigation_ops_context
-from helpers.utils.pacer_consumer import PACERConsumer
+from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from tasks.investigation_ops import InvestigationOpsTasks
 
 
@@ -27,6 +27,7 @@ class InvestigationOperationsConsumer(PACERConsumer):
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
+    @callback_order(1)
     def callback_func_investigation_mint(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"investigation_mint_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")

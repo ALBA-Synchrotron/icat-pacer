@@ -43,8 +43,8 @@ def create_investigation_context(investigation_data: str | dict,
     is_investigation_reimbursed: bool = investigation_dict.get("is_reimbursed", False)
     sync_with_icat: bool = investigation_dict.get("icat_sync", False)
     sync_with_visa: bool = investigation_dict.get("visa_sync", False)
-    icat_visit_id: str = investigation_dict.get("icat_visit_id", "")
-    visa_visit_id: int = investigation_dict.get("visa_visit_id", -1)
+    icat_visit_id: str = investigation_dict.get("icat_visit_id", instrument.get("code", "").lower() if instrument else "")
+    visa_visit_id: int = investigation_dict.get("visa_visit_id", int(investigation_name.replace("-", "") if investigation_name else "0"))
     sample_acronyms: list = investigation_dict.get("sample_acronyms", [])
 
     investigation_users_ctx: list = [

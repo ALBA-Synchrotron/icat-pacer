@@ -4,7 +4,7 @@ from kombu import Message
 
 from helpers.contexts.dataset import create_dataset_context
 from helpers.dataclasses.dataset import DatasetContext
-from helpers.utils.pacer_consumer import PACERConsumer
+from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from tasks.internal_statistics import InternalStatisticsTasks
 
 
@@ -34,6 +34,7 @@ class InternalStatisticsConsumer(PACERConsumer):
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
+    @callback_order(1)
     def callback_func_update_dataset_statistics(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"callback_func_update_dataset_statistics > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
@@ -41,6 +42,7 @@ class InternalStatisticsConsumer(PACERConsumer):
 
         self.tasks.update_dataset_statistics(self.icat_client, dataset_id, *args, **kwargs)
 
+    @callback_order(2)
     def callback_func_update_investigation_statistics(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"callback_func_update_investigation_statistics > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
@@ -48,6 +50,7 @@ class InternalStatisticsConsumer(PACERConsumer):
 
         self.tasks.update_investigation_statistics(self.icat_client, dataset_id, *args, **kwargs)
 
+    @callback_order(3)
     def callback_func_update_sample_statistics(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"callback_func_update_sample_statistics > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")

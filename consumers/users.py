@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from kombu import Message
 
 from helpers.dataclasses.user import UserContext
-from helpers.utils.pacer_consumer import PACERConsumer
+from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from helpers.contexts.user import create_user_context
 from tasks.users import UserTasks
 
@@ -17,15 +17,16 @@ class UsersConsumer(PACERConsumer):
         super().__init__(dashboard_message_type="user-sync", *args, **kwargs)
         self.tasks = UserTasks(self.logger)
 
-    def get_message_object_identifiers(self, message: Message) -> dict:
+    def get_message_object_identifiers(self, message: Message, shared_obj_identifiers: dict = {}) -> dict:
         try:
             user_str: str = message.payload or message.body
             user_context: UserContext = create_user_context(user_str)
-            return {"profile_id": user_context.uos_id, "usernames": user_context.usernames}
+            return {"profile_id": user_context.uos_id, "usernames": user_context.usernames, **shared_obj_identifiers}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
 
+    @callback_order(1)
     def callback_func_sync_user_visa(self, body, message: Message, *_args, **_kwargs) -> None:
         if "visa" in self.integrations:
             self.logger.info(
@@ -35,6 +36,7 @@ class UsersConsumer(PACERConsumer):
 
             self.tasks.sync_user_visa(self.visa_pg_pool, user_context, message=message, body=body)
 
+    @callback_order(2)
     def callback_func_sync_user_icat(self, body, message: Message, *_args, **_kwargs) -> None:
         if "icat" in self.integrations:
             self.logger.info(
