@@ -449,7 +449,7 @@ def valid_investigation():
 @pytest.fixture()
 def valid_investigation_update():
     return {
-        "name": "2025079999UP",
+        "name": "20250799991122",
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
@@ -501,7 +501,7 @@ def investigation_non_existent_instrument():
 @pytest.fixture()
 def investigation_non_existent_facility():
     return {
-        "name": "20250799GO",
+        "name": "202507990011",
         "facility": "GOTERAS",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
@@ -527,7 +527,7 @@ def investigation_non_existent_facility():
 @pytest.fixture()
 def investigation_non_existent_investigation_type():
     return {
-        "name": "20250799GO",
+        "name": "2025079918181",
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
@@ -550,10 +550,23 @@ def investigation_non_existent_investigation_type():
         "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
+@pytest.fixture(autouse=True, scope="session")
+def icat_users(icat_client):
+    user = icat_client.new("User")
+    user.name = "auo-test12"
+    user.email = "test_email@<<>>.com"
+    user.create()
+
+    user2 = icat_client.new("User")
+    user2.name = "auo-testtest1-ou12"
+    user2.email = "test_email@<<>>.com"
+    user2.create()
+
+
 @pytest.fixture()
 def valid_investigation_reimbursed_parcels():
     return {
-        "name": "20250799RE",
+        "name": "2025079971711",
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
@@ -567,7 +580,6 @@ def valid_investigation_reimbursed_parcels():
         "type": "MX",
         "user_list": [
             {"username": "auo-test12", "email": "test_email@<<>>.com", "role": "Principal investigator"},
-            {"username": "auo-testTest1-ou12", "email": "test_email1@<<>>.com", "role": "Local contact"}
         ],
         "visit_count": 982,
         "is_reimbursed": True,

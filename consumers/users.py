@@ -17,11 +17,11 @@ class UsersConsumer(PACERConsumer):
         super().__init__(dashboard_message_type="user-sync", *args, **kwargs)
         self.tasks = UserTasks(self.logger)
 
-    def get_message_object_identifiers(self, message: Message) -> dict:
+    def get_message_object_identifiers(self, message: Message, shared_obj_identifiers: dict = {}) -> dict:
         try:
             user_str: str = message.payload or message.body
             user_context: UserContext = create_user_context(user_str)
-            return {"profile_id": user_context.uos_id, "usernames": user_context.usernames}
+            return {"profile_id": user_context.uos_id, "usernames": user_context.usernames, **shared_obj_identifiers}
         except Exception as e:
             self.logger.error(f"Error getting message object identifiers: {e!r}")
             return {}
