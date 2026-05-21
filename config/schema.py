@@ -8,7 +8,7 @@ broker_schema_fields: dict = {
     "port": {"type": "integer", "required": False},
     "username": {"type": "string", "required": False},
     "password": {"type": "string", "required": False},
-    "vHost": {"type": "string", "required": False},
+    "vHost": {"type": "string", "required": False}
 }
 
 config_yaml_schema: dict = {
@@ -78,7 +78,9 @@ config_yaml_schema: dict = {
                 "schema": {
                     "name": {"type": "string", "required": True},
                     "exchange": {"type": "string", "required": True},
-                    "routingKey": {"type": "string", "required": True}
+                    "routingKey": {"type": "string", "required": True},
+                    "priorityEnabled": {"type": "boolean", "required": True, "default": False},
+                    "maxPriorityLevel": {"type": "integer", "required": False, "default": 10}
                 }
             }
     },
