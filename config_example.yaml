@@ -48,15 +48,23 @@ queues:
   - name: "icat-dataset-ingest"
     exchange: "dataset-ingest-exchange"
     routingKey: "dataset.ingest"
+    priorityEnabled: true
+    maxPriorityLevel: 10
   - name: "icat-internal-dataset-ingest"
     exchange: "dataset-internal-ingest-exchange"
     routingKey: "dataset.internal_ingest"
+    priorityEnabled: true
+    maxPriorityLevel: 10
   - name: "icat-internal-statistics"
     exchange: "dataset-internal-ingest-exchange"
     routingKey: "statistics.internal_ingest"
+    priorityEnabled: true
+    maxPriorityLevel: 10
   - name: "icat-internal-dataset-links"
     exchange: "dataset-internal-ingest-exchange"
     routingKey: "dataset.internal_links"
+    priorityEnabled: true
+    maxPriorityLevel: 10
 consumers:
   - className: "DeadLettersConsumer"
     module: "consumers.dead_letters"
@@ -64,7 +72,7 @@ consumers:
     queues:
       - "dead-letters"
     workers: 1
-    integrations: []
+    integrations: [ ]
   - className: "UsersConsumer"
     module: "consumers.users"
     enabled: true
