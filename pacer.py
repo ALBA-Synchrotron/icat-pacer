@@ -45,7 +45,6 @@ class PACER:
         if "broker_connection" in kwargs and running_in_pytest():
             self.broker_connection = kwargs["broker_connection"]
 
-
         self.__initial_setup()
 
     def get_config_value(self, key: str, fallback_value: any = None, config: dict = None) -> any:
@@ -90,12 +89,11 @@ class PACER:
 
     @classmethod
     def _construct_broker_url(cls, protocol: str, host: str, port: int, username: str, password: str,
-                               vhost: str) -> str:
+                              vhost: str) -> str:
         url: str = f"{protocol}://"
         url = f"{url}{username}:{password}@" if username and password else url
         url = f"{url}{host}:{port}" if port else f"{url}{host}"
         url = f"{url}/{vhost}" if vhost else url
-
 
         return url
 
@@ -108,8 +106,8 @@ class PACER:
         main_broker_vhost: str = quote(self.get_config_value("brokers.main.vHost", fallback_value=""))
 
         main_broker_url: str = self._construct_broker_url(main_broker_protocol, main_broker_host, main_broker_port,
-                                                           main_broker_username, main_broker_password,
-                                                           main_broker_vhost)
+                                                          main_broker_username, main_broker_password,
+                                                          main_broker_vhost)
         self.broker_connection = Connection(main_broker_url)
         self.logger.debug(f"Main broker connection URL is: {mask_amqp_password(main_broker_url)}")
         self.logger.info("Main broker connection opened")
@@ -126,8 +124,8 @@ class PACER:
             recipient_vhost: str = quote(recipient.get("vHost", ""))
 
             recipient_broker_url: str = self._construct_broker_url(recipient_protocol, recipient_host, recipient_port,
-                                                                    recipient_username, recipient_password,
-                                                                    recipient_vhost)
+                                                                   recipient_username, recipient_password,
+                                                                   recipient_vhost)
             self.recipient_connections[recipient_name] = Connection(recipient_broker_url)
             self.logger.debug(f"Recipient broker connection URL for {recipient_name} is: "
                               f"{mask_amqp_password(recipient_broker_url)}")
@@ -171,7 +169,11 @@ class PACER:
             exchange_name: str = queue.get("exchange")
             routing_key: str = queue.get("routingKey")
             self.logger.debug(f"Creating queue: name={queue_name} exchange={exchange_name} routing_key={routing_key}")
-            self.queues.append(Queue(name=queue_name, exchange=exchange_name, routing_key=routing_key))
+
+            queue_args: dict = {} if not queue.get("priorityEnabled") else {
+                "x-max-priority": queue.get("maxPriorityLevel")}
+            self.queues.append(Queue(name=queue_name, exchange=exchange_name, routing_key=routing_key,
+                                     queue_arguments=queue_args))
         self.logger.debug(f"Created {len(self.queues)} queues")
 
     def session_check(self):
