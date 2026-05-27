@@ -355,8 +355,16 @@ def mock_icat_plus_client():
 
         yield mock_client
 
+
 @pytest.fixture(autouse=True, scope="session")
 def icat_sample_acronyms_parameter_type(icat_client, icat_facility):
     parameter_type = icat_client.new("ParameterType", name="sampleAcronyms", valueType="STRING",
                                      applicableToInvestigation=True, facility=icat_facility, units="NA")
     parameter_type.create()
+
+
+@pytest.fixture(autouse=True, scope="session")
+def icat_industrial_inv_type(icat_client, icat_facility):
+    inv_type = icat_client.new("InvestigationType", name="INDUSTRIAL", facility=icat_facility)
+    inv_type.create()
+    return inv_type

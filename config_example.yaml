@@ -187,6 +187,7 @@ ingestionSettings:
   investigation:
     defaultEmbargoYears: 3
     defaultFacilityName: "ALBA"
+    defaultIndustrialInvestigationTypeName: "INDUSTRIAL"
   parameters:
     storeParametersValuesAlsoAsString: true
 integrations:

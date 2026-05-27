@@ -1,5 +1,6 @@
 import pytest
 
+import globals_var
 from exceptions.investigation import InvestigationValidationError, InvestigationFacilityNotFound, \
     InvestigationTypeNotFound
 from exceptions.user import UserNotFound
@@ -96,20 +97,24 @@ class TestICATInvestigationSync:
         assert ("reimbursedParcels", f"{inv_ctx.visit_count}") in [(i.type.name, i.stringValue) for i in
                                                                    investigation.parameters]
 
-    def test_update_investigation(self, investigation_tasks, icat_client, valid_investigation_update, valid_user_investigation,
+    def test_update_investigation(self, investigation_tasks, icat_client, valid_investigation_update,
+                                  valid_user_investigation,
                                   user_tasks):
         user_ctx = create_user_context(valid_user_investigation)
         user_tasks.sync_user_icat(icat_client, user_ctx)
 
-
         inv_ctx = create_investigation_context(valid_investigation_update)
 
-        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name, "visitId__eq": inv_ctx.icat_visit_id}, flatten_single=True)
+        investigation = icat_client.search("Investigation",
+                                           conditions={"name__eq": inv_ctx.name, "visitId__eq": inv_ctx.icat_visit_id},
+                                           flatten_single=True)
         assert investigation is None
 
         investigation_tasks.sync_investigation_icat(icat_client, inv_ctx)
 
-        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name, "visitId__eq": inv_ctx.icat_visit_id}, flatten_single=True)
+        investigation = icat_client.search("Investigation",
+                                           conditions={"name__eq": inv_ctx.name, "visitId__eq": inv_ctx.icat_visit_id},
+                                           flatten_single=True)
         assert investigation is not None
         assert investigation.investigationInstruments is not None
         assert len(investigation.investigationUsers) == len(inv_ctx.user_list)
@@ -121,9 +126,37 @@ class TestICATInvestigationSync:
         assert len(prev_inv_ctx_users) != len(inv_ctx.user_list)
 
         investigation_tasks.sync_investigation_icat(icat_client, inv_ctx)
-        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name, "visitId__eq": inv_ctx.icat_visit_id}, flatten_single=True)
+        investigation = icat_client.search("Investigation",
+                                           conditions={"name__eq": inv_ctx.name, "visitId__eq": inv_ctx.icat_visit_id},
+                                           flatten_single=True)
 
         assert investigation.title == inv_ctx.title
         assert len(investigation.investigationUsers) == len(inv_ctx.user_list)
         assert ("reimbursedParcels", f"{inv_ctx.visit_count}") in [(i.type.name, i.stringValue) for i in
                                                                    investigation.parameters]
+
+    def test_create_industrial_investigation(self, investigation_tasks, icat_client,
+                                             valid_investigation_industrial):
+        inv_ctx = create_investigation_context(valid_investigation_industrial)
+        ingestion_settings: dict = globals_var.ingestion_settings.get("investigation", {})
+
+        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name}, flatten_single=True)
+        assert investigation is None
+
+        investigation_tasks.sync_investigation_icat(icat_client, inv_ctx)
+
+        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name}, flatten_single=True)
+        assert investigation is not None
+        assert investigation.investigationInstruments is not None
+        assert investigation.releaseDate is None
+        assert investigation.type.name == ingestion_settings.get("defaultIndustrialInvestigationTypeName", "INDUSTRIAL")
+
+    def test_create_invalid_industrial_investigation(self, investigation_tasks, icat_client,
+                                                     invalid_investigation_industrial):
+        inv_ctx = create_investigation_context(invalid_investigation_industrial)
+
+        investigation = icat_client.search("Investigation", conditions={"name__eq": inv_ctx.name}, flatten_single=True)
+        assert investigation is None
+
+        with pytest.raises(InvestigationValidationError):
+            investigation_tasks.sync_investigation_icat(icat_client, inv_ctx)

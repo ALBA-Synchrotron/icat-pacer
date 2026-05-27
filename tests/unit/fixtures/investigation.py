@@ -8,7 +8,6 @@ def investigation_non_existent_user():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -33,7 +32,6 @@ def investigation_payload_empty_name():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -59,7 +57,6 @@ def investigation_payload_empty_facility():
         "facility": None,
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -85,7 +82,6 @@ def investigation_payload_empty_start_date():
         "facility": "ALBA",
         "start_date": None,
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -111,7 +107,6 @@ def investigation_payload_empty_end_date():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": None,
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -137,7 +132,6 @@ def investigation_payload_empty_title():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "",
         "summary": "test_summary",
         "instrument": {
@@ -164,7 +158,6 @@ def investigation_payload_empty_summary():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "",
         "instrument": {
@@ -191,7 +184,6 @@ def investigation_payload_empty_instrument():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": None,
@@ -215,7 +207,6 @@ def investigation_payload_empty_type():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -242,7 +233,6 @@ def investigation_payload_invalid_missing_username():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -268,7 +258,6 @@ def investigation_payload_invalid_missing_email():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -294,7 +283,6 @@ def investigation_payload_invalid_missing_role():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -321,7 +309,6 @@ def investigation_payload_invalid_missing_instrument_name():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -348,7 +335,6 @@ def investigation_payload_invalid_missing_instrument_code():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -374,7 +360,6 @@ def investigation_payload_invalid_missing_icat_visit_id():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -400,7 +385,6 @@ def investigation_payload_invalid_missing_visa_visit_id():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -427,7 +411,6 @@ def valid_investigation():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -453,7 +436,6 @@ def valid_investigation_update():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -479,7 +461,6 @@ def investigation_non_existent_instrument():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -505,7 +486,6 @@ def investigation_non_existent_facility():
         "facility": "GOTERAS",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -531,7 +511,6 @@ def investigation_non_existent_investigation_type():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
         "instrument": {
@@ -570,9 +549,58 @@ def valid_investigation_reimbursed_parcels():
         "facility": "ALBA",
         "start_date": "2025-07-01T00:00:00Z",
         "end_date": "2025-07-02T00:00:00Z",
-        "release_date": "2028-07-02T00:00:00Z",
         "title": "test_title",
         "summary": "test_summary",
+        "instrument": {
+            "name": "BL13 - XALOC",
+            "code": "BL13"
+        },
+        "type": "MX",
+        "user_list": [
+            {"username": "auo-test12", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+        ],
+        "visit_count": 982,
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
+    }
+
+@pytest.fixture()
+def valid_investigation_industrial():
+    return {
+        "name": "2025079971722",
+        "facility": "ALBA",
+        "start_date": "2025-07-01T00:00:00Z",
+        "end_date": "2025-07-02T00:00:00Z",
+        "title": "test_title",
+        "summary": "test_summary",
+        "is_industrial": True,
+        "instrument": {
+            "name": "BL13 - XALOC",
+            "code": "BL13"
+        },
+        "type": "INDUSTRIAL",
+        "user_list": [
+            {"username": "auo-test12", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+        ],
+        "visit_count": 982,
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1008623,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
+    }
+
+@pytest.fixture()
+def invalid_investigation_industrial():
+    return {
+        "name": "2025079971733",
+        "facility": "ALBA",
+        "start_date": "2025-07-01T00:00:00Z",
+        "end_date": "2025-07-02T00:00:00Z",
+        "title": "test_title",
+        "summary": "test_summary",
+        "is_industrial": True,
         "instrument": {
             "name": "BL13 - XALOC",
             "code": "BL13"
