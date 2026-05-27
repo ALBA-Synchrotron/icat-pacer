@@ -6,6 +6,7 @@ import logging
 from icat.entity import Entity
 from psycopg_pool import ConnectionPool
 
+import globals_var
 from exceptions.investigation import InvestigationNotFound
 from exceptions.investigation_ops import InvestigationOpsValidationError
 from helpers.dataclasses.investigation import InvestigationOperationsContext
@@ -38,9 +39,12 @@ class InvestigationOpsTasks(BaseTasks):
                                       check_users=True, check_dates=True, check_instruments=True,
                                       check_end_date_today=False, check_no_doi=False,
                                       check_industrial: bool = True) -> None:
-        if check_industrial and investigation.type.name == "INDUSTRIAL":
+        ingestion_settings: dict = globals_var.ingestion_settings.get("investigation", {})
+        industrial_type_inv_name: str = ingestion_settings.get("defaultIndustrialInvestigationTypeName", "INDUSTRIAL")
+
+        if check_industrial and investigation.type.name == industrial_type_inv_name:
             raise InvestigationOpsValidationError(
-                f"Investigation: Investigation {investigation.name} is of type INDUSTRIAL and cannot be minted")
+                f"Investigation: Investigation {investigation.name} is of type {industrial_type_inv_name} and cannot be minted")
 
         if check_doi and investigation.doi:
             error_msg: str = f"Investigation: Investigation {investigation.name} already has a DOI {investigation.doi}"
