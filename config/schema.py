@@ -188,6 +188,7 @@ config_yaml_schema: dict = {
                 "schema": {
                     "defaultEmbargoYears": {"type": "integer", "required": True},
                     "defaultFacilityName": {"type": "string", "required": True},
+                    "defaultIndustrialInvestigationTypeName": {"type": "string", "required": True, "default": "INDUSTRIAL"},
                 }
             },
             "parameters": {

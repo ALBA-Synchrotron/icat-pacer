@@ -44,3 +44,10 @@ class TestInvestigationOpsInvestigationValidation:
 
         has_insert = any("UPDATE" in sql.upper() for sql in sql_statements)
         assert has_insert
+
+    def test_mint_proposal_industrial_investigation(self, icat_client, investigation_ops_tasks,
+                                                    ops_industrial_investigation, mock_psycopg_pool,
+                                                    datacite_client_mock):
+        with pytest.raises(InvestigationOpsValidationError):
+            investigation_ops_tasks.mint_proposal(mock_psycopg_pool, icat_client, datacite_client_mock,
+                                                  ops_industrial_investigation)

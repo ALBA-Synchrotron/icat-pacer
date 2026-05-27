@@ -32,3 +32,8 @@ class TestInvestigationOpsInvestigationValidation:
     def test_create_panosc_item_valid_investigation(self, icat_client, investigation_ops_tasks,
                                                     ops_valid_investigation_with_doi, panosc_client_mock):
         investigation_ops_tasks.create_panosc_item(icat_client, ops_valid_investigation_with_doi, panosc_client_mock)
+
+    def test_create_panosc_item_industrial_investigation(self, icat_client, investigation_ops_tasks,
+                                                         ops_industrial_investigation, panosc_client_mock):
+        with pytest.raises(InvestigationOpsValidationError):
+            investigation_ops_tasks.create_panosc_item(icat_client, ops_industrial_investigation, panosc_client_mock)

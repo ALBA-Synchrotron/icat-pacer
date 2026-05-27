@@ -142,6 +142,29 @@ def ops_valid_investigation(icat_client, icat_facility, icat_unittest_investigat
 
     return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
 
+@pytest.fixture(scope="session")
+def ops_industrial_investigation(icat_client, icat_facility, icat_industrial_inv_type, dataset_type_raw,
+                            random_user, random_instrument):
+    name = "inv_industrial_ops"
+    i = icat_client.new("Investigation", name=name, title="Industrial inv",
+                        summary="Industrial inv",
+                        startDate=datetime.datetime.strptime("2018-10-10 12:33:43", "%Y-%m-%d %H:%M:%S"),
+                        endDate=datetime.datetime.strptime("2018-10-24 12:33:43", "%Y-%m-%d %H:%M:%S"),
+                        releaseDate=datetime.datetime.strptime("2021-10-24 12:33:43", "%Y-%m-%d %H:%M:%S"),
+                        facility=icat_facility,
+                        type=icat_industrial_inv_type,
+                        visitId=f"{name}-visitId")
+    i.create()
+
+    dataset = icat_client.new("Dataset", investigation=i, name="test_dataset", type=dataset_type_raw)
+    dataset.create()
+    inv_user = icat_client.new("InvestigationUser", investigation=i, user=random_user, role="Principal investigator")
+    inv_user.create()
+    inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
+    inv_instr.create()
+
+    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+
 
 @pytest.fixture(scope="session")
 def ops_valid_investigation_with_doi(icat_client, icat_facility, icat_unittest_investigation_type, dataset_type_raw,
