@@ -43,9 +43,12 @@ def create_investigation_context(investigation_data: str | dict,
     is_investigation_reimbursed: bool = investigation_dict.get("is_reimbursed", False)
     sync_with_icat: bool = investigation_dict.get("icat_sync", False)
     sync_with_visa: bool = investigation_dict.get("visa_sync", False)
-    icat_visit_id: str = investigation_dict.get("icat_visit_id", instrument.get("code", "").lower() if instrument else "")
-    visa_visit_id: int = investigation_dict.get("visa_visit_id", int(investigation_name.replace("-", "") if investigation_name else "0"))
+    icat_visit_id: str = investigation_dict.get("icat_visit_id",
+                                                instrument.get("code", "").lower() if instrument else "")
+    visa_visit_id: int = investigation_dict.get("visa_visit_id",
+                                                int(investigation_name.replace("-", "") if investigation_name else "0"))
     sample_acronyms: list = investigation_dict.get("sample_acronyms", [])
+    is_industrial: bool = investigation_dict.get("is_industrial", False)
 
     investigation_users_ctx: list = [
         InvestigationUserContext(username=i.get("username", ""), email=i.get("email", ""), role=i.get("role", ""))
@@ -58,7 +61,9 @@ def create_investigation_context(investigation_data: str | dict,
     end_date: datetime = try_parse_datetime(end_date_str)
 
     release_date_str: str = investigation_dict.get("release_date", "")
-    if release_date_str:
+    if is_industrial:
+        release_date = None
+    elif release_date_str:
         release_date: datetime = try_parse_datetime(release_date_str)
     else:
         release_date: datetime = end_date + relativedelta(years=ingestion_settings.get("defaultEmbargoYears", 9999))
@@ -83,7 +88,8 @@ def create_investigation_context(investigation_data: str | dict,
         icat_sync=sync_with_icat,
         icat_visit_id=icat_visit_id,
         visa_visit_id=visa_visit_id,
-        sample_acronyms=sample_acronyms
+        sample_acronyms=sample_acronyms,
+        is_industrial=is_industrial,
     )
 
     return inv_ctx

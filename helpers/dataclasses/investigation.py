@@ -55,6 +55,7 @@ class InvestigationContext:
     icat_visit_id: str
     visa_visit_id: int
     sample_acronyms: list[str]
+    is_industrial: bool
     visit_count: int = 0
     is_reimbursed: bool = False
     visa_sync: bool = False

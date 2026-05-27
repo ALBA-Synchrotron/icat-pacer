@@ -36,7 +36,12 @@ class InvestigationOpsTasks(BaseTasks):
 
     def __general_investigation_check(self, investigation: Entity, check_doi=True, check_datasets=True,
                                       check_users=True, check_dates=True, check_instruments=True,
-                                      check_end_date_today=False, check_no_doi=False) -> None:
+                                      check_end_date_today=False, check_no_doi=False,
+                                      check_industrial: bool = True) -> None:
+        if check_industrial and investigation.type.name == "INDUSTRIAL":
+            raise InvestigationOpsValidationError(
+                f"Investigation: Investigation {investigation.name} is of type INDUSTRIAL and cannot be minted")
+
         if check_doi and investigation.doi:
             error_msg: str = f"Investigation: Investigation {investigation.name} already has a DOI {investigation.doi}"
             self.logger.error(error_msg)
@@ -77,7 +82,7 @@ class InvestigationOpsTasks(BaseTasks):
                            **_kwargs) -> None:
         self.logger.info(f"PaNOSC item creation: Creating item for proposal {inv_ops_ctx.name}")
         investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": inv_ops_ctx.name,
-                                                                                "visitId__eq": inv_ops_ctx.visit_id,},
+                                                                                "visitId__eq": inv_ops_ctx.visit_id, },
                                                    flatten_single=True)
         if not investigation:
             error_msg: str = f"PaNOSC item creation: Investigation {inv_ops_ctx.name} not found"
