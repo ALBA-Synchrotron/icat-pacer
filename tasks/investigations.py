@@ -5,6 +5,7 @@ import logging
 from icat.entity import Entity
 from psycopg_pool import ConnectionPool
 
+import globals_var
 from exceptions.investigation import InvestigationValidationError, InvestigationFacilityNotFound, \
     InvestigationTypeNotFound
 from exceptions.parameter import ParameterTypeNotFound
@@ -19,6 +20,7 @@ from helpers.utils.investigation import get_investigation_parameter, set_investi
 
 
 class ProposalTasks(BaseTasks):
+    ingestion_settings: dict = globals_var.ingestion_settings.get("investigation", {})
 
     def __init__(self, logger: logging.Logger = None):
         super().__init__(logger)
@@ -34,6 +36,10 @@ class ProposalTasks(BaseTasks):
     def sync_investigation_icat(self, icat_client: ICATClient, investigation_context: InvestigationContext, *_args,
                                 **_kwargs) -> None:
         self.logger.info(f"ICAT sync: Synchronizing proposal {investigation_context.name}")
+
+        if investigation_context.is_industrial and investigation_context.type != self.ingestion_settings.get(
+                "defaultIndustrialInvestigationTypeName", "INDUSTRIAL"):
+            raise InvestigationValidationError("Mismatch between investigation type and is_industrial flag")
 
         investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": investigation_context.name,
                                                                                 "visitId__eq": investigation_context.icat_visit_id},

@@ -66,7 +66,7 @@ def create_investigation_context(investigation_data: str | dict,
     elif release_date_str:
         release_date: datetime = try_parse_datetime(release_date_str)
     else:
-        release_date: datetime = end_date + relativedelta(years=ingestion_settings.get("defaultEmbargoYears", 9999))
+        release_date: datetime = end_date + relativedelta(years=ingestion_settings.get("defaultEmbargoYears", 3))
 
     if not instrument:
         raise InvestigationValidationError("Instrument must be provided")
