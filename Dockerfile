@@ -37,7 +37,7 @@ RUN if [ "$BROKER_TYPE" = "redis" ]; then \
 
 # Conditional installation if BROKER_TYPE is sqs
 RUN if [ "$BROKER_TYPE" = "sqs" ]; then \
-        pip install --no-cache-dir -r requirements_redis.txt; \
+        pip install --no-cache-dir -r requirements_sqs.txt; \
     fi
 
 USER pacer
