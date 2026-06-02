@@ -254,9 +254,9 @@ config_yaml_schema: dict = {
                 "type": "dict",
                 "schema": {
                     "enabled": {"type": "boolean", "required": True},
-                    "exchangeName": {"type": "string", "required": False},
-                    "routingKey": {"type": "string", "required": False},
-                    "celeryTask": {"type": "string", "required": False},
+                    "exchangeName": {"type": "string", "required": False, "default": "dashboard-logging-exchange"},
+                    "routingKey": {"type": "string", "required": False, "default": "message.logging"},
+                    "celeryTask": {"type": "string", "required": False, "default": "dashboard.tasks.log_pacer_message"},
                 }
             },
             "datacite": {
