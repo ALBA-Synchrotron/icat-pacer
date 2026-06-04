@@ -10,4 +10,4 @@ The PACER provides a modern, modular, asynchronous, message-driven architecture 
 
 ## License
 
-[MIT](https://choosealicense.com/licenses/mit/)
+[GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
