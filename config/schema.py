@@ -16,6 +16,7 @@ config_yaml_schema: dict = {
         "type": "string",
         "allowed": ["spawn", "fork", "forkserver"],
         "required": False,
+        "default": "spawn"
     },
     "logging": {
         "type": "dict",
@@ -24,18 +25,18 @@ config_yaml_schema: dict = {
         "check_elastic_settings": True,
         "schema": {
             "logLevel": {"type": "string", "allowed": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
-                         "required": False},
+                         "required": False, "default": "INFO"},
             "printFormat": {"type": "string", "required": False},
             "console": {
                 "type": "dict",
                 "schema": {
-                    "enabled": {"type": "boolean", "required": True}
+                    "enabled": {"type": "boolean", "required": True, "default": True}
                 }
             },
             "file": {
                 "type": "dict",
                 "schema": {
-                    "enabled": {"type": "boolean", "required": True},
+                    "enabled": {"type": "boolean", "required": True, "default": False},
                     "path": {"type": "string", "required": False},
                     "rotate": {"type": "boolean", "required": False},
                     "maxMBytes": {"type": "integer", "required": False},
@@ -45,7 +46,7 @@ config_yaml_schema: dict = {
             "elastic": {
                 "type": "dict",
                 "schema": {
-                    "enabled": {"type": "boolean", "required": True},
+                    "enabled": {"type": "boolean", "required": True, "default": False},
                     "serverUrl": {"type": "string", "required": False},
                     "serviceName": {"type": "string", "required": False},
                     "serviceEnvironment": {"type": "string", "required": False},
@@ -145,25 +146,25 @@ config_yaml_schema: dict = {
         "required": True,
         "check_allowed_root_location_paths": True,
         "schema": {
-            "messageProcessingRetries": {"type": "integer", "required": True},
+            "messageProcessingRetries": {"type": "integer", "required": True, "default": 5},
             "dataset": {
                 "type": "dict",
                 "required": True,
                 "schema": {
-                    "acceptXMLPayloads": {"type": "boolean", "required": True},
-                    "mandatoryPathsExistence": {"type": "boolean", "required": True},
-                    "mandatorySampleType": {"type": "boolean", "required": True},
+                    "acceptXMLPayloads": {"type": "boolean", "required": True, "default": False},
+                    "mandatoryPathsExistence": {"type": "boolean", "required": True, "default": True},
+                    "mandatorySampleType": {"type": "boolean", "required": True, "default": True},
                     "checkAllowedLocationPaths": {"type": "boolean", "required": True},
                     "allowedRootLocationPaths": {
                         "type": "list", "required": False, "nullable": True,
                         "schema": {"type": "string", "required": True}
                     },
-                    "internalDatasetExchangeName": {"type": "string", "required": True},
-                    "internalDatasetRoutingKey": {"type": "string", "required": True},
-                    "internalStatisticsRoutingKey": {"type": "string", "required": True},
-                    "internalDatasetLinksRoutingKey": {"type": "string", "required": True},
-                    "automaticDatasetLocationIndex": {"type": "boolean", "required": True},
-                    "maxDatafilesPerDataset": {"type": "integer", "required": True},
+                    "internalDatasetExchangeName": {"type": "string", "required": True, "default": "dataset-internal-ingest-exchange"},
+                    "internalDatasetRoutingKey": {"type": "string", "required": True, "default": "dataset.internal_ingest"},
+                    "internalStatisticsRoutingKey": {"type": "string", "required": True, "default": "statistics.internal_ingest"},
+                    "internalDatasetLinksRoutingKey": {"type": "string", "required": True, "default": "dataset.internal_links"},
+                    "automaticDatasetLocationIndex": {"type": "boolean", "required": True, "default": False},
+                    "maxDatafilesPerDataset": {"type": "integer", "required": True, "default": 30000},
                     "galleryFolderName": {"type": "string", "required": True, "default": "gallery"},
                     "xmlNamespacesTransform": {"type": "list", "schema": {"type": "dict", "schema": {
                         "schema": {"type": "string", "required": True}, "to": {"type": "string", "nullable": True}}},
@@ -195,7 +196,7 @@ config_yaml_schema: dict = {
                 "type": "dict",
                 "required": True,
                 "schema": {
-                    "storeParametersValuesAlsoAsString": {"type": "boolean", "required": True},
+                    "storeParametersValuesAlsoAsString": {"type": "boolean", "required": True, "default": False},
                 }
             },
         }
@@ -251,9 +252,9 @@ config_yaml_schema: dict = {
                 "type": "dict",
                 "schema": {
                     "enabled": {"type": "boolean", "required": True},
-                    "exchangeName": {"type": "string", "required": False},
-                    "routingKey": {"type": "string", "required": False},
-                    "celeryTask": {"type": "string", "required": False},
+                    "exchangeName": {"type": "string", "required": False, "default": "dashboard-logging-exchange"},
+                    "routingKey": {"type": "string", "required": False, "default": "message.logging"},
+                    "celeryTask": {"type": "string", "required": False, "default": "dashboard.tasks.log_pacer_message"},
                 }
             },
             "datacite": {
