@@ -1,5 +1,3 @@
-from markdown_it.presets import default
-
 broker_schema_fields: dict = {
     "protocol": {
         "type": "string",
