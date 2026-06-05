@@ -26,6 +26,9 @@ def valid_user():
             },
             {
                 "username": "auo-testTest1-ou"
+            },
+            {
+                "username": "auo-testTest1-ou-ALL_CAPS"
             }
         ]
     }
