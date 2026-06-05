@@ -39,6 +39,7 @@ class UserTasks(BaseTasks):
             u.email = user_context.email
             u.orcidId = user_context.orcid
             u.affiliation = user_context.affiliation.get_affiliation_name(limit=255)
+            u.name = u.name.lower()
             u.name = u.name.replace(self.USER_DISABLED_SUFFIX,
                                     "") if user_context.enabled else \
                 u.name if u.name.endswith(self.USER_DISABLED_SUFFIX) else \
