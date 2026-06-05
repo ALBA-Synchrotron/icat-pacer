@@ -79,6 +79,9 @@ class DatasetsInternalTasks(BaseTasks):
                     setattr(rb, f"new_datafile_{index}", new_datafile)
                     self.logger.info(f"Created datafile {dataset_ctx.location} with id {new_datafile.id}")
 
+                if not rb.dataset.datafiles:
+                    raise ValueError(f"Dataset {dataset_ctx.location} has no datafiles")
+
             except Exception as e:
                 rb.rollback_all(force_delete=(not is_duplicated))
 
