@@ -1,7 +1,7 @@
 import pytest
+from pydantic import ValidationError
 
-from exceptions.investigation import InvestigationValidationError
-from helpers.contexts.proposals import create_investigation_context
+from helpers.contexts.investigation import create_investigation_context
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ class TestInvestigationPayloadValidation:
                              ],
                              indirect=True)
     def test_invalid_investigation_payload(self, invalid_investigation_payload):
-        with pytest.raises(InvestigationValidationError):
+        with pytest.raises(ValidationError):
             _ = create_investigation_context(invalid_investigation_payload)
 
     def test_valid_investigation_payload(self, valid_investigation):

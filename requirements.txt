@@ -10,3 +10,4 @@ pytest==8.4.1
 python-elasticsearch-logging==2.0.8
 requests==2.32.4
 xmltodict==1.0.2
+pydantic==2.13.4

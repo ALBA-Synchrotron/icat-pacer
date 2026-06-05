@@ -5,8 +5,7 @@ from dateutil.relativedelta import relativedelta
 
 import globals_var
 from exceptions.investigation import InvestigationValidationError
-from helpers.dataclasses.investigation import InvestigationContext, InvestigationInstrumentContext, \
-    InvestigationUserContext
+from helpers.models.investigation import InvestigationContext, InvestigationUserContext, InvestigationInstrumentContext
 from helpers.static_settings import ICAT_USER_ROLE_PARTICIPANT
 from helpers.utils.datetime import try_parse_datetime
 
@@ -32,8 +31,8 @@ def create_investigation_context(investigation_data: str | dict,
 
     investigation_name: str = f"{name_prefix}{investigation_dict.get('name')}"
     facility_name: str = investigation_dict.get('facility', ingestion_settings.get("defaultFacilityName", ""))
-    start_date_str: str = investigation_dict.get("start_date")
-    end_date_str: str = investigation_dict.get("end_date")
+    start_date: str = investigation_dict.get("start_date")
+    end_date: str = investigation_dict.get("end_date")
     investigation_title: str = investigation_dict.get("title", "")
     investigation_summary: str = investigation_dict.get("summary", "")
     instrument: dict = investigation_dict.get("instrument")
@@ -54,19 +53,8 @@ def create_investigation_context(investigation_data: str | dict,
         InvestigationUserContext(username=i.get("username", ""), email=i.get("email", ""), role=i.get("role", ""))
         for i in investigation_user_list]
 
-    if not start_date_str or not end_date_str:
-        raise InvestigationValidationError("Start and end dates must be provided")
-
-    start_date: datetime = try_parse_datetime(start_date_str)
-    end_date: datetime = try_parse_datetime(end_date_str)
-
     release_date_str: str = investigation_dict.get("release_date", "")
-    if is_industrial:
-        release_date = None
-    elif release_date_str:
-        release_date: datetime = try_parse_datetime(release_date_str)
-    else:
-        release_date: datetime = end_date + relativedelta(years=ingestion_settings.get("defaultEmbargoYears", 3))
+
 
     if not instrument:
         raise InvestigationValidationError("Instrument must be provided")

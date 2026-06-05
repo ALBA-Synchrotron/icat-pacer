@@ -1,6 +1,6 @@
 import json
 
-from helpers.dataclasses.investigation import InvestigationOperationsContext
+from helpers.models.investigation import InvestigationOperationsContext
 
 
 def create_investigation_ops_context(inv_ops_data: str | dict) -> InvestigationOperationsContext:

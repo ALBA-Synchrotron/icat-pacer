@@ -8,11 +8,10 @@ from psycopg_pool import ConnectionPool
 import globals_var
 from exceptions.investigation import InvestigationValidationError, InvestigationFacilityNotFound, \
     InvestigationTypeNotFound
-from exceptions.parameter import ParameterTypeNotFound
 from exceptions.user import UserNotFound
-from helpers.dataclasses.investigation import InvestigationContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.visa_utils import VISALoader
+from helpers.models.investigation import InvestigationContext
 from helpers.static_settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PROPOSER, \
     ICAT_USER_ROLE_LOCAL_CONTACT, ICAT_USER_ROLE_PARTICIPANT, SAMPLE_ACRONYMS_PARAMETER_NAME
 from helpers.utils.base_tasks import BaseTasks
