@@ -6,14 +6,11 @@ from exceptions.dataset import DatasetValidationError, DatasetParameterValidatio
     DatasetSampleValidationError
 
 
-@dataclass
+
 class DatasetSampleContext(BaseModel):
     name: str
     type: str
 
-    def __post_init__(self):
-        if not self.name:
-            raise DatasetSampleValidationError("Sample name cannot be empty")
 
 @dataclass
 class DatasetDatafileContext:
