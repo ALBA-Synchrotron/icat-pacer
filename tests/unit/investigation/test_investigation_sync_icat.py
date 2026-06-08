@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 import globals_var
 from exceptions.investigation import InvestigationValidationError, InvestigationFacilityNotFound, \

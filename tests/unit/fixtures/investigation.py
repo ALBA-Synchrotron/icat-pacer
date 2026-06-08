@@ -403,6 +403,30 @@ def investigation_payload_invalid_missing_visa_visit_id():
         "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
     }
 
+@pytest.fixture()
+def investigation_payload_invalid_user_role_invalid():
+    return {
+        "name": "2025079999",
+        "facility": "ALBA",
+        "start_date": "2025-07-01T00:00:00Z",
+        "end_date": "2025-07-02T00:00:00Z",
+        "title": "test_title",
+        "summary": "test_summary",
+        "instrument": {
+            "name": "BL13 - XALOC",
+            "code": ""
+        },
+        "type": "MX",
+        "user_list": [
+            {"username": "testuser", "email": "test_email@<<>>.com", "role": "Principal investigator"},
+            {"username": "testuser", "email": "test_email1@<<>>.com", "role": "Random fella"}
+        ],
+        "visit_count": 1,
+        "is_reimbursed": True,
+        "icat_visit_id": "uo_8623",
+        "visa_visit_id": 1234,
+        "sample_acronyms": ["test_sample_acronym1", "test_sample_acronym2"]
+    }
 
 @pytest.fixture()
 def valid_investigation():

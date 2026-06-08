@@ -12,7 +12,7 @@ from exceptions.investigation_ops import InvestigationOpsValidationError
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.datacite import DataciteClient
 from helpers.integrations.panosc import PaNOSCClient
-from helpers.models.investigation import InvestigationOperationsContext
+from helpers.models.investigation_operations import InvestigationOperationsContext
 from helpers.static_settings import ICAT_USER_ROLE_PRINCIPAL_INVESTIGATOR, ICAT_USER_ROLE_PARTICIPANT, \
     DATACITE_CONTRIBUTOR_DATA_COLLECTOR, ICAT_USER_ROLE_LOCAL_CONTACT, DATACITE_CONTRIBUTOR_PROJECT_MANAGER, \
     DATACITE_CONTRIBUTOR_PROJECT_MEMBER, ICAT_USER_ROLE_PROPOSER

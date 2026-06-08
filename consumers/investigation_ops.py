@@ -4,6 +4,7 @@ from kombu import Message
 
 from helpers.dataclasses.investigation import InvestigationOperationsContext
 from helpers.contexts.investigation_ops import create_investigation_ops_context
+from helpers.static_settings import INV_OPS_MINT_PROPOSAL, INV_OPS_CREATE_PANOSC_ITEM
 from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from tasks.investigation_ops import InvestigationOpsTasks
 
@@ -34,16 +35,16 @@ class InvestigationOperationsConsumer(PACERConsumer):
         inv_ops_str: str = message.payload or message.body
         inv_ops_ctx: InvestigationOperationsContext = create_investigation_ops_context(inv_ops_str)
 
-        if "mint-proposal" in inv_ops_ctx.operations and self.datacite_client is not None:
+        if INV_OPS_MINT_PROPOSAL in inv_ops_ctx.operations and self.datacite_client is not None:
             self.tasks.mint_proposal(self.visa_pg_pool, self.icat_client, self.datacite_client, inv_ops_ctx, *args,
                                      **kwargs)
 
     @callback_order(1)
-    def callback_func_datacite_item(self, _body, message: Message, *args, **kwargs) -> None:
+    def callback_func_pss_item(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
-            f"investigation_mint_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+            f"pss_item_callback > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         inv_ops_str: str = message.payload or message.body
         inv_ops_ctx: InvestigationOperationsContext = create_investigation_ops_context(inv_ops_str)
 
-        if "create-panosc-item" in inv_ops_ctx.operations:
+        if INV_OPS_CREATE_PANOSC_ITEM in inv_ops_ctx.operations:
             self.tasks.create_panosc_item(self.icat_client, inv_ops_ctx, self.panosc_client, *args, **kwargs)

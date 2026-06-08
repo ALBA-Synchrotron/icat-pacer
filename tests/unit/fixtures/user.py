@@ -33,6 +33,7 @@ def valid_user():
         ]
     }
 
+
 @pytest.fixture()
 def valid_user_investigation():
     return {
@@ -61,6 +62,7 @@ def valid_user_investigation():
             }
         ]
     }
+
 
 @pytest.fixture()
 def user_payload_empty_first_name():

@@ -116,7 +116,7 @@ def ops_investigation_future_end_date(icat_client, icat_facility, icat_unittest_
 
 @pytest.fixture(scope="session")
 def ops_non_existent_investigation():
-    return create_investigation_ops_context({"name": "non_existent_investigation", "ops": ops, "visit_id": ""})
+    return create_investigation_ops_context({"name": "non_existent_investigation", "ops": ops, "visit_id": "asd"})
 
 
 @pytest.fixture(scope="session")
