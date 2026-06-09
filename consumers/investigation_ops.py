@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 from kombu import Message
 
-from helpers.dataclasses.investigation import InvestigationOperationsContext
+from helpers.models.investigation_operations import InvestigationOperationsContext
 from helpers.contexts.investigation_ops import create_investigation_ops_context
 from helpers.static_settings import INV_OPS_MINT_PROPOSAL, INV_OPS_CREATE_PANOSC_ITEM
 from helpers.utils.pacer_consumer import PACERConsumer, callback_order

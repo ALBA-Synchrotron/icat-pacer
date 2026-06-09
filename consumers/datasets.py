@@ -4,7 +4,7 @@ import globals_var
 from kombu import Message
 
 from helpers.contexts.dataset import create_dataset_context
-from helpers.dataclasses.dataset import DatasetContext
+from helpers.models.dataset import DatasetContext
 from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from producers.generic import GenericProducer
 from tasks.datasets import DatasetsTasks
