@@ -76,7 +76,8 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
-        self.tasks.create_dataset_gallery(self.icat_plus_client, self.icat_client, dataset_ctx, dataset_id, *args, **kwargs)
+        self.tasks.create_dataset_gallery(self.icat_plus_client, self.icat_client, dataset_ctx, dataset_id, *args,
+                                          **kwargs)
 
     @callback_order(4)
     def callback_func_dataset_linkage(self, _body, message: Message, *args, **kwargs) -> None:
@@ -100,7 +101,6 @@ class InternalDatasetsConsumer(PACERConsumer):
     def callback_func_forward_to_following_queues(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
             f"callback_func_forward_to_following_queues > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
-        dataset_str: str = message.payload or message.body
         dataset_id: int = message.headers.get("dataset_id", 0)
         investigation_id: int = message.headers.get("investigation_id", 0)
 
@@ -108,5 +108,5 @@ class InternalDatasetsConsumer(PACERConsumer):
 
         for queue_routing_key in following_queues:
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
-                                         queue_routing_key, dataset_str,
+                                         queue_routing_key, message,
                                          {"dataset_id": dataset_id, "investigation_id": investigation_id})
