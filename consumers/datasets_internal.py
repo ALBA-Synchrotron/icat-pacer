@@ -101,7 +101,6 @@ class InternalDatasetsConsumer(PACERConsumer):
         self.logger.info(
             f"callback_func_forward_to_following_queues > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
         dataset_str: str = message.payload or message.body
-        dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
         investigation_id: int = message.headers.get("investigation_id", 0)
 
@@ -109,5 +108,5 @@ class InternalDatasetsConsumer(PACERConsumer):
 
         for queue_routing_key in following_queues:
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
-                                         queue_routing_key, dataset_ctx,
+                                         queue_routing_key, dataset_str,
                                          {"dataset_id": dataset_id, "investigation_id": investigation_id})
