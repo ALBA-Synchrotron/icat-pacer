@@ -54,10 +54,6 @@ class InternalDatasetsConsumer(PACERConsumer):
 
         self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id, is_duplicated, *args, **kwargs)
 
-        GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
-                                     self.internal_datasets_links_routing_key, dataset_ctx,
-                                     {"dataset_id": dataset_id, "investigation_id": investigation_id})
-
     @callback_order(2)
     def callback_func_create_dataset_parameters(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
