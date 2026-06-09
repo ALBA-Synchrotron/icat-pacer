@@ -3,7 +3,7 @@ import pytest
 import globals_var
 from exceptions.dataset import DatasetValidationError, DatasetNotFound
 from helpers.contexts.dataset import create_dataset_context
-from helpers.models.dataset import DatasetDatafileContext, DatasetParameterContext
+from helpers.models.dataset import DatasetParameterContext
 from helpers.static_settings import DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS
 from tests.unit.fixtures.icat import mock_icat_plus_client
 
