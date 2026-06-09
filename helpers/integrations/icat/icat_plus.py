@@ -7,7 +7,7 @@ import requests
 from requests import Response
 
 from exceptions.integrations import ICATPlusClientError
-from helpers.dataclasses.dataset import DatasetContext
+from helpers.models.dataset import DatasetContext
 
 
 class ICATPlusClient:

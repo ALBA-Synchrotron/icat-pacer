@@ -3,7 +3,7 @@ import pytest
 from exceptions.dataset import DatasetValidationError, DatasetNotFound
 from exceptions.parameter import ParameterTypeNotFound
 from helpers.contexts.dataset import create_dataset_context
-from helpers.dataclasses.dataset import DatasetParameterContext
+from helpers.models.dataset import DatasetParameterContext
 from helpers.static_settings import DATASET_PROCESSING_VERSION_PARAMETER_NAME
 
 
@@ -75,14 +75,16 @@ class TestInternalDatasetConsumerDatasetParameterCreation:
         dataset = icat_client.search("Dataset", conditions={"id__eq": new_dataset_id}, flatten_single=True)
         assert len(dataset.parameters) == len(dataset_ctx.parameters)
 
-        dataset_ctx.parameters.append(DatasetParameterContext("parameter_type_2", "no"))
+        dataset_ctx.parameters.append(
+            DatasetParameterContext.model_validate({"name": "parameter_type_2", "value": "no"}))
         new_dataset_id, investigation_id, is_duplicated = dataset_tasks.create_base_dataset_icat(
             icat_client=icat_client, dataset_ctx=dataset_ctx)
         internal_dataset_tasks.create_dataset_parameters(icat_client, dataset_ctx, new_dataset_id, is_duplicated)
         assert is_duplicated
         assert "parameter_type_2" not in [i.type.name for i in dataset.parameters]
 
-        dataset_ctx.parameters.append(DatasetParameterContext(DATASET_PROCESSING_VERSION_PARAMETER_NAME, "2"))
+        dataset_ctx.parameters.append(DatasetParameterContext.model_validate(
+            {"name": DATASET_PROCESSING_VERSION_PARAMETER_NAME, "value": "2"}))
 
         internal_dataset_tasks.create_dataset_parameters(icat_client, dataset_ctx, new_dataset_id, is_duplicated)
         dataset = icat_client.search("Dataset", conditions={"id__eq": new_dataset_id}, flatten_single=True)

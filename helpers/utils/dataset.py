@@ -4,7 +4,7 @@ from icat.entity import Entity
 
 from exceptions.instrument import InstrumentNotFound
 from exceptions.investigation import InvestigationNotFound, InvestigationInstrumentMismatch, MultipleInvestigationsFound
-from helpers.dataclasses.dataset import DatasetContext
+from helpers.models.dataset import DatasetContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.static_settings import PROCESSED_DATASET_TYPE_NAME
 from helpers.utils.datetime import try_parse_datetime
@@ -76,7 +76,7 @@ def get_dataset_investigation(icat_client: ICATClient, logger: Logger, dataset_c
             raise MultipleInvestigationsFound(error_msg)
 
     if not investigation:
-        error_msg: str = f"Investigation {dataset_ctx.investigation if dataset_ctx.investigation else f'w/ id={dataset_ctx.investigation_id}'}not found"
+        error_msg: str = f"Investigation {dataset_ctx.investigation if dataset_ctx.investigation else f'w/ id={dataset_ctx.investigation_id}'} not found"
         logger.error(error_msg)
         raise InvestigationNotFound(error_msg)
 

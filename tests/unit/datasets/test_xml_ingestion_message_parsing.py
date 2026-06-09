@@ -1,4 +1,5 @@
 import pytest
+from pydantic import ValidationError
 
 from exceptions.dataset import DatasetValidationError, DatasetDatafileLimitExceeded
 from helpers.contexts.dataset import create_dataset_context
@@ -39,7 +40,7 @@ class TestXMLIngestionMessageParsing:
                              ],
                              indirect=True)
     def test_invalid_xml_message(self, invalid_xml_payload):
-        with pytest.raises(DatasetValidationError):
+        with pytest.raises((ValidationError, DatasetValidationError)):
             _ = create_dataset_context(invalid_xml_payload)
 
     def test_enforce_sample_type_xml_message(self, valid_xml_raw_dataset_payload, monkeypatch,

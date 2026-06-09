@@ -8,7 +8,7 @@ from icat.entity import Entity
 
 import globals_var
 from exceptions.dataset import DatasetValidationError, DatasetNotFound
-from helpers.dataclasses.dataset import DatasetContext, DatasetDatafileContext
+from helpers.models.dataset import DatasetContext, DatasetDatafileContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.icat.icat_plus import ICATPlusClient
 from helpers.static_settings import INPUT_DATASET_PARAMETER_NAME, INPUT_DATASET_IDS_PARAMETER_NAME, \
@@ -53,7 +53,8 @@ class DatasetsInternalTasks(BaseTasks):
 
                     for root, dirs, files in os.walk(dataset_ctx.location):
                         for file in files:
-                            dataset_ctx.datafiles.append(DatasetDatafileContext(os.path.join(root, file)))
+                            dataset_ctx.datafiles.append(DatasetDatafileContext.model_validate(
+                                {"location": os.path.join(root, file)}))
 
                             if file.startswith("."):
                                 continue
