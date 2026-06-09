@@ -1,10 +1,11 @@
 import pytest
+from pydantic import ValidationError
 
 import globals_var
 from exceptions.investigation import InvestigationValidationError, InvestigationFacilityNotFound, \
     InvestigationTypeNotFound
 from exceptions.user import UserNotFound
-from helpers.contexts.proposals import create_investigation_context
+from helpers.contexts.investigation import create_investigation_context
 from helpers.contexts.user import create_user_context
 from helpers.static_settings import SAMPLE_ACRONYMS_PARAMETER_NAME
 

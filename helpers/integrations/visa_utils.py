@@ -3,8 +3,8 @@ from logging import Logger
 
 from psycopg_pool import ConnectionPool
 
-from helpers.dataclasses.investigation import InvestigationContext
-from helpers.dataclasses.user import UserContext, Affiliation
+from helpers.models.investigation import InvestigationContext
+from helpers.models.user import Affiliation, UserContext
 
 
 def get_pg_connection_pool(config: dict) -> ConnectionPool:

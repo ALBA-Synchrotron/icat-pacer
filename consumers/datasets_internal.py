@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from kombu import Message
 
 from helpers.contexts.dataset import create_dataset_context
-from helpers.dataclasses.dataset import DatasetContext
+from helpers.models.dataset import DatasetContext
 from helpers.static_settings import RAW_DATASET_TYPE_NAME, PROCESSED_DATASET_TYPE_NAME
 from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from producers.generic import GenericProducer
@@ -107,7 +107,7 @@ class InternalDatasetsConsumer(PACERConsumer):
 
         following_queues: list = [self.internal_statistics_routing_key, self.internal_datasets_links_routing_key]
 
-        for queue in following_queues:
+        for queue_routing_key in following_queues:
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
-                                         queue, dataset_ctx,
+                                         queue_routing_key, dataset_ctx,
                                          {"dataset_id": dataset_id, "investigation_id": investigation_id})

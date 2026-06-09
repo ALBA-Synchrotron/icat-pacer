@@ -19,7 +19,7 @@ def ops_investigation_with_doi(icat_client, icat_facility, icat_unittest_investi
                         doi="10.1234/test.123456789", facility=icat_facility,
                         type=icat_unittest_investigation_type, visitId=f"{name}-visitId", )
     i.create()
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -33,7 +33,7 @@ def ops_investigation_no_datasets(icat_client, icat_facility, icat_unittest_inve
                         facility=icat_facility,
                         type=icat_unittest_investigation_type, visitId=f"{name}-visitId")
     i.create()
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -46,7 +46,7 @@ def ops_investigation_missing_end_date(icat_client, icat_facility, icat_unittest
                         facility=icat_facility,
                         type=icat_unittest_investigation_type, visitId=f"{name}-visitId")
     i.create()
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -65,7 +65,7 @@ def ops_investigation_missing_investigation_users(icat_client, icat_facility, ic
     dataset = icat_client.new("Dataset", investigation=i, name="test_dataset", type=dataset_type_raw)
     dataset.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -86,7 +86,7 @@ def ops_investigation_missing_instrument(icat_client, icat_facility, icat_unitte
     inv_user = icat_client.new("InvestigationUser", investigation=i, user=random_user, role="Principal investigator")
     inv_user.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -111,12 +111,12 @@ def ops_investigation_future_end_date(icat_client, icat_facility, icat_unittest_
     inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
     inv_instr.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
 def ops_non_existent_investigation():
-    return create_investigation_ops_context({"name": "non_existent_investigation", "ops": ops, "visit_id": ""})
+    return create_investigation_ops_context({"name": "non_existent_investigation", "operations": ops, "visit_id": "asd"})
 
 
 @pytest.fixture(scope="session")
@@ -140,11 +140,12 @@ def ops_valid_investigation(icat_client, icat_facility, icat_unittest_investigat
     inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
     inv_instr.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
+
 
 @pytest.fixture(scope="session")
 def ops_industrial_investigation(icat_client, icat_facility, icat_industrial_inv_type, dataset_type_raw,
-                            random_user, random_instrument):
+                                 random_user, random_instrument):
     name = "inv_industrial_ops"
     i = icat_client.new("Investigation", name=name, title="Industrial inv",
                         summary="Industrial inv",
@@ -163,7 +164,7 @@ def ops_industrial_investigation(icat_client, icat_facility, icat_industrial_inv
     inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
     inv_instr.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -187,7 +188,7 @@ def ops_valid_investigation_with_doi(icat_client, icat_facility, icat_unittest_i
     inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
     inv_instr.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -211,7 +212,7 @@ def ops_valid_investigation_no_doi(icat_client, icat_facility, icat_unittest_inv
     inv_instr = icat_client.new("InvestigationInstrument", investigation=i, instrument=random_instrument)
     inv_instr.create()
 
-    return create_investigation_ops_context({"name": i.name, "ops": ops, "visit_id": i.visitId})
+    return create_investigation_ops_context({"name": i.name, "operations": ops, "visit_id": i.visitId})
 
 
 @pytest.fixture(scope="session")
@@ -231,3 +232,35 @@ def panosc_client_mock():
         client_mock.item_exists.return_value = False
 
         yield client_mock
+
+@pytest.fixture()
+def inv_ops_invalid_payload_empty_name():
+    return {
+        "name": "",
+        "operations": ["mint-proposal"],
+        "visit_id": "ASD",
+    }
+
+@pytest.fixture()
+def inv_ops_invalid_payload_empty_operations():
+    return {
+        "name": "",
+        "operations": [],
+        "visit_id": "ASD",
+    }
+
+@pytest.fixture()
+def inv_ops_invalid_payload_invalid_operations():
+    return {
+        "name": "",
+        "operations": ["like-and-subscribe"],
+        "visit_id": "ASD",
+    }
+
+@pytest.fixture()
+def inv_ops_invalid_payload_empty_visit_id():
+    return {
+        "name": "",
+        "operations": ["mint-proposal"],
+        "visit_id": "ASD",
+    }

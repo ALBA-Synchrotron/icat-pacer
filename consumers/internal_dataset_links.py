@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from kombu import Message
 
 from helpers.contexts.dataset import create_dataset_context
-from helpers.dataclasses.dataset import DatasetContext
+from helpers.models.dataset import DatasetContext
 from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from tasks.internal_dataset_links import InternalDatasetLinksTasks
 
