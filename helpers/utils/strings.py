@@ -1,3 +1,4 @@
+import re
 from urllib.parse import ParseResult, urlparse, urlunparse
 
 
@@ -6,6 +7,10 @@ def to_camel_case(string: str) -> str:
         return string
     return string[0].lower() + string[1:]
 
+def to_snake_case(s: str) -> str:
+    s = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1_\2', s)
+    s = re.sub(r'([a-z\d])([A-Z])', r'\1_\2', s)
+    return s.lower()
 
 def string_to_classname(class_name: str, separator: str = '_') -> str:
     class_name_bits = class_name.split(separator)

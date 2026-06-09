@@ -9,6 +9,7 @@ import globals_var
 from exceptions.dataset import DatasetValidationError, PayloadParsingError, DatasetDatafileLimitExceeded
 from helpers.models.dataset import DatasetParameterContext, DatasetSampleContext, DatasetDatafileContext, \
     DatasetContext
+from helpers.utils.xml import snakify_xml_dict_keys
 
 
 def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
@@ -25,14 +26,12 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
             xml_payload = dataset_data.strip()
             dataset_dict = xmltodict.parse(xml_payload, process_namespaces=True, namespaces=transform_namespaces)[
                 "dataset"]
-            if "datafile" in dataset_dict:
-                dataset_dict["datafiles"] = dataset_dict["datafile"]
+            dataset_dict = snakify_xml_dict_keys(dataset_dict)
             if "parameter" in dataset_dict:
-                dataset_dict["parameters"] = dataset_dict["parameter"]
-            dataset_dict["start_date"] = dataset_dict["startDate"]
-            dataset_dict["end_date"] = dataset_dict["endDate"]
-            if "investigationId" in dataset_dict:
-                dataset_dict["investigation_id"] = int(dataset_dict["investigationId"])
+                dataset_dict["parameters"] = dataset_dict.pop("parameter")
+            if "datafile" in dataset_dict:
+                dataset_dict["datafiles"] = dataset_dict.pop("datafile")
+
         except Exception as e:
             raise PayloadParsingError(f"Error parsing XML payload: {e!r}", e)
 
