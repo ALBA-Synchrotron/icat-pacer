@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 from kombu import Message
 
 from helpers.contexts.dataset import create_dataset_context
-from helpers.dataclasses.dataset import DatasetContext
+from helpers.models.dataset import DatasetContext
 from helpers.static_settings import RAW_DATASET_TYPE_NAME, PROCESSED_DATASET_TYPE_NAME
 from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from producers.generic import GenericProducer
@@ -54,10 +54,6 @@ class InternalDatasetsConsumer(PACERConsumer):
 
         self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id, is_duplicated, *args, **kwargs)
 
-        GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
-                                     self.internal_datasets_links_routing_key, dataset_ctx,
-                                     {"dataset_id": dataset_id, "investigation_id": investigation_id})
-
     @callback_order(2)
     def callback_func_create_dataset_parameters(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
@@ -76,7 +72,8 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
-        self.tasks.create_dataset_gallery(self.icat_plus_client, self.icat_client, dataset_ctx, dataset_id, *args, **kwargs)
+        self.tasks.create_dataset_gallery(self.icat_plus_client, self.icat_client, dataset_ctx, dataset_id, *args,
+                                          **kwargs)
 
     @callback_order(4)
     def callback_func_dataset_linkage(self, _body, message: Message, *args, **kwargs) -> None:
@@ -100,14 +97,12 @@ class InternalDatasetsConsumer(PACERConsumer):
     def callback_func_forward_to_following_queues(self, _body, message: Message, *_args, **_kwargs) -> None:
         self.logger.info(
             f"callback_func_forward_to_following_queues > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
-        dataset_str: str = message.payload or message.body
-        dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
         investigation_id: int = message.headers.get("investigation_id", 0)
 
         following_queues: list = [self.internal_statistics_routing_key, self.internal_datasets_links_routing_key]
 
-        for queue in following_queues:
+        for queue_routing_key in following_queues:
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
-                                         queue, dataset_ctx,
+                                         queue_routing_key, message,
                                          {"dataset_id": dataset_id, "investigation_id": investigation_id})

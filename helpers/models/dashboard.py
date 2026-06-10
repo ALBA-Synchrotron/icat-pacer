@@ -1,8 +1,7 @@
-from dataclasses import dataclass
+from pydantic import BaseModel
 
 
-@dataclass
-class MessageContext:
+class MessageContext(BaseModel):
     object_identifiers: dict
     error_message: dict
     processing_start: str = ""
@@ -16,8 +15,7 @@ class MessageContext:
     routing_key: str = ""
 
 
-@dataclass
-class DashboardCeleryTask:
+class DashboardCeleryTask(BaseModel):
     id: str
     task: str
     args: list

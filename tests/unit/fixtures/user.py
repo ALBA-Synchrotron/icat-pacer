@@ -6,7 +6,7 @@ def valid_user():
     return {
         "first_name": "Test",
         "last_name": "Test1",
-        "ORCID": None,
+        "ORCID": "",
         "email": "test1@cells.es",
         "affiliation": {
             "id": 999,
@@ -26,16 +26,20 @@ def valid_user():
             },
             {
                 "username": "auo-testTest1-ou"
+            },
+            {
+                "username": "auo-testTest1-ou-ALL_CAPS"
             }
         ]
     }
+
 
 @pytest.fixture()
 def valid_user_investigation():
     return {
         "first_name": "Test",
         "last_name": "Test1",
-        "ORCID": None,
+        "ORCID": "",
         "email": "test112@cells.es",
         "affiliation": {
             "id": 999,
@@ -58,6 +62,7 @@ def valid_user_investigation():
             }
         ]
     }
+
 
 @pytest.fixture()
 def user_payload_empty_first_name():

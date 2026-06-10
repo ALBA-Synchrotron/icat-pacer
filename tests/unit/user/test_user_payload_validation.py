@@ -1,7 +1,8 @@
 import pytest
+from pydantic import ValidationError
 
-from exceptions.user import UserValidationError
 from helpers.contexts.user import create_user_context
+
 
 @pytest.fixture
 def invalid_user_payload(request):
@@ -20,7 +21,7 @@ class TestUserPayloadValidation:
                               ],
                              indirect=True)
     def test_invalid_user_payload(self, invalid_user_payload):
-        with pytest.raises(UserValidationError):
+        with pytest.raises(ValidationError):
             _ = create_user_context(invalid_user_payload)
 
 

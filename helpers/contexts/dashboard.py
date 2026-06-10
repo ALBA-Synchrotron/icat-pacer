@@ -5,7 +5,7 @@ from typing import Callable
 
 from kombu import Message
 
-from helpers.dataclasses.dashboard import MessageContext
+from helpers.models.dashboard import MessageContext
 from producers.dashboard import DashboardProducer
 
 
@@ -17,17 +17,19 @@ def create_message_context(message: Message, message_type: str, error_message: d
     payload: str = message.payload or str(message.body)
     errored: bool = True if error_message else False
     error_message: dict = error_message or {}
-    return MessageContext(
-        object_identifiers=obj_identifiers,
-        processing_start=received_at or datetime.datetime.now().isoformat(),
-        processing_end=datetime.datetime.now().isoformat(),
-        hash=hash_str,
-        message_type=message_type,
-        payload=payload,
-        errored=errored,
-        error_message=error_message,
-        exchange_name=message.delivery_info["exchange"],
-        routing_key=message.delivery_info["routing_key"],
+    return MessageContext.model_validate(
+        {
+            "object_identifiers": obj_identifiers,
+            "processing_start": received_at or datetime.datetime.now().isoformat(),
+            "processing_end": datetime.datetime.now().isoformat(),
+            "hash": hash_str,
+            "message_type": message_type,
+            "payload": payload,
+            "errored": errored,
+            "error_message": error_message,
+            "exchange_name": message.delivery_info["exchange"],
+            "routing_key": message.delivery_info["routing_key"],
+        }
     )
 
 

@@ -7,7 +7,7 @@ from icat.entity import Entity
 
 from exceptions.dataset import DatasetTypeNotFound
 from exceptions.sample import SampleTypeNotFound
-from helpers.dataclasses.dataset import DatasetContext
+from helpers.models.dataset import DatasetContext
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.utils.base_tasks import BaseTasks
 from helpers.utils.dataset import get_dataset_investigation, get_duplicated_processed_dataset_in_investigation

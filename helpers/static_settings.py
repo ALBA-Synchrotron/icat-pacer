@@ -4,6 +4,12 @@ ICAT_USER_ROLE_PROPOSER: str = "Proposal scientist"
 ICAT_USER_ROLE_PARTICIPANT: str = "Participant"
 ICAT_USER_ROLE_LOCAL_CONTACT: str = "Local contact"
 
+ICAT_USER_ROLES: dict = {
+    name: value
+    for name, value in globals().items()
+    if name.startswith("ICAT_USER_ROLE_") and isinstance(value, str)
+}
+
 # Datacite proposal user roles
 DATACITE_CONTRIBUTOR_PROJECT_MANAGER: str = "ProjectManager"
 DATACITE_CONTRIBUTOR_PROJECT_MEMBER: str = "ProjectMember"
@@ -64,6 +70,16 @@ DATASET_PARAMETER_END_DATE_PARAMETER_NAME: str = "endDate"
 # Dataset gallery
 DATASET_PARAMETER_RESOURCE_GALLERY_FILE_PATHS: str = "ResourcesGalleryFilePaths"
 DATASET_PARAMETER_RESOURCE_GALLERY: str = "ResourcesGallery"
+
+# Investigation operations
+INV_OPS_MINT_PROPOSAL: str = "mint-proposal"
+INV_OPS_CREATE_PANOSC_ITEM: str = "create-panosc-item"
+
+INV_OPS: dict = {
+    name: value
+    for name, value in globals().items()
+    if name.startswith("INV_OPS_") and isinstance(value, str)
+}
 
 PARAMETER_STRING_VALUE_MAX_LENGTH: int = 4000
 

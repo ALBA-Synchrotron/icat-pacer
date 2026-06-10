@@ -1,7 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import json
-from dataclasses import asdict, is_dataclass
 from typing import TypeVar
 
 from kombu import Connection, Message
@@ -18,7 +17,7 @@ class GenericProducer:
             if isinstance(ctx, Message):
                 payload = ctx.payload
             else:
-                payload: dict = asdict(ctx) if is_dataclass(ctx) else ctx
+                payload: dict = ctx
             with conn.Producer() as producer:
                 producer.publish(
                     json.dumps(payload),

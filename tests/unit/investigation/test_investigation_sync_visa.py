@@ -1,4 +1,4 @@
-from helpers.contexts.proposals import create_investigation_context
+from helpers.contexts.investigation import create_investigation_context
 
 
 class TestVISAInvestigationSync:
