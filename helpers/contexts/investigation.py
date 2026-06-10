@@ -40,7 +40,7 @@ def create_investigation_context(investigation_data: str | dict,
     sync_with_visa: bool = investigation_dict.get("visa_sync", False)
     icat_visit_id: str = investigation_dict.get("icat_visit_id",
                                                 instrument.get("code", "").lower() if instrument else "")
-    visa_visit_id: int = int(investigation_dict.get("visa_visit_id", "0") or 0)
+    visa_visit_id: int = investigation_dict.get("visa_visit_id", int(investigation_name.replace("-", "") if investigation_name else "0"))
     sample_acronyms: list = investigation_dict.get("sample_acronyms", [])
     is_industrial: bool = investigation_dict.get("is_industrial", False)
 
