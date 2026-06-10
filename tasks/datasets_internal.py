@@ -173,16 +173,12 @@ class DatasetsInternalTasks(BaseTasks):
                         return
 
                 for index, parameter in enumerate(dataset_ctx.parameters):
-                    new_dataset_param: Entity = icat_client.new("DatasetParameter")
-                    setattr(rb, f"new_dataset_param_{index}", new_dataset_param.copy())
 
                     param_value: str | int | float = parameter.value
                     param_type_name: str = parameter.name
 
-                    new_dataset_param = get_dataset_parameter(icat_client, param_type_name, entity=rb.dataset._obj)
-                    new_dataset_param = set_dataset_parameter(new_dataset_param, param_value)
-
-                    setattr(rb, f"new_dataset_param_{index}", new_dataset_param)
+                    rb.new_dataset_param = get_dataset_parameter(icat_client, param_type_name, entity=rb.dataset._obj)
+                    rb.new_dataset_param = set_dataset_parameter(rb.new_dataset_param._obj, param_value)
 
                 self.logger.info(f"Created following parameters for dataset {dataset_ctx.parameters}")
 

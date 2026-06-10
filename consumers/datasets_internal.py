@@ -49,7 +49,6 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_str: str = message.payload or message.body
         dataset_ctx: DatasetContext = create_dataset_context(dataset_str)
         dataset_id: int = message.headers.get("dataset_id", 0)
-        investigation_id: int = message.headers.get("investigation_id", 0)
         is_duplicated: bool = message.headers.get("is_duplicated", False)
 
         self.tasks.create_dataset_datafiles(self.icat_client, dataset_ctx, dataset_id, is_duplicated, *args, **kwargs)
