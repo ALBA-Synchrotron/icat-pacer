@@ -19,7 +19,7 @@ def create_user_context(
         {
             "first_name": user_dict.get("first_name"),
             "last_name": user_dict.get("last_name"),
-            "orcid": user_dict.get("ORCID", ""),
+            "orcid": user_dict.get("ORCID", "") or "",
             "email": user_dict.get("email"),
             "is_staff": user_dict.get("is_staff", False),
             "enabled": user_dict.get("enabled"),
@@ -30,13 +30,13 @@ def create_user_context(
             ],
             "affiliation": {
                 "id": aff.get("id", 0),
-                "name": aff.get("name", ""),
-                "code": aff.get("code", ""),
-                "department_name": aff.get("department_name", ""),
-                "department_code": aff.get("department_code", ""),
-                "unit": aff.get("unit", ""),
-                "city": aff.get("city", ""),
-                "country_code": aff.get("country_code", ""),
+                "name": aff.get("name", "") or "",
+                "code": aff.get("code", "") or "",
+                "department_name": aff.get("department_name", "") or "",
+                "department_code": aff.get("department_code", "") or "",
+                "unit": aff.get("unit", "") or "",
+                "city": aff.get("city", "") or "",
+                "country_code": aff.get("country_code", "") or "",
             },
         }
     )
