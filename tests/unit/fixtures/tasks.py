@@ -1,6 +1,7 @@
 import pytest
 
 from tasks.datasets import DatasetsTasks
+from tasks.datasets_indexing import DatasetsIndexingTasks
 from tasks.datasets_internal import DatasetsInternalTasks
 from tasks.internal_dataset_links import InternalDatasetLinksTasks
 from tasks.internal_statistics import InternalStatisticsTasks
@@ -39,3 +40,7 @@ def internal_statistics_tasks(test_logger):
 @pytest.fixture(scope="module")
 def internal_dataset_links_tasks(test_logger):
     return InternalDatasetLinksTasks(test_logger)
+
+@pytest.fixture(scope="module")
+def datasets_indexing_tasks(test_logger):
+    return DatasetsIndexingTasks(test_logger)
