@@ -4,6 +4,7 @@ import json
 import logging
 from contextlib import suppress
 
+from helpers.integrations.elastic import ElasticClient
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.models.dataset import DatasetIndexingContext
 from helpers.utils.base_tasks import BaseTasks
@@ -14,7 +15,8 @@ class DatasetsIndexingTasks(BaseTasks):
     def __init__(self, logger: logging.Logger = None):
         super().__init__(logger)
 
-    def index_dataset_elasticsearch(self, icat_client: ICATClient, index_ctx: DatasetIndexingContext, *_args,
+    def index_dataset_elasticsearch(self, icat_client: ICATClient, elastic_client: ElasticClient,
+                                    index_ctx: DatasetIndexingContext, *_args,
                                     **kwargs) -> None:
         try:
             dataset_doc: dict = self.create_dataset_document(icat_client, index_ctx.dataset_id, *_args, **kwargs)
@@ -24,10 +26,18 @@ class DatasetsIndexingTasks(BaseTasks):
             return
 
         dataset_doc = {
-            **dataset_doc,
+            **{
+                k: v
+                for k, v in dataset_doc.items()
+                if not isinstance(v, list)
+            },
             "_index": index_ctx.index_name,
             "_id": index_ctx.dataset_id,
         }
+
+        for key, value in dataset_doc.items():
+            if isinstance(value, list):
+                del dataset_doc[key]
 
     def create_dataset_document(self, icat_client: ICATClient, dataset_id: int, *_args,
                                 **kwargs) -> dict:

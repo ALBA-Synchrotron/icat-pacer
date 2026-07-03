@@ -38,4 +38,4 @@ class DatasetIndexerConsumer(PACERConsumer):
         index_str: str = message.payload or message.body
         index_ctx: DatasetIndexingContext = create_dataset_indexing_context(index_str)
 
-        self.tasks.index_dataset_elasticsearch(self.icat_client, index_ctx, *args, **kwargs)
+        self.tasks.index_dataset_elasticsearch(self.icat_client, self.elastic_client, index_ctx, *args, **kwargs)

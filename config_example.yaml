@@ -240,3 +240,10 @@ integrations:
     server:
       url: "https://icattest.cells.es/iws/icat_plus/"
       apiKey: "<<REDACTED>>"
+  elastic:
+    host: "<<REDACTED>>"
+    port: 9200
+    scheme: "http"
+    username: "<<REDACTED>>"
+    password: "<<REDACTED>>"
+    enabled: true
