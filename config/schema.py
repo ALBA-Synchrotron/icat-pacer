@@ -311,11 +311,11 @@ config_yaml_schema: dict = {
             "elastic": {
                 "type": "dict",
                 "schema": {
-                    "host": {"type": "str", "required": True},
-                    "port": {"type": "int", "required": True},
-                    "scheme": {"type": "str", "required": True},
-                    "username": {"type": "str", "required": True},
-                    "password": {"type": "str", "required": True},
+                    "host": {"type": "string", "required": True},
+                    "port": {"type": "integer", "required": True},
+                    "scheme": {"type": "string", "required": True},
+                    "username": {"type": "string", "required": True},
+                    "password": {"type": "string", "required": True},
                     "enabled": {"type": "boolean", "required": True}
                 }
             }
