@@ -72,8 +72,10 @@ class DatasetsTasks(BaseTasks):
                 rb.new_dataset.sample = sample if sample else rb.new_dataset_sample._obj
                 rb.new_dataset.investigation = investigation
                 rb.new_dataset.location = dataset_ctx.location
-                rb.new_dataset.startDate = dataset_ctx.start_date
-                rb.new_dataset.endDate = dataset_ctx.end_date
+                rb.new_dataset.startDate = datetime.datetime.fromisoformat(dataset_ctx.start_date) if isinstance(
+                    dataset_ctx.start_date, str) else dataset_ctx.start_date
+                rb.new_dataset.endDate = datetime.datetime.fromisoformat(dataset_ctx.end_date) if isinstance(
+                    dataset_ctx.end_date, str) else dataset_ctx.end_date
 
                 same_name_dataset: list = icat_client.search("Dataset",
                                                              conditions={"name__eq": dataset_ctx.name,
