@@ -88,7 +88,7 @@ class TestDatasetsConsumer:
         "xml_proc_dataset",
         "json_proc_dataset"
     ], indirect=True)
-    def test_ingest_duplicate_proc_dataset(self, dataset_tasks, dataset_msg, icat_client):
+    def test_ingest_duplicate_proc_dataset_same_sample(self, dataset_tasks, dataset_msg, icat_client):
         dataset_ctx = create_dataset_context(dataset_msg)
 
         new_dataset_id, investigation_id, is_duplicated = dataset_tasks.create_base_dataset_icat(
@@ -99,3 +99,21 @@ class TestDatasetsConsumer:
 
         assert is_duplicated is True
         assert dupl_dataset_id == new_dataset_id
+
+    @pytest.mark.parametrize("dataset_msg", [
+        "xml_proc_dataset",
+        "json_proc_dataset"
+    ], indirect=True)
+    def test_ingest_duplicate_proc_dataset_different_sample(self, dataset_tasks, dataset_msg, icat_client):
+        dataset_ctx = create_dataset_context(dataset_msg)
+
+        new_dataset_id, investigation_id, is_duplicated = dataset_tasks.create_base_dataset_icat(
+            icat_client=icat_client, dataset_ctx=dataset_ctx)
+
+        dataset_ctx.sample.name = "different_sample"
+
+        dupl_dataset_id, investigation_id, is_duplicated = dataset_tasks.create_base_dataset_icat(
+            icat_client=icat_client, dataset_ctx=dataset_ctx)
+
+        assert is_duplicated is False
+        assert dupl_dataset_id != new_dataset_id

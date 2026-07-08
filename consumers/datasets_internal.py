@@ -100,7 +100,8 @@ class InternalDatasetsConsumer(PACERConsumer):
         dataset_id: int = message.headers.get("dataset_id", 0)
         investigation_id: int = message.headers.get("investigation_id", 0)
 
-        following_queues: list = [self.internal_statistics_routing_key, self.internal_datasets_links_routing_key]
+        following_queues: list = [self.internal_statistics_routing_key, self.internal_datasets_links_routing_key,
+                                  self.dataset_indexing_routing_key]
 
         for queue_routing_key in following_queues:
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,

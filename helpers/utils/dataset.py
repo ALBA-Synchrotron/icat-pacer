@@ -26,6 +26,7 @@ def set_dataset_parameter(dataset_parameter: Entity,
 
 
 def get_duplicated_processed_dataset_in_investigation(icat_client: ICATClient, dataset_name: str, dataset_type: str,
+                                                      sample_name: str,
                                                       investigation_id: str) -> Entity | None:
 
     if dataset_type != PROCESSED_DATASET_TYPE_NAME:
@@ -33,6 +34,7 @@ def get_duplicated_processed_dataset_in_investigation(icat_client: ICATClient, d
 
     result = icat_client.search("Dataset", conditions={"name__like": dataset_name,
                                                        "type.name__eq": PROCESSED_DATASET_TYPE_NAME,
+                                                       "sample.name__eq": sample_name,
                                                        "investigation.id__eq": investigation_id},
                                 flatten_single=True)
 
