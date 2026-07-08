@@ -11,7 +11,6 @@ from exceptions.dataset import DatasetIndexingError
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.models.dataset import DatasetIndexingContext
 from helpers.utils.base_tasks import BaseTasks
-from helpers.utils.elastic import elastic_date_check
 
 date_pattern = re.compile(r"^\d{1,2}/\d{1,2}/\d{4}\s+\d{1,2}:\d{2}\s(?:AM|PM)$")
 
