@@ -248,6 +248,8 @@ class PACERConsumer(ConsumerMixin):
             message.headers['received_at'] = datetime.now(datetime.timezone.utc).isoformat()
         return super().receive(*args, **kwargs)
 
+    def on_sigterm(self, *_) -> None:
+        self.should_stop = True
 
 def callback_order(order: int) -> callable:
     def decorator(func: callable) -> callable:
