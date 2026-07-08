@@ -4,18 +4,17 @@ import multiprocessing
 import os
 import signal
 import sys
-from ctypes import c_char_p
 from logging.handlers import QueueListener
 from time import sleep
 from urllib.parse import quote
 
 from amqp import Channel
-from icat import ICATSessionError
 from kombu import Connection, Exchange, Queue
+
 import globals_var
 from config.config import ConfigParser
 from helpers.integrations.icat.extended_client import ICATClient
-from helpers.logging.general import configure_pacer_logger
+from helpers.pacer_logging.general import configure_pacer_logger
 from helpers.utils.pacer_consumer import PACERConsumer
 from helpers.utils.strings import mask_amqp_password
 from helpers.utils.utils import Singleton, running_in_pytest
@@ -256,8 +255,6 @@ class PACER:
                                                          consumer_queues, self.recipient_fw_rules, self.log_queue,
                                                          self.config, integrations, self.shared_session_id)
             self.consumers.append(pacer_consumer)
-
-    import signal
 
     def main_background_loop(self) -> None:
         # Register signal handlers

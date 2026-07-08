@@ -1,5 +1,7 @@
 import base64
 import logging
+
+import pacer_logging
 from pathlib import Path
 from urllib.parse import urlencode
 

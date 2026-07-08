@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 import logging
 from contextlib import suppress
-import re
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
@@ -12,7 +11,6 @@ from helpers.integrations.icat.extended_client import ICATClient
 from helpers.models.dataset import DatasetIndexingContext
 from helpers.utils.base_tasks import BaseTasks
 
-date_pattern = re.compile(r"^\d{1,2}/\d{1,2}/\d{4}\s+\d{1,2}:\d{2}\s(?:AM|PM)$")
 
 class DatasetsIndexingTasks(BaseTasks):
 

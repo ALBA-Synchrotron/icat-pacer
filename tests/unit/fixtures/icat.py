@@ -1,5 +1,7 @@
 import datetime
 import logging
+
+import pacer_logging
 import os
 import random
 import tempfile
