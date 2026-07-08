@@ -93,29 +93,30 @@ class DatasetsIndexingTasks(BaseTasks):
 
         for dataset_param in dataset.parameters:
 
-            if date_pattern.match(dataset_param.stringValue):
-                if not elastic_date_check(dataset_param.stringValue):
-                    continue
+            param_value = dataset_param.stringValue if dataset_param.stringValue else dataset_param.numericValue
+
+            if not param_value:
+                continue
 
             dataset_param_type_name: str = dataset_param.type.name
             es_dataset_param_type_name: str = dataset_param_type_name.replace("__", "")
-            dataset_doc[es_dataset_param_type_name] = dataset_param.stringValue
+            dataset_doc[es_dataset_param_type_name] = param_value
 
             match dataset_param_type_name:
                 case "scanType":
-                    dataset_doc["definition"] = dataset_param.stringValue
+                    dataset_doc["definition"] = param_value
                 case "InstrumentMonochromator_energy" | "InstrumentMonochromator_wavelength" | "InstrumentSource_current":
                     with suppress(ValueError):
-                        dataset_doc[es_dataset_param_type_name] = float(dataset_param.stringValue)
+                        dataset_doc[es_dataset_param_type_name] = float(param_value)
                 case "volume" | "fileCount" | "_metadataSize":
                     with suppress(Exception):
-                        dataset_doc[es_dataset_param_type_name] = int(dataset_param.stringValue)
+                        dataset_doc[es_dataset_param_type_name] = int(param_value)
 
             if dataset_param_type_name.endswith(("_name", "_value")):
                 composed_key, param_kind = dataset_param_type_name.rsplit("_", 1)
                 if composed_key not in composed_params:
                     composed_params[composed_key] = {}
-                composed_params[composed_key][param_kind] = dataset_param.stringValue
+                composed_params[composed_key][param_kind] = param_value
 
         for composed_key, dataset_composed_param in composed_params.items():
             names: list = dataset_composed_param.get("name", "").split(" ")
