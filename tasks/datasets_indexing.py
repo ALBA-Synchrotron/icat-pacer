@@ -1,16 +1,19 @@
 from __future__ import absolute_import, unicode_literals
 
-import json
 import logging
 from contextlib import suppress
+import re
 
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 
+from exceptions.dataset import DatasetIndexingError
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.models.dataset import DatasetIndexingContext
 from helpers.utils.base_tasks import BaseTasks
+from helpers.utils.elastic import elastic_date_check
 
+date_pattern = re.compile(r"^\d{1,2}/\d{1,2}/\d{4}\s+\d{1,2}:\d{2}\s(?:AM|PM)$")
 
 class DatasetsIndexingTasks(BaseTasks):
 
@@ -41,7 +44,7 @@ class DatasetsIndexingTasks(BaseTasks):
             bulk(elastic_client, [dataset_doc])
         except Exception as e:
             self.logger.error(f"Error indexing dataset id={index_ctx.dataset_id}: {e}")
-            raise e
+            raise DatasetIndexingError(f"Error indexing dataset id={index_ctx.dataset_id}: {e.errors}")
         self.logger.info(f"Indexed dataset id={index_ctx.dataset_id}")
 
     def create_dataset_document(self, icat_client: ICATClient, dataset_id: int, *_args,
@@ -89,6 +92,10 @@ class DatasetsIndexingTasks(BaseTasks):
         composed_params: dict = {}
 
         for dataset_param in dataset.parameters:
+
+            if date_pattern.match(dataset_param.stringValue):
+                if not elastic_date_check(dataset_param.stringValue):
+                    continue
 
             dataset_param_type_name: str = dataset_param.type.name
             es_dataset_param_type_name: str = dataset_param_type_name.replace("__", "")
