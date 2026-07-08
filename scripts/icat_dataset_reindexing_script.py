@@ -35,21 +35,22 @@ if __name__ == "__main__":
     broker_url: str = PACER._construct_broker_url(RMQ_PROTOCOL, RMQ_HOST, RMQ_PORT, RMQ_USERNAME, RMQ_PASSWORD, RMQ_VHOST)
     broker_conn: Connection = Connection(broker_url)
 
-    datasets_count = client.search("Dataset", flatten_single=True, aggregate="COUNT")
+    max_dataset_id = client.search("Dataset", flatten_single=True, order=[("id", "DESC")], limit=(0, 1)).id
 
-    for i in range(0, datasets_count, BATCH_SIZE):
-
-        datasets = client.search("Dataset", conditions={"id__gte": i}, limit=(0, BATCH_SIZE), flatten_single=False)
+    for i in range(max_dataset_id, 0, -BATCH_SIZE):
+        start = max(0, i - BATCH_SIZE)
+        print(f"Processing datasets from {start} to {i}")
+        datasets = client.search("Dataset", conditions={"id__lte": i}, limit=(0, BATCH_SIZE), flatten_single=False)
 
         for dataset in datasets:
-
-
             GenericProducer.send_message(conn=broker_conn, exchange_name=INGESTION_EXCHANGE,
                                          routing_key=INGESTION_ROUTING_KEY,
                                          ctx=DatasetIndexingContext.model_validate({
                                              "dataset_id": dataset.id,
                                              "index_name": INDEX_NAME
                                          }).model_dump_json())
+
             print(f"Sent message to broker dataset: {dataset.id}")
         client.auto_refresh_session()
         sleep(50)
+
