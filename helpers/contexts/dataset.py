@@ -8,7 +8,7 @@ import xmltodict
 import globals_var
 from exceptions.dataset import DatasetValidationError, PayloadParsingError, DatasetDatafileLimitExceeded
 from helpers.models.dataset import DatasetParameterContext, DatasetSampleContext, DatasetDatafileContext, \
-    DatasetContext
+    DatasetContext, DatasetIndexingContext
 from helpers.utils.xml import snakify_xml_dict_keys
 
 
@@ -76,4 +76,14 @@ def create_dataset_context(dataset_data: str | dict) -> DatasetContext:
         "sample": DatasetSampleContext.model_validate({"name": sample_name, "type": sample_type}),
         "datafiles": [DatasetDatafileContext.model_validate({"location": i.get("location", "")}) for i in datafiles if
                       i]}
+    )
+
+
+def create_dataset_indexing_context(index_data: str | dict) -> DatasetIndexingContext:
+    index_dict: dict = json.loads(index_data) if isinstance(index_data, str) else index_data
+    return DatasetIndexingContext.model_validate(
+        {
+            "index_name": index_dict.get("index_name", ""),
+            "dataset_id": index_dict.get("dataset_id", 0),
+        }
     )

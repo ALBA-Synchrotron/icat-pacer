@@ -159,10 +159,17 @@ config_yaml_schema: dict = {
                         "type": "list", "required": False, "nullable": True,
                         "schema": {"type": "string", "required": True}
                     },
-                    "internalDatasetExchangeName": {"type": "string", "required": True, "default": "dataset-internal-ingest-exchange"},
-                    "internalDatasetRoutingKey": {"type": "string", "required": True, "default": "dataset.internal_ingest"},
-                    "internalStatisticsRoutingKey": {"type": "string", "required": True, "default": "statistics.internal_ingest"},
-                    "internalDatasetLinksRoutingKey": {"type": "string", "required": True, "default": "dataset.internal_links"},
+                    "internalDatasetExchangeName": {"type": "string", "required": True,
+                                                    "default": "dataset-internal-ingest-exchange"},
+                    "internalDatasetRoutingKey": {"type": "string", "required": True,
+                                                  "default": "dataset.internal_ingest"},
+                    "internalStatisticsRoutingKey": {"type": "string", "required": True,
+                                                     "default": "statistics.internal_ingest"},
+                    "internalDatasetLinksRoutingKey": {"type": "string", "required": True,
+                                                       "default": "dataset.internal_links"},
+                    "datasetIndexingRoutingKey": {"type": "string", "required": True,
+                                                  "default": "dataset.indexing"},
+                    "datasetElasticIndexName": {"type": "string", "required": False, "default": ""},
                     "automaticDatasetLocationIndex": {"type": "boolean", "required": True, "default": False},
                     "maxDatafilesPerDataset": {"type": "integer", "required": True, "default": 30000},
                     "galleryFolderName": {"type": "string", "required": True, "default": "gallery"},
@@ -189,7 +196,8 @@ config_yaml_schema: dict = {
                 "schema": {
                     "defaultEmbargoYears": {"type": "integer", "required": True},
                     "defaultFacilityName": {"type": "string", "required": True},
-                    "defaultIndustrialInvestigationTypeName": {"type": "string", "required": True, "default": "INDUSTRIAL"},
+                    "defaultIndustrialInvestigationTypeName": {"type": "string", "required": True,
+                                                               "default": "INDUSTRIAL"},
                 }
             },
             "parameters": {
@@ -301,6 +309,15 @@ config_yaml_schema: dict = {
                             "apiKey": {"type": "string", "required": True},
                         }
                     }
+                }
+            },
+            "elastic": {
+                "type": "dict",
+                "schema": {
+                    "url": {"type": "string", "required": True},
+                    "username": {"type": "string", "required": True},
+                    "password": {"type": "string", "required": True},
+                    "enabled": {"type": "boolean", "required": True}
                 }
             }
         }

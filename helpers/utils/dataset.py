@@ -26,9 +26,8 @@ def set_dataset_parameter(dataset_parameter: Entity,
 
 
 def get_duplicated_processed_dataset_in_investigation(icat_client: ICATClient, dataset_name: str, dataset_type: str,
-                                                    sample_name: str,
+                                                      sample_name: str,
                                                       investigation_id: str) -> Entity | None:
-
     if dataset_type != PROCESSED_DATASET_TYPE_NAME:
         return None
 
@@ -83,7 +82,8 @@ def get_dataset_investigation(icat_client: ICATClient, logger: Logger, dataset_c
         raise InvestigationNotFound(error_msg)
 
     if not dataset_ctx.investigation_id:
-        if dataset_ctx.instrument.lower() not in [i.instrument.name.lower() for i in investigation.investigationInstruments]:
+        if dataset_ctx.instrument.lower() not in [i.instrument.name.lower() for i in
+                                                  investigation.investigationInstruments]:
             error_msg: str = f"Dataset's {dataset_ctx.name} investigation ({investigation.name}/{investigation.visitId}) not associated with instrument {dataset_ctx.instrument}"
             logger.error(error_msg)
             raise InvestigationInstrumentMismatch(error_msg)
