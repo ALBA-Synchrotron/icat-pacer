@@ -7,7 +7,6 @@ import requests
 from requests import Response
 
 from exceptions.integrations import ICATPlusClientError
-from helpers.integrations.elastic import ElasticClient
 from helpers.models.dataset import DatasetContext
 
 

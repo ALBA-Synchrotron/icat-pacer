@@ -8,13 +8,13 @@ from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from tasks.datasets_indexing import DatasetsIndexingTasks
 
 
-class DatasetIndexerConsumer(PACERConsumer):
+class DatasetIndexingConsumer(PACERConsumer):
 
     # BEFORE ADDING (COPYING AND PASTING THIS CONSUMER TO CREATE A NEW ONE), REPLACE THE `dashboard_message_type`
     # SPECIFIED IN THE CALL TO THE SUPERIOR CLASS CONSTRUCTOR WITH A NEW VALUE FOR THE NEW MESSAGES TYPE.
 
     def __init__(self, *args, **kwargs) -> None:
-        super().__init__(dashboard_message_type="dataset-index", *args, **kwargs)
+        super().__init__(dashboard_message_type="dataset-indexing", *args, **kwargs)
         self.tasks = DatasetsIndexingTasks(self.logger)
 
     def get_message_object_identifiers(self, message: Message, shared_obj_identifiers: dict = {}) -> dict:

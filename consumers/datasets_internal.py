@@ -26,6 +26,7 @@ class InternalDatasetsConsumer(PACERConsumer):
         self.internal_dataset_exchange_name: str = ingestion_settings.get("internalDatasetExchangeName", "")
         self.internal_datasets_links_routing_key: str = ingestion_settings.get("internalDatasetLinksRoutingKey", "")
         self.internal_statistics_routing_key: str = ingestion_settings.get("internalStatisticsRoutingKey", "")
+        self.dataset_indexing_routing_key: str = ingestion_settings.get("datasetIndexingRoutingKey", "")
 
     def get_message_object_identifiers(self, message: Message, shared_obj_identifiers: dict = {}) -> dict:
         try:

@@ -167,6 +167,9 @@ config_yaml_schema: dict = {
                                                      "default": "statistics.internal_ingest"},
                     "internalDatasetLinksRoutingKey": {"type": "string", "required": True,
                                                        "default": "dataset.internal_links"},
+                    "datasetIndexingRoutingKey": {"type": "string", "required": True,
+                                                  "default": "dataset.indexing"},
+                    "indexDatasetsElastic": {"type": "boolean", "required": True, "default": False},
                     "automaticDatasetLocationIndex": {"type": "boolean", "required": True, "default": False},
                     "maxDatafilesPerDataset": {"type": "integer", "required": True, "default": 30000},
                     "galleryFolderName": {"type": "string", "required": True, "default": "gallery"},
@@ -311,9 +314,7 @@ config_yaml_schema: dict = {
             "elastic": {
                 "type": "dict",
                 "schema": {
-                    "host": {"type": "string", "required": True},
-                    "port": {"type": "integer", "required": True},
-                    "scheme": {"type": "string", "required": True},
+                    "url": {"type": "string", "required": True},
                     "username": {"type": "string", "required": True},
                     "password": {"type": "string", "required": True},
                     "enabled": {"type": "boolean", "required": True}

@@ -65,6 +65,9 @@ queues:
     routingKey: "dataset.internal_links"
     priorityEnabled: true
     maxPriorityLevel: 10
+  - name: "dataset-indexing"
+    exchange: "dataset-internal-ingest-exchange"
+    routingKey: "dataset.indexing"
 consumers:
   - className: "DeadLettersConsumer"
     module: "consumers.dead_letters"
@@ -144,6 +147,16 @@ consumers:
     integrations:
       - "dashboard"
       - "icat"
+  - className: "DatasetIndexingConsumer"
+    module: "consumers.dataset_indexing"
+    enabled: true
+    queues:
+      - "dataset-indexing"
+    workers: 1
+    integrations:
+      - "dashboard"
+      - "icat"
+      - "elastic"
 brokers:
   main:
     protocol: "amqp"
@@ -176,6 +189,8 @@ ingestionSettings:
     internalDatasetRoutingKey: "dataset.internal_ingest"
     internalStatisticsRoutingKey: "statistics.internal_ingest"
     internalDatasetLinksRoutingKey: "dataset.internal_links"
+    datasetIndexingRoutingKey: "dataset.indexing"
+    indexDatasetsElastic: true
     automaticDatasetLocationIndex: true
     maxDatafilesPerDataset: 30000
     galleryFolderName: "gallery"
@@ -241,9 +256,7 @@ integrations:
       url: "https://icattest.cells.es/iws/icat_plus/"
       apiKey: "<<REDACTED>>"
   elastic:
-    host: "<<REDACTED>>"
-    port: 9200
-    scheme: "http"
+    url: "<<REDACTED>>"
     username: "<<REDACTED>>"
     password: "<<REDACTED>>"
     enabled: true

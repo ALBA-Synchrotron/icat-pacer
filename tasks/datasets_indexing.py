@@ -4,7 +4,9 @@ import json
 import logging
 from contextlib import suppress
 
-from helpers.integrations.elastic import ElasticClient
+from elasticsearch import Elasticsearch
+from elasticsearch.helpers import bulk
+
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.models.dataset import DatasetIndexingContext
 from helpers.utils.base_tasks import BaseTasks
@@ -15,7 +17,7 @@ class DatasetsIndexingTasks(BaseTasks):
     def __init__(self, logger: logging.Logger = None):
         super().__init__(logger)
 
-    def index_dataset_elasticsearch(self, icat_client: ICATClient, elastic_client: ElasticClient,
+    def index_dataset_elasticsearch(self, icat_client: ICATClient, elastic_client: Elasticsearch,
                                     index_ctx: DatasetIndexingContext, *_args,
                                     **kwargs) -> None:
         try:
@@ -23,7 +25,7 @@ class DatasetsIndexingTasks(BaseTasks):
 
         except Exception as e:
             self.logger.error(f"Error generating document for dataset id={index_ctx.dataset_id}: {e}")
-            return
+            raise e
 
         dataset_doc = {
             **{
@@ -35,9 +37,11 @@ class DatasetsIndexingTasks(BaseTasks):
             "_id": index_ctx.dataset_id,
         }
 
-        for key, value in dataset_doc.items():
-            if isinstance(value, list):
-                del dataset_doc[key]
+        try:
+            bulk(elastic_client, [dataset_doc])
+        except Exception as e:
+            self.logger.error(f"Error indexing dataset id={index_ctx.dataset_id}: {e}")
+            raise e
 
     def create_dataset_document(self, icat_client: ICATClient, dataset_id: int, *_args,
                                 **kwargs) -> dict:
@@ -63,8 +67,8 @@ class DatasetsIndexingTasks(BaseTasks):
             "type": dataset.type.name,
             "sampleName": dataset_sample.name,
             "sampleId": dataset_sample.id,
-            "startDate": str(dataset.startDate) if dataset.startDate else None,
-            "endDate": str(dataset.endDate) if dataset.endDate else None,
+            "startDate": dataset.startDate.isoformat() if dataset.startDate else None,
+            "endDate": dataset.endDate.isoformat() if dataset.endDate else None,
             "investigationId": dataset_investigation.id,
             "investigationName": dataset_investigation.name,
             "investigationSummary": dataset_investigation.summary,

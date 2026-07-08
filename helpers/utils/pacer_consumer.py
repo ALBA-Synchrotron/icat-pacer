@@ -5,6 +5,7 @@ import logging
 from contextlib import suppress
 from multiprocessing.managers import convert_to_error
 
+from elasticsearch import Elasticsearch
 from icat import ICATSessionError
 
 import globals_var
@@ -19,7 +20,7 @@ from kombu.transport.virtual import Channel
 from psycopg_pool import ConnectionPool
 
 from helpers.contexts.dashboard import get_configured_dashboard_callback, create_message_context
-from helpers.integrations.elastic import ElasticClient, get_elastic_client
+from helpers.integrations.elastic import get_elastic_client
 from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.datacite import get_datacite_client, DataciteClient
 from helpers.integrations.icat.icat_plus import ICATPlusClient, get_icat_plus_client
@@ -52,7 +53,7 @@ class PACERConsumer(ConsumerMixin):
     datacite_client: DataciteClient = None
     panosc_client: PaNOSCClient = None
     icat_plus_client: ICATPlusClient = None
-    elastic_client: ElasticClient = None
+    elastic_client: Elasticsearch = None
     reject_msg_at_first_callback_error: bool = False
     max_msg_retries: int
 
