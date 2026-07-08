@@ -30,3 +30,6 @@ class DatasetTypeNotFound(DatasetValidationError):
 
 class DatasetNotFound(DatasetValidationError):
     pass
+
+class DatasetIndexingError(DatasetValidationError):
+    pass
