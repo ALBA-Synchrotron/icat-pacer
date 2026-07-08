@@ -1,7 +1,5 @@
 import json
 import logging
-
-import pacer_logging
 import time
 
 import requests

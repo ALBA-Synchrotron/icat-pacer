@@ -2,35 +2,30 @@ from __future__ import absolute_import, unicode_literals
 
 import datetime
 import logging
-
-import pacer_logging
+import multiprocessing
 from contextlib import suppress
+from logging.handlers import QueueHandler
+from multiprocessing import Process
 from multiprocessing.managers import convert_to_error
+from typing import override
 
 from elasticsearch import Elasticsearch
 from icat import ICATSessionError
-
-import globals_var
-import multiprocessing
-from logging.handlers import QueueHandler
-from multiprocessing import Process
-from typing import override
-
 from kombu import Connection, Queue, Message
 from kombu.mixins import ConsumerMixin
 from kombu.transport.virtual import Channel
 from psycopg_pool import ConnectionPool
 
+import globals_var
 from helpers.contexts.dashboard import get_configured_dashboard_callback, create_message_context
+from helpers.integrations.datacite import get_datacite_client, DataciteClient
 from helpers.integrations.elastic import get_elastic_client
 from helpers.integrations.icat.extended_client import ICATClient
-from helpers.integrations.datacite import get_datacite_client, DataciteClient
 from helpers.integrations.icat.icat_plus import ICATPlusClient, get_icat_plus_client
 from helpers.integrations.panosc import PaNOSCClient, get_panosc_client
 from helpers.integrations.visa_utils import get_pg_connection_pool
 from helpers.pacer_logging.general import configure_worker_logger
 from helpers.utils.utils import running_in_pytest, camel_case_to_snake_case
-
 from producers.forwarder import MessageForwarder
 from producers.generic import GenericProducer
 

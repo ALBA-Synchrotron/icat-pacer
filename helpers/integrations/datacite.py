@@ -1,7 +1,6 @@
 import json
 import logging
 
-import pacer_logging
 from itertools import chain
 
 import requests
