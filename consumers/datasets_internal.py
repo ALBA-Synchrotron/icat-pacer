@@ -1,9 +1,11 @@
 from __future__ import absolute_import, unicode_literals
 
+import json
+
 from kombu import Message
 
 from helpers.contexts.dataset import create_dataset_context
-from helpers.models.dataset import DatasetContext
+from helpers.models.dataset import DatasetContext, DatasetIndexingContext
 from helpers.static_settings import RAW_DATASET_TYPE_NAME, PROCESSED_DATASET_TYPE_NAME
 from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from producers.generic import GenericProducer
@@ -27,6 +29,8 @@ class InternalDatasetsConsumer(PACERConsumer):
         self.internal_datasets_links_routing_key: str = ingestion_settings.get("internalDatasetLinksRoutingKey", "")
         self.internal_statistics_routing_key: str = ingestion_settings.get("internalStatisticsRoutingKey", "")
         self.dataset_indexing_routing_key: str = ingestion_settings.get("datasetIndexingRoutingKey", "")
+
+        self.dataset_es_index_name: str = ingestion_settings.get("datasetElasticIndexName", "")
 
     def get_message_object_identifiers(self, message: Message, shared_obj_identifiers: dict = {}) -> dict:
         try:
@@ -102,8 +106,17 @@ class InternalDatasetsConsumer(PACERConsumer):
 
         following_queues: list = [self.internal_statistics_routing_key, self.internal_datasets_links_routing_key,
                                   self.dataset_indexing_routing_key]
-
+        msg = None
         for queue_routing_key in following_queues:
+            match queue_routing_key:
+                case self.dataset_indexing_routing_key:
+                    if not self.dataset_es_index_name:
+                        continue
+                    msg = DatasetIndexingContext.model_validate(
+                        {"dataset_id": dataset_id, "index_name": self.dataset_es_index_name}).model_dump_json()
+                case _:
+                    msg = message
+
             GenericProducer.send_message(self.connection, self.internal_dataset_exchange_name,
-                                         queue_routing_key, message,
+                                         queue_routing_key, msg,
                                          {"dataset_id": dataset_id, "investigation_id": investigation_id})

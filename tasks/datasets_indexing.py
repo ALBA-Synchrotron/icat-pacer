@@ -42,6 +42,7 @@ class DatasetsIndexingTasks(BaseTasks):
         except Exception as e:
             self.logger.error(f"Error indexing dataset id={index_ctx.dataset_id}: {e}")
             raise e
+        self.logger.info(f"Indexed dataset id={index_ctx.dataset_id}")
 
     def create_dataset_document(self, icat_client: ICATClient, dataset_id: int, *_args,
                                 **kwargs) -> dict:
@@ -74,7 +75,7 @@ class DatasetsIndexingTasks(BaseTasks):
             "investigationSummary": dataset_investigation.summary,
             "investigationTitle": dataset_investigation.title,
             "investigationVisitId": dataset_investigation.visitId,
-            "releaseDate": str(dataset_investigation.releaseDate) if dataset_investigation.releaseDate else None,
+            "releaseDate": dataset_investigation.releaseDate.isoformat() if dataset_investigation.releaseDate else None,
             "investigationDOI": dataset_investigation.doi,
             "estype": "dataset",
             "parametersCount": len(dataset.parameters),

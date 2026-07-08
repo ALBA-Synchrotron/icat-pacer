@@ -190,7 +190,7 @@ ingestionSettings:
     internalStatisticsRoutingKey: "statistics.internal_ingest"
     internalDatasetLinksRoutingKey: "dataset.internal_links"
     datasetIndexingRoutingKey: "dataset.indexing"
-    indexDatasetsElastic: true
+    datasetElasticIndexName: "all_datasets_test"
     automaticDatasetLocationIndex: true
     maxDatafilesPerDataset: 30000
     galleryFolderName: "gallery"

@@ -169,7 +169,7 @@ config_yaml_schema: dict = {
                                                        "default": "dataset.internal_links"},
                     "datasetIndexingRoutingKey": {"type": "string", "required": True,
                                                   "default": "dataset.indexing"},
-                    "indexDatasetsElastic": {"type": "boolean", "required": True, "default": False},
+                    "datasetElasticIndexName": {"type": "string", "required": False, "default": ""},
                     "automaticDatasetLocationIndex": {"type": "boolean", "required": True, "default": False},
                     "maxDatafilesPerDataset": {"type": "integer", "required": True, "default": 30000},
                     "galleryFolderName": {"type": "string", "required": True, "default": "gallery"},
