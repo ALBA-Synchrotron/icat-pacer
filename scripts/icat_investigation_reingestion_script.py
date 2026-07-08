@@ -84,4 +84,4 @@ if __name__ == "__main__":
                                      ctx=json.dumps(msg))
         print(f"Sent message to broker dataset: {dataset.id}")
         client.auto_refresh_session()
-        sleep(5)
+        sleep(50)
