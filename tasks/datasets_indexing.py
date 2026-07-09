@@ -62,22 +62,6 @@ class DatasetsIndexingTasks(BaseTasks):
             f"Building dataset document for dataset id={dataset_id}, inv={dataset_investigation.name}")
 
         dataset_doc: dict = {
-            "id": dataset.id,
-            "name": dataset.name,
-            "location": dataset.location,
-            "type": dataset.type.name,
-            "sampleName": dataset_sample.name,
-            "sampleId": dataset_sample.id,
-            "startDate": dataset.startDate.isoformat() if dataset.startDate else None,
-            "endDate": dataset.endDate.isoformat() if dataset.endDate else None,
-            "investigationId": dataset_investigation.id,
-            "investigationName": dataset_investigation.name,
-            "investigationSummary": dataset_investigation.summary,
-            "investigationTitle": dataset_investigation.title,
-            "investigationVisitId": dataset_investigation.visitId,
-            "releaseDate": dataset_investigation.releaseDate.isoformat() if dataset_investigation.releaseDate else None,
-            "investigationDOI": dataset_investigation.doi,
-            "estype": "dataset",
             "parametersCount": len(dataset.parameters),
             "definition": "undefined"
         }
@@ -146,6 +130,22 @@ class DatasetsIndexingTasks(BaseTasks):
 
         dataset_doc = {
             **dataset_doc,
+            "id": dataset.id,
+            "name": dataset.name,
+            "location": dataset.location,
+            "type": dataset.type.name,
+            "sampleName": dataset_sample.name,
+            "sampleId": dataset_sample.id,
+            "startDate": dataset.startDate.isoformat() if dataset.startDate else None,
+            "endDate": dataset.endDate.isoformat() if dataset.endDate else None,
+            "investigationId": dataset_investigation.id,
+            "investigationName": dataset_investigation.name,
+            "investigationSummary": dataset_investigation.summary,
+            "investigationTitle": dataset_investigation.title,
+            "investigationVisitId": dataset_investigation.visitId,
+            "releaseDate": dataset_investigation.releaseDate.isoformat() if dataset_investigation.releaseDate else None,
+            "investigationDOI": dataset_investigation.doi,
+            "estype": "dataset",
             "escompactsearch": " ".join(s for s in compact_search_values if s is not None),
         }
 

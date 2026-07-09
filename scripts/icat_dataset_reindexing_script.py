@@ -38,9 +38,11 @@ if __name__ == "__main__":
     max_dataset_id = client.search("Dataset", flatten_single=True, order=[("id", "DESC")], limit=(0, 1)).id
 
     for i in range(max_dataset_id, 0, -BATCH_SIZE):
-        start = max(0, i - BATCH_SIZE)
-        print(f"Processing datasets from {start} to {i}")
-        datasets = client.search("Dataset", conditions={"id__lte": i}, limit=(0, BATCH_SIZE), flatten_single=False)
+        end = i
+        start = max(1, i - BATCH_SIZE + 1)
+        print(f"Processing datasets from {start} to {end}")
+        datasets = client.search("Dataset", conditions={"id__gte": start, "id__lte": end}, limit=(0, BATCH_SIZE),
+                                 order=[("id", "DESC")], flatten_single=False)
 
         for dataset in datasets:
             GenericProducer.send_message(conn=broker_conn, exchange_name=INGESTION_EXCHANGE,
@@ -52,5 +54,5 @@ if __name__ == "__main__":
 
             print(f"Sent message to broker dataset: {dataset.id}")
         client.auto_refresh_session()
-        sleep(50)
+        sleep(40)
 
