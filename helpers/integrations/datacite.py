@@ -1,5 +1,6 @@
 import json
 import logging
+
 from itertools import chain
 
 import requests

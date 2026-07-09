@@ -1,7 +1,6 @@
 import datetime
 import logging
 import os
-import random
 import tempfile
 import time
 from unittest.mock import patch
@@ -360,6 +359,25 @@ def mock_icat_plus_client():
 def icat_sample_acronyms_parameter_type(icat_client, icat_facility):
     parameter_type = icat_client.new("ParameterType", name="sampleAcronyms", valueType="STRING",
                                      applicableToInvestigation=True, facility=icat_facility, units="NA")
+    parameter_type.create()
+
+
+@pytest.fixture(autouse=True, scope="session")
+def icat_test_parameter_1_parameter_type(icat_client, icat_facility):
+    parameter_type = icat_client.new("ParameterType", name="test_parameter_1", valueType="STRING",
+                                     applicableToDataset=True, facility=icat_facility, units="NA")
+    parameter_type.create()
+
+@pytest.fixture(autouse=True, scope="session")
+def icat_test_cola_value_parameter_type(icat_client, icat_facility):
+    parameter_type = icat_client.new("ParameterType", name="cola_value", valueType="STRING",
+                                     applicableToDataset=True, facility=icat_facility, units="NA")
+    parameter_type.create()
+
+@pytest.fixture(autouse=True, scope="session")
+def icat_test_cola_name_parameter_type(icat_client, icat_facility):
+    parameter_type = icat_client.new("ParameterType", name="cola_name", valueType="STRING",
+                                     applicableToDataset=True, facility=icat_facility, units="NA")
     parameter_type.create()
 
 

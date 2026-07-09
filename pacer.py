@@ -2,19 +2,19 @@ import importlib
 import logging
 import multiprocessing
 import os
+import signal
 import sys
-from ctypes import c_char_p
 from logging.handlers import QueueListener
 from time import sleep
 from urllib.parse import quote
 
 from amqp import Channel
-from icat import ICATSessionError
 from kombu import Connection, Exchange, Queue
+
 import globals_var
 from config.config import ConfigParser
 from helpers.integrations.icat.extended_client import ICATClient
-from helpers.logging.general import configure_pacer_logger
+from helpers.pacer_logging.general import configure_pacer_logger
 from helpers.utils.pacer_consumer import PACERConsumer
 from helpers.utils.strings import mask_amqp_password
 from helpers.utils.utils import Singleton, running_in_pytest
@@ -257,19 +257,56 @@ class PACER:
             self.consumers.append(pacer_consumer)
 
     def main_background_loop(self) -> None:
+        # Register signal handlers
+        signal.signal(signal.SIGTERM, self._signal_handler)
+        signal.signal(signal.SIGINT, self._signal_handler)
+
         try:
             while True:
                 sleep(MAIN_LOOP_WAIT_TIME)
                 self.session_check()
                 self.icat_client.auto_refresh_session()
-        except KeyboardInterrupt:
-            self.stop_consumers()
+        except (KeyboardInterrupt, SystemExit):
             sys.exit(0)
+
+    def _signal_handler(self, signum, frame) -> None:
+        """Handle termination signals"""
+        self.logger.info(f"Received signal {signum}, initiating shutdown...")
+        self.stop_consumers()
+        sys.exit(0)
 
     def start_consumers(self) -> None:
         for consumer in self.consumers:
             consumer.start()
 
     def stop_consumers(self) -> None:
+        self.logger.info("Stopping all consumers...")
+
         for consumer in self.consumers:
-            consumer.stop()
+            try:
+                consumer.on_sigterm()
+                self.logger.debug(f"Triggered on_sigterm for consumer: {consumer.__class__.__name__}")
+            except Exception as e:
+                self.logger.error(f"Error triggering on_sigterm for consumer {consumer.__class__.__name__}: {e}")
+
+        for consumer in self.consumers:
+            try:
+                consumer.stop()
+                self.logger.debug(f"Stopped consumer: {consumer.__class__.__name__}")
+            except Exception as e:
+                self.logger.error(f"Error stopping consumer {consumer.__class__.__name__}: {e}")
+
+        if self.log_queue_listener:
+            try:
+                self.logger.info("Stopping log queue listener...")
+                self.log_queue_listener.stop()
+                self.log_queue_listener = None
+            except Exception as e:
+                print(f"Error stopping log queue listener: {e}")
+
+        if self.log_queue:
+            try:
+                self.log_queue.close()
+                self.log_queue = None
+            except Exception as e:
+                print(f"Error closing log queue: {e}")

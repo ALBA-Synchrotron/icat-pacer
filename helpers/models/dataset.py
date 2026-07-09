@@ -1,6 +1,5 @@
 import os
 from contextlib import suppress
-from dataclasses import dataclass
 from pathlib import Path
 
 from pydantic import BaseModel, model_validator, field_validator, Field
@@ -32,7 +31,6 @@ class DatasetParameterContext(BaseModel):
     value: str = Field(min_length=1)
 
 
-@dataclass
 class DatasetContext(BaseModel):
     sample: DatasetSampleContext
     investigation: str
@@ -48,7 +46,7 @@ class DatasetContext(BaseModel):
 
     @model_validator(mode="after")
     def investigation_name_validator(self):
-        if self.investigation == '' and  self.investigation_id == 0:
+        if self.investigation == '' and self.investigation_id == 0:
             raise DatasetValidationError("Investigation name nor id not found in payload")
         return self
 
@@ -107,3 +105,9 @@ class DatasetContext(BaseModel):
             raise DatasetValidationError(f"Duplicate parameter names found in dataset: {param_names}")
 
         return self
+
+
+class DatasetIndexingContext(BaseModel):
+    index_name: str
+    dataset_id: int = Field(gt=0)
+

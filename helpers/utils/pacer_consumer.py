@@ -2,31 +2,30 @@ from __future__ import absolute_import, unicode_literals
 
 import datetime
 import logging
-from contextlib import suppress
-from multiprocessing.managers import convert_to_error
-
-from icat import ICATSessionError
-
-import globals_var
 import multiprocessing
+from contextlib import suppress
 from logging.handlers import QueueHandler
 from multiprocessing import Process
+from multiprocessing.managers import convert_to_error
 from typing import override
 
+from elasticsearch import Elasticsearch
+from icat import ICATSessionError
 from kombu import Connection, Queue, Message
 from kombu.mixins import ConsumerMixin
 from kombu.transport.virtual import Channel
 from psycopg_pool import ConnectionPool
 
+import globals_var
 from helpers.contexts.dashboard import get_configured_dashboard_callback, create_message_context
-from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.datacite import get_datacite_client, DataciteClient
+from helpers.integrations.elastic import get_elastic_client
+from helpers.integrations.icat.extended_client import ICATClient
 from helpers.integrations.icat.icat_plus import ICATPlusClient, get_icat_plus_client
 from helpers.integrations.panosc import PaNOSCClient, get_panosc_client
 from helpers.integrations.visa_utils import get_pg_connection_pool
-from helpers.logging.general import configure_worker_logger
+from helpers.pacer_logging.general import configure_worker_logger
 from helpers.utils.utils import running_in_pytest, camel_case_to_snake_case
-
 from producers.forwarder import MessageForwarder
 from producers.generic import GenericProducer
 
@@ -51,6 +50,7 @@ class PACERConsumer(ConsumerMixin):
     datacite_client: DataciteClient = None
     panosc_client: PaNOSCClient = None
     icat_plus_client: ICATPlusClient = None
+    elastic_client: Elasticsearch = None
     reject_msg_at_first_callback_error: bool = False
     max_msg_retries: int
 
@@ -200,7 +200,8 @@ class PACERConsumer(ConsumerMixin):
             self.callback_func_broker_forwarder_callback = callback_order(9999999)(self.__broker_forwarder_callback)
         if "dashboard" in self.integrations:
             self.__configured_dashboard_logging_call = get_configured_dashboard_callback(self)
-            self.callback_func_dashboard_message_logging = callback_order(9999999)(self.__dashboard_message_logging_callback)
+            self.callback_func_dashboard_message_logging = callback_order(9999999)(
+                self.__dashboard_message_logging_callback)
         if "icat" in self.integrations:
             self.icat_client = ICATClient.open_icat_session(self.pacer_config)
             self.icat_client.sessionId = shared_session_id
@@ -212,6 +213,8 @@ class PACERConsumer(ConsumerMixin):
             self.panosc_client = get_panosc_client(self.pacer_config, self.logger)
         if "icatPlus" in self.integrations:
             self.icat_plus_client = get_icat_plus_client(self.pacer_config, self.logger)
+        if "elastic" in self.integrations:
+            self.elastic_client = get_elastic_client(self.pacer_config)
 
         if hasattr(self, "tasks"):
             self.tasks.logger = self.logger
@@ -242,10 +245,13 @@ class PACERConsumer(ConsumerMixin):
             message.headers['received_at'] = datetime.now(datetime.timezone.utc).isoformat()
         return super().receive(*args, **kwargs)
 
+    def on_sigterm(self, *_) -> None:
+        self.should_stop = True
 
 def callback_order(order: int) -> callable:
     def decorator(func: callable) -> callable:
         target = func.__func__ if hasattr(func, "__func__") else func
         target._order = order
         return func
+
     return decorator

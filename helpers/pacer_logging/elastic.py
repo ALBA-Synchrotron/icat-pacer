@@ -169,7 +169,7 @@ class CustomElasticHandler(logging.Handler):
 
             return es_client
         except es.exceptions.ConnectionError:
-            logging.error("Can't connect to Elasticsearch host - {host}")
+            pacer_logging.error("Can't connect to Elasticsearch host - {host}")
 
             return None
         except:

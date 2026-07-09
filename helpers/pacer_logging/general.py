@@ -1,10 +1,9 @@
 import logging
 import os
-
 import sys
 from logging.handlers import RotatingFileHandler
 
-from helpers.logging.elastic import CustomElasticHandler
+from helpers.pacer_logging.elastic import CustomElasticHandler
 
 BASE_DIR: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_LOGGING_FORMAT: str = "%(asctime)s [%(levelname)s] %(name)s -- %(message)s"
