@@ -8,7 +8,7 @@ from helpers.models.investigation_operations import InvestigationOperationsConte
 from helpers.contexts.investigation_ops import create_investigation_ops_context
 from helpers.static_settings import INV_OPS_MINT_PROPOSAL, INV_OPS_CREATE_PANOSC_ITEM
 from helpers.utils.pacer_consumer import PACERConsumer, callback_order
-from models.dataset import DatasetIndexingContext
+from helpers.models.dataset import DatasetIndexingContext
 from producers.generic import GenericProducer
 from tasks.investigation_ops import InvestigationOpsTasks
 
