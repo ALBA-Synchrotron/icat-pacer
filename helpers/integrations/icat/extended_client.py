@@ -129,43 +129,49 @@ class ICATClient(Client):
                 except ValueError:
                     raise ValueError(f"Invalid custom condition format: {c}")
 
+                if not field in result:
+                    result[field] = []
+
                 match operator:
                     case "eq":
                         if value is None:
-                            result[field] = "IS NULL"
+                            result[field].append("IS NULL")
                             continue
-
-                        result[field] = f"= '{value}'"
+                        result[field].append(f"= '{value}'")
                     case "in":
                         if not isinstance(value, Iterable) or isinstance(value, (str, bytes)):
                             raise ValueError(f"Value must be non-string iterable for IN operator: {value}")
-                        result[field] = f"IN ({cls.__to_sql_in_clause(value)})"
+                        result[field].append(f"IN ({cls.__to_sql_in_clause(value)})")
+                    case "not_in":
+                        if not isinstance(value, Iterable) or isinstance(value, (str, bytes)):
+                            raise ValueError(f"Value must be non-string iterable for IN operator: {value}")
+                        result[field].append(f"NOT IN ({cls.__to_sql_in_clause(value)})")
                     case "gt":
                         if isinstance(value, str):
-                            result[field] = f"> '{value}'"
+                            result[field].append(f"> '{value}'")
                         else:
-                            result[field] = f"> {value}"
+                            result[field].append(f"> {value}")
                     case "gte":
                         if isinstance(value, str):
-                            result[field] = f">= '{value}'"
+                            result[field].append(f">= '{value}'")
                         else:
-                            result[field] = f">= {value}"
+                            result[field].append(f">= {value}")
                     case "lt":
                         if isinstance(value, str):
-                            result[field] = f"< '{value}'"
+                            result[field].append(f"< '{value}'")
                         else:
-                            result[field] = f"< {value}"
+                            result[field].append(f"< {value}")
                     case "lte":
                         if isinstance(value, str):
-                            result[field] = f"<= '{value}'"
+                            result[field].append(f"<= '{value}'")
                         else:
-                            result[field] = f"<= {value}"
+                            result[field].append(f"<= {value}")
                     case "like" | "contains":
-                        result[field] = f"LIKE '%{value}%'"
+                        result[field].append(f"LIKE '%{value}%'")
                     case "startswith":
-                        result[field] = f"LIKE '{value}%'"
+                        result[field].append(f"LIKE '{value}%'")
                     case "endswith":
-                        result[field] = f"LIKE '%{value}'"
+                        result[field].append(f"LIKE '%{value}'")
                     case _:
                         raise ValueError(f"Invalid operator '{operator}' for custom condition.")
 
