@@ -17,7 +17,7 @@ ICAT_SERVER_PASSWORD: str = os.getenv("ICAT_SERVER_PASSWORD", "")
 INGESTION_EXCHANGE: str = os.getenv("INGESTION_EXCHANGE", "dataset-internal-ingest-exchange")
 INGESTION_ROUTING_KEY: str = os.getenv("INGESTION_ROUTING_KEY", "dataset.indexing")
 
-INDEX_NAME: str = os.getenv("INDEX_NAME", "all_datasets_test")
+INDEX_NAME: str = os.getenv("INDEX_NAME", "all_datasets_prod")
 BATCH_SIZE: int = int(os.getenv("BATCH_SIZE", 2000))
 
 RMQ_HOST: str = os.getenv("RMQ_HOST", "localhost")
