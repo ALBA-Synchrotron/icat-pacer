@@ -64,6 +64,10 @@ class InvestigationOperationsConsumer(PACERConsumer):
     def callback_func_reindex_investigation_datasets(self, _body, message: Message, *args, **kwargs) -> None:
         self.logger.info(
             f"reindex_investigation_datasets > Processing message from {message.delivery_info['routing_key']}: {message.payload!r}")
+
+        if not self.dataset_es_index_name:
+            return
+
         inv_ops_str: str = message.payload or message.body
         inv_ops_ctx: InvestigationOperationsContext = create_investigation_ops_context(inv_ops_str)
 
