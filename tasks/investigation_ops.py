@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import datetime
 import logging
 
+import math
 from icat.entity import Entity
 from psycopg_pool import ConnectionPool
 
@@ -209,3 +210,28 @@ class InvestigationOpsTasks(BaseTasks):
             VISALoader.db_update_investigation_doi(pg_pool, f"{investigation.name}/{investigation.visitId}", doi,
                                                    doi_landing_url, self.logger)
             self.logger.info(f"Investigation mint: Investigation {inv_ops_ctx.name} updated in VISA with new DOI {doi}")
+
+    def fetch_investigation_datasets_reindex(self, icat_client: ICATClient, inv_ops_ctx: InvestigationOperationsContext,
+                                             *_args, **_kwargs) -> list:
+        ret: list = []
+        investigation: Entity = icat_client.search("Investigation", conditions={"name__eq": inv_ops_ctx.name,
+                                                                                "visitId__eq": inv_ops_ctx.visit_id, },
+                                                   flatten_single=True)
+        if not investigation:
+            error_msg: str = f"Investigation dataset reindex: Investigation {inv_ops_ctx.name} not found"
+            self.logger.error(error_msg)
+            raise InvestigationNotFound(error_msg)
+
+        batch_size: int = globals_var.ingestion_settings.get("generalBatchSize", 2000)
+        total_datasets = icat_client.search("Dataset", conditions={"investigation.id__eq": investigation.id},
+                                            aggregate="COUNT")
+        last_dataset_id: int = 0
+        for batch in range(math.ceil(total_datasets / batch_size)):
+            datasets = icat_client.search("Dataset", conditions={"id__gte": last_dataset_id,
+                                                                 "investigation.id__eq": investigation.id},
+                                          limit=(0, batch_size),
+                                          order=[("id", "DESC")], flatten_single=False)
+            ret.extend([i.id for i in datasets])
+            last_dataset_id = datasets[-1].id
+
+        return ret

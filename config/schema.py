@@ -147,6 +147,7 @@ config_yaml_schema: dict = {
         "check_allowed_root_location_paths": True,
         "schema": {
             "messageProcessingRetries": {"type": "integer", "required": True, "default": 5},
+            "generalBatchSize": {"type": "integer", "required": True, "default": 2000},
             "dataset": {
                 "type": "dict",
                 "required": True,

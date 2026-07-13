@@ -178,6 +178,7 @@ brokers:
   #        toBroker: "pacer-prod"
 ingestionSettings:
   messageProcessingRetries: 15
+  generalBatchSize: 2000
   dataset:
     acceptXMLPayloads: true
     mandatoryPathsExistence: false
