@@ -1,16 +1,14 @@
 from __future__ import absolute_import, unicode_literals
 
-import json
-
 from kombu import Message
 
+import globals_var
 from helpers.contexts.dataset import create_dataset_context
 from helpers.models.dataset import DatasetContext, DatasetIndexingContext
 from helpers.static_settings import RAW_DATASET_TYPE_NAME, PROCESSED_DATASET_TYPE_NAME
 from helpers.utils.pacer_consumer import PACERConsumer, callback_order
 from producers.generic import GenericProducer
 from tasks.datasets_internal import DatasetsInternalTasks
-import globals_var
 
 
 class InternalDatasetsConsumer(PACERConsumer):
