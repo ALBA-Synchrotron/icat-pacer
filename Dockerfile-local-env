@@ -1,6 +1,16 @@
-FROM registry.cells.es/docker/python:3.12.6-slim-bullseye
+FROM python:3.15.2-slim-trixie
 
 WORKDIR /app
+
+RUN apt-get update && apt-get install -y build-essential \
+    libxml2 \
+    libxslt1.1 \
+    zlib1g \
+    build-essential \
+    libxml2-dev \
+    libxslt1-dev \
+    zlib1g-dev
+
 
 COPY requirements.txt /app
 
