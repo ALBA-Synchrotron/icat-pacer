@@ -11,14 +11,21 @@ ARG EXTRA_GIDS=1001,1002
 
 WORKDIR /icat-pacer/
 
-RUN addgroup --gid $PRIMARY_GID pacer
-RUN adduser --shell /bin/sh --no-create-home --uid $NEW_UID --gid $PRIMARY_GID --disabled-login --gecos "" pacer
+RUN groupadd --gid "$PRIMARY_GID" pacer
+
+RUN useradd \
+    --shell /bin/sh \
+    --no-create-home \
+    --uid "$NEW_UID" \
+    --gid "$PRIMARY_GID" \
+    --comment "" \
+    pacer
 
 RUN set -eux; \
     for gid in $(echo "$EXTRA_GIDS" | tr ',' ' '); do \
         group="g${gid}"; \
-        addgroup --gid "$gid" "$group" || true; \
-        addgroup pacer "$group"; \
+        getent group "$group" || groupadd --gid "$gid" "$group"; \
+        usermod -aG "$group" pacer; \
     done
 
 RUN apt-get update && apt-get install -y build-essential \
